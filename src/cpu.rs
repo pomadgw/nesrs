@@ -81,13 +81,13 @@ impl CPU {
             }
             0xb9 => {
                 set_instruction!(self, 4, {
-                    aby!(self, memory, false);
+                    aby!(self, memory);
                     lda!(self, memory);
                 });
             }
             0xbd => {
                 set_instruction!(self, 4, {
-                    abx!(self, memory, false);
+                    abx!(self, memory);
                     lda!(self, memory);
                 });
             }
@@ -99,7 +99,7 @@ impl CPU {
             }
             0xfe => {
                 set_instruction!(self, 7, {
-                    abx!(self, memory, true);
+                    abx!(self, memory);
                     inc!(self, memory);
                 });
             }

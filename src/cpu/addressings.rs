@@ -13,7 +13,7 @@ macro_rules! abs {
 }
 
 macro_rules! abw {
-    ($self:expr, $memory:expr, $reg:expr, false) => {
+    ($self:expr, $memory:expr, $reg:expr) => {
         let lo = $memory.read($self.next_pc(), false) as u16;
         let hi = $memory.read($self.next_pc(), false) as u16;
         $self.absolute_address = (hi << 8) | lo;
@@ -22,13 +22,6 @@ macro_rules! abw {
             $self.is_crossing_page = true;
         }
     };
-
-    ($self:expr, $memory:expr, $reg:expr, true) => {
-        let lo = $memory.read($self.next_pc(), false) as u16;
-        let hi = $memory.read($self.next_pc(), false) as u16;
-        $self.absolute_address = (hi << 8) | lo;
-        $self.absolute_address += ($reg as u16);
-    };
 }
 
 /// params:
@@ -36,11 +29,8 @@ macro_rules! abw {
 /// $memory: memory trait
 /// $skip_cross_page: whether to skip cross page or not
 macro_rules! abx {
-    ($self:expr, $memory:expr, false) => {
-        abw!($self, $memory, $self.x, false);
-    };
-    ($self:expr, $memory:expr, true) => {
-        abw!($self, $memory, $self.x, true);
+    ($self:expr, $memory:expr) => {
+        abw!($self, $memory, $self.x);
     };
 }
 
@@ -49,10 +39,7 @@ macro_rules! abx {
 /// $memory: memory trait
 /// $skip_cross_page: whether to skip cross page or not
 macro_rules! aby {
-    ($self:expr, $memory:expr, false) => {
-        abw!($self, $memory, $self.y, false);
-    };
-    ($self:expr, $memory:expr, true) => {
-        abw!($self, $memory, $self.y, true);
+    ($self:expr, $memory:expr) => {
+        abw!($self, $memory, $self.y);
     };
 }

@@ -56,5 +56,7 @@ macro_rules! inc {
         temp = temp.wrapping_add(1);
         $memory.write($self.absolute_address, temp);
         $self.set_nz(temp);
+
+        $self.is_crossing_page = false;
     };
 }
