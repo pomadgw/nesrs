@@ -1,5 +1,7 @@
 #[macro_use]
 mod instructions;
+#[macro_use]
+mod addressings;
 
 use crate::utils::Memory;
 
