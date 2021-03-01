@@ -74,3 +74,15 @@ macro_rules! lda {
         $self.a = $memory.read($self.absolute_address, false);
     };
 }
+
+// INC opcode invokes double read-write
+macro_rules! inc {
+    ($self:expr, $memory:expr) => {
+        let mut temp = $memory.read($self.absolute_address, false);
+        temp = $memory.read($self.absolute_address, false);
+
+        $memory.write($self.absolute_address, temp);
+        temp = temp.wrapping_add(1);
+        $memory.write($self.absolute_address, temp);
+    };
+}

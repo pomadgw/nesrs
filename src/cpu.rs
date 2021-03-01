@@ -72,7 +72,21 @@ impl CPU {
                     lda!(self, memory);
                 });
             }
-            _ => {}
+            0xee => {
+                set_instruction!(self, 6, {
+                    abs!(self, memory);
+                    inc!(self, memory);
+                });
+            }
+            0xfe => {
+                set_instruction!(self, 7, {
+                    abx!(self, memory, true);
+                    inc!(self, memory);
+                });
+            }
+            _ => {
+                self.sync = true;
+            }
         }
 
         self.steps += 1;
