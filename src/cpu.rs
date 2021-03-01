@@ -11,11 +11,15 @@ pub struct CPU {
     pub p: u8,
     pub pc: u16,
 
+    pub cycles: u32,
+
     sync: bool,
     current_opcode: u8,
 
     absolute_address: u16,
     relative_address: i16,
+    steps: i32,
+    is_crossing_page: bool,
 }
 
 impl CPU {
@@ -32,21 +36,47 @@ impl CPU {
             current_opcode: 0,
             absolute_address: 0,
             relative_address: 0,
+            steps: 0,
+            cycles: 0,
+            is_crossing_page: false,
         }
     }
 
-    pub fn clock(&mut self, memory: &dyn Memory) {
+    pub fn is_clocking_done(&self) -> bool {
+        self.sync
+    }
+
+    pub fn clock(&mut self, memory: &mut dyn Memory) {
         if self.sync {
             self.sync = false;
+            self.is_crossing_page = false;
             self.current_opcode = memory.read(self.next_pc(), false);
         }
 
         match self.current_opcode {
             0xad => {
-                abs!(self, memory);
+                set_instruction!(self, 4, {
+                    abs!(self, memory);
+                    lda!(self, memory);
+                });
+            }
+            0xb9 => {
+                set_instruction!(self, 4, {
+                    aby!(self, memory, false);
+                    lda!(self, memory);
+                });
+            }
+            0xbd => {
+                set_instruction!(self, 4, {
+                    abx!(self, memory, false);
+                    lda!(self, memory);
+                });
             }
             _ => {}
         }
+
+        self.steps += 1;
+        self.cycles += 1;
     }
 
     fn next_pc(&mut self) -> u16 {
