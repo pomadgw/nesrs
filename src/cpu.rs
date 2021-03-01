@@ -3,6 +3,17 @@ mod instructions;
 
 use crate::utils::Memory;
 
+pub enum CPUStatus {
+    C = 0x01,
+    Z = 0x02,
+    I = 0x04,
+    D = 0x08,
+    B = 0x10,
+    U = 0x20,
+    V = 0x40,
+    N = 0x80,
+}
+
 pub struct CPU {
     pub a: u8,
     pub x: u8,
@@ -98,5 +109,25 @@ impl CPU {
         self.pc += 1;
 
         current_pc
+    }
+
+    fn set_nz(&mut self, value: u8) {
+        let is_zero = value == 0;
+        let is_neg = (value & 0x80) > 0;
+
+        self.set_status(CPUStatus::Z, is_zero);
+        self.set_status(CPUStatus::N, is_neg);
+    }
+
+    pub fn get_status(&mut self, flag: CPUStatus) -> bool {
+        (self.p & (flag as u8)) > 0
+    }
+
+    fn set_status(&mut self, flag: CPUStatus, value: bool) {
+        if value {
+            self.p |= flag as u8;
+        } else {
+            self.p &= !(flag as u8);
+        }
     }
 }
