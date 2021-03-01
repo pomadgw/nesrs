@@ -1,3 +1,9 @@
+macro_rules! imm {
+    ($self:expr, $memory:expr) => {
+        $self.absolute_address = $self.next_pc();
+    };
+}
+
 macro_rules! abs {
     ($self:expr, $memory:expr) => {
         let lo = $memory.read($self.next_pc(), false) as u16;
