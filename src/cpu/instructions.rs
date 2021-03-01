@@ -72,6 +72,7 @@ macro_rules! aby {
 macro_rules! lda {
     ($self:expr, $memory:expr) => {
         $self.a = $memory.read($self.absolute_address, false);
+        $self.set_nz($self.a);
     };
 }
 
@@ -84,5 +85,6 @@ macro_rules! inc {
         $memory.write($self.absolute_address, temp);
         temp = temp.wrapping_add(1);
         $memory.write($self.absolute_address, temp);
+        $self.set_nz(temp);
     };
 }
