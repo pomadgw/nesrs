@@ -26,7 +26,6 @@ mod tests {
         assert_eq!(cpu.cycles, 2);
     }
 
-
     #[test]
     fn lda_set_z() {
         let mut bus = DummyBus::new();
