@@ -4,6 +4,20 @@ macro_rules! imm {
     };
 }
 
+macro_rules! zp0 {
+    ($self:expr, $memory:expr) => {
+        let lo = $memory.read($self.next_pc(), false) as u16;
+        $self.absolute_address = lo;
+    };
+}
+
+macro_rules! zpx {
+    ($self:expr, $memory:expr) => {
+        let lo = $memory.read($self.next_pc(), false);
+        $self.absolute_address = (lo.wrapping_add($self.x)) as u16;
+    };
+}
+
 macro_rules! abs {
     ($self:expr, $memory:expr) => {
         let lo = $memory.read($self.next_pc(), false) as u16;

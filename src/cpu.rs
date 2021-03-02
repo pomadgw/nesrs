@@ -67,6 +67,12 @@ impl CPU {
         }
 
         match self.current_opcode {
+            0xa5 => {
+                set_instruction!(self, 3, {
+                    zp0!(self, memory);
+                    lda!(self, memory);
+                });
+            }
             0xa9 => {
                 set_instruction!(self, 2, {
                     imm!(self, memory);
@@ -76,6 +82,12 @@ impl CPU {
             0xad => {
                 set_instruction!(self, 4, {
                     abs!(self, memory);
+                    lda!(self, memory);
+                });
+            }
+            0xb5 => {
+                set_instruction!(self, 4, {
+                    zpx!(self, memory);
                     lda!(self, memory);
                 });
             }

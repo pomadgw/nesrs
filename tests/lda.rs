@@ -48,6 +48,66 @@ mod tests {
     }
 
     #[test]
+    fn lda_zp0() {
+        let mut bus = DummyBus::new();
+        let mut cpu = nesrs::cpu::CPU::new();
+        bus.ram[0x0000] = 0xa5;
+        bus.ram[0x0001] = 0x00;
+
+        loop {
+            cpu.clock(&mut bus);
+
+            if cpu.is_clocking_done() {
+                break;
+            }
+        }
+
+        assert_eq!(cpu.a, 0xa5);
+        assert_eq!(cpu.cycles, 3);
+    }
+
+    #[test]
+    fn lda_zpx() {
+        let mut bus = DummyBus::new();
+        let mut cpu = nesrs::cpu::CPU::new();
+        bus.ram[0x0000] = 0xb5;
+        bus.ram[0x0001] = 0x00;
+        bus.ram[0x0002] = 0xff;
+        cpu.x = 0x02;
+
+        loop {
+            cpu.clock(&mut bus);
+
+            if cpu.is_clocking_done() {
+                break;
+            }
+        }
+
+        assert_eq!(cpu.a, 0xff);
+        assert_eq!(cpu.cycles, 4);
+    }
+
+    #[test]
+    fn lda_zpx_wrap() {
+        let mut bus = DummyBus::new();
+        let mut cpu = nesrs::cpu::CPU::new();
+        bus.ram[0x0000] = 0xb5;
+        bus.ram[0x0001] = 0x80;
+        bus.ram[0x007f] = 0xff;
+        cpu.x = 0xff;
+
+        loop {
+            cpu.clock(&mut bus);
+
+            if cpu.is_clocking_done() {
+                break;
+            }
+        }
+
+        assert_eq!(cpu.a, 0xff);
+    }
+
+    #[test]
     fn lda_set_z() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
