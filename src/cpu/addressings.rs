@@ -67,3 +67,17 @@ macro_rules! izx {
         $self.absolute_address = (hi << 8) | lo;
     };
 }
+
+macro_rules! izy {
+    ($self:expr, $memory:expr) => {
+        let temp = $memory.read($self.next_pc(), false);
+        let lo = $memory.read(temp.wrapping_add(0) as u16, false) as u16;
+        let hi = $memory.read(temp.wrapping_add(1) as u16, false) as u16;
+        $self.absolute_address = (hi << 8) | lo;
+
+        $self.absolute_address += ($self.y as u16);
+        if ($self.absolute_address & 0xff00) != (hi << 8) {
+            $self.is_crossing_page = true;
+        }
+    };
+}

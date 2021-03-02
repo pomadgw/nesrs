@@ -74,7 +74,7 @@ impl CPU {
                 });
             }
             0xa1 => {
-                set_instruction!(self, 2, {
+                set_instruction!(self, 6, {
                     izx!(self, memory);
                     lda!(self, memory);
                 });
@@ -88,6 +88,12 @@ impl CPU {
             0xad => {
                 set_instruction!(self, 4, {
                     abs!(self, memory);
+                    lda!(self, memory);
+                });
+            }
+            0xb1 => {
+                set_instruction!(self, 5, {
+                    izy!(self, memory);
                     lda!(self, memory);
                 });
             }
