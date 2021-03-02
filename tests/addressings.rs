@@ -1,4 +1,3 @@
-#[macro_use]
 mod lib;
 
 use lib::DummyBus;
@@ -12,7 +11,8 @@ mod tests {
     fn lda_imm() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
-        init_memory!(bus, 0xa9, 0xff);
+        bus.ram[0x0000] = 0xa9;
+        bus.ram[0x0001] = 0xff;
 
         loop {
             cpu.clock(&mut bus);
@@ -30,7 +30,9 @@ mod tests {
     fn lda_abs() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
-        init_memory!(bus, 0xad, 0x00, 0x01);
+        bus.ram[0x0000] = 0xad;
+        bus.ram[0x0001] = 0x00;
+        bus.ram[0x0002] = 0x01;
         bus.ram[0x0100] = 0xff;
 
         loop {
@@ -49,7 +51,8 @@ mod tests {
     fn lda_zp0() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
-        init_memory!(bus, 0xa5, 0x00);
+        bus.ram[0x0000] = 0xa5;
+        bus.ram[0x0001] = 0x00;
 
         loop {
             cpu.clock(&mut bus);
@@ -67,7 +70,9 @@ mod tests {
     fn lda_zpx() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
-        init_memory!(bus, 0xb5, 0x00, 0xff);
+        bus.ram[0x0000] = 0xb5;
+        bus.ram[0x0001] = 0x00;
+        bus.ram[0x0002] = 0xff;
         cpu.x = 0x02;
 
         loop {
@@ -86,7 +91,8 @@ mod tests {
     fn lda_zpx_wrap() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
-        init_memory!(bus, 0xb5, 0x80);
+        bus.ram[0x0000] = 0xb5;
+        bus.ram[0x0001] = 0x80;
         bus.ram[0x007f] = 0xff;
         cpu.x = 0xff;
 
@@ -105,7 +111,11 @@ mod tests {
     fn lda_izx() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
-        init_memory!(bus, 0xa1, 0x01, 0x00, 0x00, 0x80);
+        bus.ram[0x0000] = 0xa1;
+        bus.ram[0x0001] = 0x01;
+        bus.ram[0x0002] = 0x00;
+        bus.ram[0x0003] = 0x00;
+        bus.ram[0x0004] = 0x80;
         bus.ram[0x8000] = 0xff;
         cpu.x = 0x02;
 
@@ -125,7 +135,10 @@ mod tests {
     fn lda_izy_no_cross() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
-        init_memory!(bus, 0xb1, 0x02, 0x00, 0x80);
+        bus.ram[0x0000] = 0xb1;
+        bus.ram[0x0001] = 0x02;
+        bus.ram[0x0002] = 0x00;
+        bus.ram[0x0003] = 0x80;
         bus.ram[0x8002] = 0xff;
         cpu.y = 0x02;
 
@@ -145,7 +158,10 @@ mod tests {
     fn lda_izy_crosspage() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::cpu::CPU::new();
-        init_memory!(bus, 0xb1, 0x02, 0x01, 0x80);
+        bus.ram[0x0000] = 0xb1;
+        bus.ram[0x0001] = 0x02;
+        bus.ram[0x0002] = 0x01;
+        bus.ram[0x0003] = 0x80;
         bus.ram[0x8100] = 0xff;
         cpu.y = 0xff;
 

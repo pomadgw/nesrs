@@ -21,13 +21,3 @@ impl nesrs::utils::Memory for DummyBus {
         self.ram[addressing as usize] = value;
     }
 }
-
-macro_rules! init_memory {
-    ($bus:expr, $( $x:expr ),*) => {
-        let mut pos: usize = 0;
-        $(
-            pos += 1;
-            $bus.ram[pos - 1] = $x;
-        )*
-    }
-}
