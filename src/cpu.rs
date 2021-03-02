@@ -73,6 +73,12 @@ impl CPU {
                     lda!(self, memory);
                 });
             }
+            0xa1 => {
+                set_instruction!(self, 2, {
+                    izx!(self, memory);
+                    lda!(self, memory);
+                });
+            }
             0xa9 => {
                 set_instruction!(self, 2, {
                     imm!(self, memory);

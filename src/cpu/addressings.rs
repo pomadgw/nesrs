@@ -57,3 +57,13 @@ macro_rules! aby {
         abw!($self, $memory, $self.y);
     };
 }
+
+macro_rules! izx {
+    ($self:expr, $memory:expr) => {
+        let mut temp = $memory.read($self.next_pc(), false);
+        temp = temp.wrapping_add($self.x);
+        let lo = $memory.read(temp.wrapping_add(0) as u16, false) as u16;
+        let hi = $memory.read(temp.wrapping_add(1) as u16, false) as u16;
+        $self.absolute_address = (hi << 8) | lo;
+    };
+}
