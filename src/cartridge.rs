@@ -2,6 +2,7 @@ use std::fs::File;
 use std::mem;
 use std::rc::Rc;
 use std::slice;
+use std::io::Cursor;
 
 use std::io::prelude::*;
 use std::io::SeekFrom;
@@ -37,8 +38,8 @@ pub struct Cartridge {
 }
 
 impl Cartridge {
-    pub fn new_from_file(path: &str) -> Cartridge {
-        let mut file = File::open(path).unwrap();
+    pub fn new_from_file(data: Vec<u8>) -> Cartridge {
+        let mut file = Cursor::new(data);
         let mut header: NESHeader = unsafe { mem::zeroed() };
 
         let header_size = mem::size_of::<NESHeader>();
