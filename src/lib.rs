@@ -1,6 +1,7 @@
 pub mod bus;
-pub mod cpu;
 pub mod cartridge;
+pub mod cpu;
+pub mod mappers;
 pub mod utils;
 
 pub fn hello() -> String {

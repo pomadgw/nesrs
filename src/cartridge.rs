@@ -1,11 +1,12 @@
-use std::fs::File;
-use std::mem;
-use std::rc::Rc;
-use std::slice;
 use std::io::Cursor;
+use std::mem;
+use std::slice;
 
 use std::io::prelude::*;
 use std::io::SeekFrom;
+
+use crate::mappers::nrom::*;
+use crate::mappers::*;
 
 pub enum MirrorMode {
     Hardware,
@@ -29,12 +30,13 @@ pub struct NESHeader {
 }
 
 pub struct Cartridge {
-    pub mapperid : u8,
-    pub hardware_mirror_mode : MirrorMode,
+    pub mapperid: u8,
+    pub hardware_mirror_mode: MirrorMode,
     pub prg_rom: Vec<u8>,
     pub chr_rom: Vec<u8>,
     pub ram: Vec<u8>,
     pub header: NESHeader,
+    pub mapper: Option<Box<dyn Mapper>>,
 }
 
 impl Cartridge {
@@ -91,6 +93,11 @@ impl Cartridge {
         }
         if n_filetype == 2 {}
 
+        let mapper: Option<Box<dyn Mapper>> = match mapperid {
+            0 => Some(Box::new(MapperNROM::new(n_prg_banks, n_chr_banks))),
+            _ => None,
+        };
+
         Cartridge {
             mapperid,
             prg_rom,
@@ -98,6 +105,7 @@ impl Cartridge {
             hardware_mirror_mode,
             ram: vec![0; 0x2000],
             header,
+            mapper,
         }
     }
 }
