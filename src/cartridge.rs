@@ -7,6 +7,7 @@ use std::io::SeekFrom;
 
 use crate::mappers::nrom::*;
 use crate::mappers::*;
+use crate::utils::*;
 
 pub enum MirrorMode {
     Hardware,
@@ -106,6 +107,50 @@ impl Cartridge {
             ram: vec![0; 0x2000],
             header,
             mapper,
+        }
+    }
+
+    pub fn cpu_read(&self, addressing: u16, result: &mut u8) -> bool {
+        let mut mapped_address: usize = 0;
+
+        match self
+            .mapper
+            .as_ref()
+            .unwrap()
+            .cpu_map_read(addressing, &mut mapped_address, result)
+        {
+            MapperStatus::ReadWrite => true,
+            MapperStatus::VRAM => {
+                *result = self.ram[mapped_address];
+                true
+            }
+            MapperStatus::Read => {
+                *result = self.prg_rom[mapped_address];
+                true
+            }
+            MapperStatus::Unreadable => false,
+        }
+    }
+
+    pub fn cpu_write(&mut self, addressing: u16, value: u8) -> bool {
+        let mut mapped_address: usize = 0;
+
+        match self
+            .mapper
+            .as_ref()
+            .unwrap()
+            .cpu_map_write(addressing, &mut mapped_address, value)
+        {
+            MapperStatus::ReadWrite => true,
+            MapperStatus::VRAM => {
+                self.ram[mapped_address] = value;
+                true
+            }
+            MapperStatus::Read => {
+                self.prg_rom[mapped_address] = value;
+                true
+            }
+            MapperStatus::Unreadable => false,
         }
     }
 }
