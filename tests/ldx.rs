@@ -11,7 +11,7 @@ mod tests_ldx {
     #[test]
     fn ldx() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xa2;
         bus.ram[0x0001] = 0xff;
 
@@ -30,7 +30,7 @@ mod tests_ldx {
     #[test]
     fn ldx_set_z() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xae;
         bus.ram[0x0001] = 0x00;
         bus.ram[0x0002] = 0x01;
@@ -45,13 +45,13 @@ mod tests_ldx {
         }
 
         assert_eq!(cpu.x, 0x00);
-        assert_eq!(cpu.get_status(nesrs::cpu::CPUStatus::Z), true);
+        assert_eq!(cpu.get_status(nesrs::CPUStatus::Z), true);
     }
 
     #[test]
     fn ldx_set_n() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xae;
         bus.ram[0x0001] = 0x00;
         bus.ram[0x0002] = 0x01;
@@ -66,6 +66,6 @@ mod tests_ldx {
         }
 
         assert_eq!(cpu.x, 0x81);
-        assert_eq!(cpu.get_status(nesrs::cpu::CPUStatus::N), true);
+        assert_eq!(cpu.get_status(nesrs::CPUStatus::N), true);
     }
 }

@@ -12,7 +12,7 @@ impl DummyBus {
     }
 }
 
-impl nesrs::utils::Memory for DummyBus {
+impl nesrs::Memory for DummyBus {
     fn read(&self, addressing: u16, _is_read_only: bool) -> u8 {
         self.ram[addressing as usize]
     }

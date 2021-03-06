@@ -10,7 +10,7 @@ mod tests {
     #[test]
     fn lda_imm() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xa9;
         bus.ram[0x0001] = 0xff;
 
@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn lda_abs() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xad;
         bus.ram[0x0001] = 0x00;
         bus.ram[0x0002] = 0x01;
@@ -50,7 +50,7 @@ mod tests {
     #[test]
     fn lda_zp0() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xa5;
         bus.ram[0x0001] = 0x00;
 
@@ -69,7 +69,7 @@ mod tests {
     #[test]
     fn lda_zpx() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xb5;
         bus.ram[0x0001] = 0x00;
         bus.ram[0x0002] = 0xff;
@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn lda_zpx_wrap() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xb5;
         bus.ram[0x0001] = 0x80;
         bus.ram[0x007f] = 0xff;
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn lda_izx() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xa1;
         bus.ram[0x0001] = 0x01;
         bus.ram[0x0002] = 0x00;
@@ -134,7 +134,7 @@ mod tests {
     #[test]
     fn lda_izy_no_cross() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xb1;
         bus.ram[0x0001] = 0x02;
         bus.ram[0x0002] = 0x00;
@@ -157,7 +157,7 @@ mod tests {
     #[test]
     fn lda_izy_crosspage() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xb1;
         bus.ram[0x0001] = 0x02;
         bus.ram[0x0002] = 0x01;
@@ -180,7 +180,7 @@ mod tests {
     #[test]
     fn lda_abx_no_cross_page() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xbd;
         bus.ram[0x0001] = 0x00;
         bus.ram[0x0002] = 0x01;
@@ -202,7 +202,7 @@ mod tests {
     #[test]
     fn lda_abx_with_cross_page() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xbd;
         bus.ram[0x0001] = 0x01;
         bus.ram[0x0002] = 0x01;
@@ -224,7 +224,7 @@ mod tests {
     #[test]
     fn lda_aby_no_cross_page() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xb9;
         bus.ram[0x0001] = 0x00;
         bus.ram[0x0002] = 0x01;
@@ -246,7 +246,7 @@ mod tests {
     #[test]
     fn lda_aby_with_cross_page() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xb9;
         bus.ram[0x0001] = 0x01;
         bus.ram[0x0002] = 0x01;

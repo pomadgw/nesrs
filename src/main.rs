@@ -1,7 +1,4 @@
-use nesrs;
-use nesrs::bus::*;
-use nesrs::cartridge::*;
-use nesrs::utils::*;
+use nesrs::*;
 use std::fs;
 
 fn main() {

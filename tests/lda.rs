@@ -10,7 +10,7 @@ mod tests {
     #[test]
     fn lda_imm() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xa9;
         bus.ram[0x0001] = 0xff;
 
@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn lda_set_z() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xad;
         bus.ram[0x0001] = 0x00;
         bus.ram[0x0002] = 0x01;
@@ -44,13 +44,13 @@ mod tests {
         }
 
         assert_eq!(cpu.a, 0x00);
-        assert_eq!(cpu.get_status(nesrs::cpu::CPUStatus::Z), true);
+        assert_eq!(cpu.get_status(nesrs::CPUStatus::Z), true);
     }
 
     #[test]
     fn lda_set_n() {
         let mut bus = DummyBus::new();
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = nesrs::CPU::new();
         bus.ram[0x0000] = 0xad;
         bus.ram[0x0001] = 0x00;
         bus.ram[0x0002] = 0x01;
@@ -65,6 +65,6 @@ mod tests {
         }
 
         assert_eq!(cpu.a, 0x81);
-        assert_eq!(cpu.get_status(nesrs::cpu::CPUStatus::N), true);
+        assert_eq!(cpu.get_status(nesrs::CPUStatus::N), true);
     }
 }
