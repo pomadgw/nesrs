@@ -2,7 +2,7 @@ use nesrs::*;
 use std::fs;
 
 fn main() {
-    let filename = "nestest.nes";
+    let filename = "./roms/nestest.nes";
     println!("{}", nesrs::hello());
 
     let file = fs::read(filename).unwrap();
