@@ -20,6 +20,14 @@ pub enum CPUStatus {
     N = 0x80,
 }
 
+pub enum IRQStatus {
+    Reset = 0x01,
+    NMI = 0x02,
+    External = 0x04,
+    Frame = 0x08,
+    DPCM = 0x10,
+}
+
 #[allow(dead_code)]
 pub struct CPU {
     pub a: u8,
@@ -30,6 +38,8 @@ pub struct CPU {
     pub pc: u16,
 
     pub cycles: u32,
+
+    pub irq_triggers: u8,
 
     sync: bool,
     current_opcode: u8,
@@ -56,6 +66,7 @@ impl CPU {
             relative_address: 0,
             steps: 0,
             cycles: 0,
+            irq_triggers: 0,
             is_crossing_page: false,
         }
     }
@@ -97,5 +108,28 @@ impl CPU {
             self.is_crossing_page = false;
             self.current_opcode = memory.read(self.next_pc(), false);
         }
+    }
+
+    fn check_trigger(&self, trigger: IRQStatus) -> bool {
+        (self.irq_triggers) & (trigger as u8) != 0
+    }
+
+    pub fn set_trigger(&mut self, trigger: IRQStatus) {
+        self.irq_triggers |= trigger as u8;
+    }
+
+    pub fn clear_trigger(&mut self, trigger: IRQStatus) {
+        self.irq_triggers &= !(trigger as u8);
+    }
+
+    fn push_stack(&mut self, memory: &mut dyn Memory, value: u8) {
+        memory.write((self.sp as u16) + 0x0100, value);
+        self.sp = self.sp.wrapping_sub(1);
+    }
+
+    #[allow(dead_code)]
+    fn pop_stack(&mut self, memory: &mut dyn Memory) -> u8 {
+        self.sp = self.sp.wrapping_add(1);
+        memory.read((self.sp as u16) + 0x0100, false)
     }
 }
