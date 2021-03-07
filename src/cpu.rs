@@ -122,6 +122,12 @@ impl CPU {
                     lda!(self, memory);
                 });
             }
+            0xb6 => {
+                set_instruction!(self, 4, {
+                    zpy!(self, memory);
+                    lda!(self, memory);
+                });
+            }
             0xb9 => {
                 set_instruction!(self, 4, {
                     aby!(self, memory);

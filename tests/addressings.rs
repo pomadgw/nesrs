@@ -108,6 +108,48 @@ mod tests {
     }
 
     #[test]
+    fn ldx_zpy() {
+        let mut bus = DummyBus::new();
+        let mut cpu = nesrs::CPU::new();
+        bus.ram[0x0000] = 0xb6;
+        bus.ram[0x0001] = 0x00;
+        bus.ram[0x0002] = 0xff;
+        cpu.y = 0x02;
+
+        loop {
+            cpu.clock(&mut bus);
+
+            if cpu.is_clocking_done() {
+                break;
+            }
+        }
+
+        assert_eq!(cpu.a, 0xff);
+        assert_eq!(cpu.cycles, 4);
+    }
+
+    #[test]
+    fn ldx_zpy_wrap() {
+        let mut bus = DummyBus::new();
+        let mut cpu = nesrs::CPU::new();
+        bus.ram[0x0000] = 0xb6;
+        bus.ram[0x0001] = 0x80;
+        bus.ram[0x007f] = 0xff;
+        cpu.y = 0xff;
+
+        loop {
+            cpu.clock(&mut bus);
+
+            if cpu.is_clocking_done() {
+                break;
+            }
+        }
+
+        assert_eq!(cpu.a, 0xff);
+    }
+
+
+    #[test]
     fn lda_izx() {
         let mut bus = DummyBus::new();
         let mut cpu = nesrs::CPU::new();

@@ -18,6 +18,13 @@ macro_rules! zpx {
     };
 }
 
+macro_rules! zpy {
+    ($self:expr, $memory:expr) => {
+        let lo = $memory.read($self.next_pc(), false);
+        $self.absolute_address = (lo.wrapping_add($self.y)) as u16;
+    };
+}
+
 macro_rules! abs {
     ($self:expr, $memory:expr) => {
         let lo = $memory.read($self.next_pc(), false) as u16;
