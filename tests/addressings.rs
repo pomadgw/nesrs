@@ -124,7 +124,7 @@ mod tests {
             }
         }
 
-        assert_eq!(cpu.a, 0xff);
+        assert_eq!(cpu.x, 0xff);
         assert_eq!(cpu.cycles, 4);
     }
 
@@ -145,7 +145,7 @@ mod tests {
             }
         }
 
-        assert_eq!(cpu.a, 0xff);
+        assert_eq!(cpu.x, 0xff);
     }
 
     #[test]
