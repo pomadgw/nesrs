@@ -9,8 +9,12 @@ fn main() {
     let cartridge = Cartridge::new_from_file(file);
     println!("Mapper Id: {}", cartridge.mapperid);
 
-    let mut bus = Bus::new();
-    bus.insert_cartridge(cartridge);
+    let mut nes = NES::new();
+    nes.bus.insert_cartridge(cartridge);
 
-    println!("VAL: {:02X}", bus.read(0xc000, false));
+    println!("VAL: {:02X}", nes.bus.read(0xc000, false));
+
+    nes.cpu.pc = 0xc000;
+    nes.clock();
+    println!("VAL: ${:04X}", nes.cpu.pc);
 }

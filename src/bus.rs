@@ -1,5 +1,6 @@
-use crate::cartridge::Cartridge;
-use crate::utils::Memory;
+use crate::Cartridge;
+use crate::Memory;
+use crate::CPU;
 
 pub struct Bus {
     pub ram: Vec<u8>,
@@ -56,5 +57,36 @@ impl Memory for Bus {
         } else if address == 0x4016 || address == 0x4017 {
             // TODO: controllers here
         }
+    }
+}
+
+pub struct NES {
+    pub bus: Box<Bus>,
+    pub cpu: Box<CPU>,
+    pub cycles: u32,
+    cpuclock: u8,
+}
+
+impl NES {
+    pub fn new() -> NES {
+        NES {
+            bus: Box::new(Bus::new()),
+            cpu: Box::new(CPU::new()),
+            cycles: 0,
+            cpuclock: 0,
+        }
+    }
+
+    pub fn clock(&mut self) {
+        if self.cpuclock == 0 {
+            self.cpu.as_mut().clock(self.bus.as_mut());
+            self.cpuclock = 3;
+        }
+        self.cycles += 1;
+        self.cpuclock -= 1;
+    }
+
+    pub fn reset(&mut self) {
+        self.cycles = 0;
     }
 }
