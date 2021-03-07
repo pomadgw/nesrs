@@ -7,11 +7,10 @@ const root = resolve(__dirname, './documentations')
 const instructions = fs.readdirSync(root).sort().map(e => e.replace('.md', ''))
 
 let string = ''
-let stringClock = ''
 
 
 const templateClock = (result) => `
-use crate::CPU;
+use crate::cpu::*;
 use crate::Memory;
 
 impl CPU {
@@ -32,6 +31,7 @@ impl CPU {
 `
 
 const implementedAddresingModes = {
+  'Implied': 'imp',
   'Immediate': 'imm',
   'Zero Page': 'zp0',
   'Zero Page,X': 'zpx',
