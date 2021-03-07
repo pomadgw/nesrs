@@ -148,7 +148,6 @@ mod tests {
         assert_eq!(cpu.a, 0xff);
     }
 
-
     #[test]
     fn lda_izx() {
         let mut bus = DummyBus::new();
