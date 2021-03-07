@@ -1,5 +1,5 @@
-use crate::CPU;
 use crate::Memory;
+use crate::CPU;
 
 impl CPU {
     pub fn clock(&mut self, memory: &mut dyn Memory) {
@@ -63,7 +63,7 @@ impl CPU {
             0xb6 => {
                 set_instruction!(self, 4, {
                     zpy!(self, memory);
-                    lda!(self, memory);
+                    ldx!(self, memory);
                 });
             }
             0xb9 => {
@@ -81,12 +81,24 @@ impl CPU {
             0xbe => {
                 set_instruction!(self, 4, {
                     aby!(self, memory);
-                    lda!(self, memory);
+                    ldx!(self, memory);
+                });
+            }
+            0xe6 => {
+                set_instruction!(self, 5, {
+                    zp0!(self, memory);
+                    inc!(self, memory);
                 });
             }
             0xee => {
                 set_instruction!(self, 6, {
                     abs!(self, memory);
+                    inc!(self, memory);
+                });
+            }
+            0xf6 => {
+                set_instruction!(self, 6, {
+                    zpx!(self, memory);
                     inc!(self, memory);
                 });
             }

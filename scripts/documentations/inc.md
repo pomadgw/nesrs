@@ -2,6 +2,8 @@
 
 Affects Flags: N Z
 
+## Addresing Modes
+
 |MODE        |SYNTAX       |HEX |LEN |TIM|
 |------------|-------------|----|----|---|
 |Zero Page   |INC $44      |$E6 |2   |5  |
