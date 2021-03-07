@@ -1,3 +1,9 @@
+macro_rules! imp {
+    ($self:expr, $memory:expr) => {
+        // do nothing...
+    };
+}
+
 macro_rules! imm {
     ($self:expr, $memory:expr) => {
         $self.absolute_address = $self.next_pc();
