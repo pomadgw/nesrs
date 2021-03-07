@@ -2,6 +2,7 @@ mod bus;
 mod cartridge;
 mod cpu;
 mod mappers;
+#[macro_use]
 mod utils;
 
 pub use bus::*;
