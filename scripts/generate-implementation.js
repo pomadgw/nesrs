@@ -75,7 +75,6 @@ instructions.forEach(instruction => {
   const implementationidx = token.findIndex(e => e.type === 'heading' && e.depth === 2 && e.text === 'Implementation')
   const implementation = token[implementationidx + 1];
 
-  console.log(implementation)
   string += `#[allow(unused_macros)]
 macro_rules! ${instruction.toLowerCase()} {
   ($self:expr, $memory:expr) => {
