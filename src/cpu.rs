@@ -75,6 +75,13 @@ impl CPU {
         self.sync
     }
 
+    pub fn reset(&mut self) {
+        self.sync = true;
+        self.set_trigger(IRQStatus::Reset);
+        self.cycles = 0;
+        self.steps = 0;
+    }
+
     fn next_pc(&mut self) -> u16 {
         let current_pc = self.pc;
         self.pc += 1;
@@ -106,7 +113,12 @@ impl CPU {
         if self.sync {
             self.sync = false;
             self.is_crossing_page = false;
-            self.current_opcode = memory.read(self.next_pc(), false);
+
+            if self.check_trigger(IRQStatus::Reset) || self.check_trigger(IRQStatus::NMI) {
+                self.current_opcode = 0x00;
+            } else {
+                self.current_opcode = memory.read(self.next_pc(), false);
+            }
         }
     }
 

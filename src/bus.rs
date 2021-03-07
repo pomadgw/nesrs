@@ -18,6 +18,10 @@ impl Bus {
     pub fn insert_cartridge(&mut self, cart: Cartridge) {
         self.cartridge = Some(Box::new(cart));
     }
+
+    pub fn reset(&mut self) {
+        //
+    }
 }
 
 impl Memory for Bus {
@@ -88,5 +92,7 @@ impl NES {
 
     pub fn reset(&mut self) {
         self.cycles = 0;
+        self.cpu.reset();
+        self.bus.reset();
     }
 }

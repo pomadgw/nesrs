@@ -14,7 +14,9 @@ fn main() {
 
     println!("VAL: {:02X}", nes.bus.read(0xc000, false));
 
-    nes.cpu.pc = 0xc000;
+    nes.reset();
+    // nes.cpu.pc = 0xc000;
     nes.clock();
     println!("VAL: ${:04X}", nes.cpu.pc);
+    println!("VAL: ${:02X}", nes.cpu.p);
 }
