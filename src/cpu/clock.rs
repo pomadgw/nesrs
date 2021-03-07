@@ -1,11 +1,17 @@
+use crate::cpu::*;
 use crate::Memory;
-use crate::CPU;
 
 impl CPU {
     pub fn clock(&mut self, memory: &mut dyn Memory) {
         self.init_opcode(memory);
 
         match self.current_opcode {
+            0x00 => {
+                set_instruction!(self, 7, {
+                    imp!(self, memory);
+                    brk!(self, memory);
+                });
+            }
             0xa1 => {
                 set_instruction!(self, 6, {
                     izx!(self, memory);
