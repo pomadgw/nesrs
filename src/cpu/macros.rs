@@ -15,3 +15,11 @@ macro_rules! set_instruction {
         }
     }};
 }
+
+macro_rules! on_step {
+    ($myname:ident : $cycles:expr, $block:block) => {{
+        let $myname = $cycles;
+
+        $block;
+    }};
+}
