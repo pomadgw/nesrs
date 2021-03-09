@@ -115,11 +115,11 @@ impl CPU {
                 });
             }
             _ => {
-                self.sync = true;
+                self.steps = 1;
             }
         }
 
-        self.steps += 1;
+        self.steps -= 1;
         self.cycles += 1;
     }
 }

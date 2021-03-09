@@ -17,6 +17,10 @@ fn main() {
     nes.reset();
     // nes.cpu.pc = 0xc000;
     nes.clock();
+    while !nes.cpu.is_clocking_done() {
+        nes.clock();
+    }
     println!("VAL: ${:04X}", nes.cpu.pc);
     println!("VAL: ${:02X}", nes.cpu.p);
+    println!("VAL: {}", nes.cpu.cycles);
 }
