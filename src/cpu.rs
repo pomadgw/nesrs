@@ -41,7 +41,6 @@ pub struct CPU {
 
     pub irq_triggers: u8,
 
-    sync: bool,
     current_opcode: u8,
 
     absolute_address: u16,
@@ -60,7 +59,6 @@ impl CPU {
             p: 0,
             pc: 0,
 
-            sync: true,
             current_opcode: 0,
             absolute_address: 0,
             relative_address: 0,
@@ -72,11 +70,10 @@ impl CPU {
     }
 
     pub fn is_clocking_done(&self) -> bool {
-        self.sync
+        self.steps == 0
     }
 
     pub fn reset(&mut self) {
-        self.sync = true;
         self.set_trigger(IRQStatus::Reset);
         self.cycles = 0;
         self.steps = 0;
@@ -110,8 +107,7 @@ impl CPU {
     }
 
     fn init_opcode(&mut self, memory: &mut dyn Memory) {
-        if self.sync {
-            self.sync = false;
+        if self.steps == 0 {
             self.is_crossing_page = false;
 
             if self.check_trigger(IRQStatus::Reset) || self.check_trigger(IRQStatus::NMI) {

@@ -1,6 +1,7 @@
 const { resolve } = require('path')
 const fs = require('fs')
 const marked = require('marked')
+const definedOpcodes = require('./opcodes.json')
 
 const root = resolve(__dirname, './documentations')
 
@@ -20,11 +21,11 @@ impl CPU {
         match self.current_opcode {
             ${result}
             _ => {
-                self.sync = true;
+              self.steps = 1;
             }
         }
 
-        self.steps += 1;
+        self.steps -= 1;
         self.cycles += 1;
     }
 }
@@ -47,6 +48,15 @@ const implementedAddresingModes = {
 }
 
 const opcodes = []
+
+definedOpcodes.forEach((opcode, idx) => {
+  if (opcode.operate === 'nop' || opcode.operate === 'xxx') {
+    opcodes.push(`0x${idx.toString(16).padStart(2, '0').toLowerCase()} => {
+      set_instruction!(self, ${opcode.cycles}, {
+      });
+    },`)
+  }
+})
 
 instructions.forEach(instruction => {
   const document = fs.readFileSync(resolve(root, `${instruction}.md`), { encoding: 'utf8'})
