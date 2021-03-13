@@ -76,6 +76,13 @@ macro_rules! inc {
 }
 
 #[allow(unused_macros)]
+macro_rules! jmp {
+    ($self:expr, $memory:expr) => {
+        $self.pc = $self.absolute_address;
+    };
+}
+
+#[allow(unused_macros)]
 macro_rules! lda {
     ($self:expr, $memory:expr) => {
         $self.a = $memory.read($self.absolute_address, false);

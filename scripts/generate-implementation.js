@@ -42,7 +42,7 @@ const implementedAddresingModes = {
   'Absolute,Y': 'aby',
   'Indirect,X': 'izx',
   'Indirect,Y': 'izy',
-  // 'Indirect': 'ind',
+  'Indirect': 'ind',
   // 'Accumulator': 'acc',
   // 'Relative': 'rel',
 }

@@ -111,6 +111,12 @@ impl CPU {
             0x4b => {
                 set_instruction!(self, 2, {});
             }
+            0x4c => {
+                set_instruction!(self, 3, {
+                    abs!(self, memory);
+                    jmp!(self, memory);
+                });
+            }
             0x4f => {
                 set_instruction!(self, 6, {});
             }
@@ -152,6 +158,12 @@ impl CPU {
             }
             0x6b => {
                 set_instruction!(self, 2, {});
+            }
+            0x6c => {
+                set_instruction!(self, 5, {
+                    ind!(self, memory);
+                    jmp!(self, memory);
+                });
             }
             0x6f => {
                 set_instruction!(self, 6, {});

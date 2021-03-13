@@ -94,3 +94,19 @@ macro_rules! izy {
         }
     };
 }
+
+/// params:
+/// $self: CPU
+/// $memory: memory trait
+/// $skip_cross_page: whether to skip cross page or not
+macro_rules! ind {
+    ($self:expr, $memory:expr) => {
+        let lo_lo = $memory.read($self.next_pc(), false);
+        let hi = $memory.read($self.next_pc(), false);
+        let lo_hi = lo_lo.wrapping_add(1);
+        let lo = toword!(lo_lo, hi);
+        let hi = toword!(lo_hi, hi);
+
+        $self.absolute_address = toword!(lo, hi);
+    };
+}
