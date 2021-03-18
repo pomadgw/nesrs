@@ -47,6 +47,7 @@ pub struct CPU {
     relative_address: i16,
     steps: i32,
     is_crossing_page: bool,
+    is_writing: bool,
 }
 
 impl CPU {
@@ -66,6 +67,7 @@ impl CPU {
             cycles: 0,
             irq_triggers: 0,
             is_crossing_page: false,
+            is_writing: false,
         }
     }
 
@@ -109,6 +111,7 @@ impl CPU {
     fn init_opcode(&mut self, memory: &mut dyn Memory) {
         if self.steps == 0 {
             self.is_crossing_page = false;
+            self.is_writing = false;
 
             if self.check_trigger(IRQStatus::Reset) || self.check_trigger(IRQStatus::NMI) {
                 self.current_opcode = 0x00;

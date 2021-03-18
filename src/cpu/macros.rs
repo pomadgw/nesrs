@@ -17,13 +17,13 @@ macro_rules! set_instruction {
 macro_rules! toword {
     ($lo:expr, $hi:expr) => {
         (($hi as u16) >> 8) | ($lo as u16)
-    }
+    };
 }
 
 macro_rules! on_step {
-    ($myname:ident : $cycles:expr, $block:block) => {{
-        let $myname = $cycles;
-
-        $block;
+    ($self:expr, $cycles:expr, $block:block) => {{
+        if ($self.steps == $cycles) {
+            $block;
+        }
     }};
 }

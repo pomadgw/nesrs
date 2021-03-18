@@ -389,6 +389,12 @@ impl CPU {
                     zp0!(self, memory);
                     inc!(self, memory);
                 });
+                on_step!(self, 1, {
+                    self.is_writing = true;
+                });
+                on_step!(self, 0, {
+                    self.is_writing = true;
+                });
             }
             0xe7 => {
                 set_instruction!(self, 5, {});
@@ -400,6 +406,12 @@ impl CPU {
                 set_instruction!(self, 6, {
                     abs!(self, memory);
                     inc!(self, memory);
+                });
+                on_step!(self, 1, {
+                    self.is_writing = true;
+                });
+                on_step!(self, 0, {
+                    self.is_writing = true;
                 });
             }
             0xef => {
@@ -419,6 +431,12 @@ impl CPU {
                     zpx!(self, memory);
                     inc!(self, memory);
                 });
+                on_step!(self, 1, {
+                    self.is_writing = true;
+                });
+                on_step!(self, 0, {
+                    self.is_writing = true;
+                });
             }
             0xf7 => {
                 set_instruction!(self, 6, {});
@@ -436,6 +454,12 @@ impl CPU {
                 set_instruction!(self, 7, {
                     abx!(self, memory);
                     inc!(self, memory);
+                });
+                on_step!(self, 1, {
+                    self.is_writing = true;
+                });
+                on_step!(self, 0, {
+                    self.is_writing = true;
                 });
             }
             0xff => {

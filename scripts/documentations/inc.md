@@ -24,3 +24,15 @@ $self.set_nz(temp);
 
 $self.is_crossing_page = false;
 ```
+
+## Additional Codes
+
+```rs
+on_step!(self, 1, {
+  self.is_writing = true;
+});
+
+on_step!(self, 0, {
+  self.is_writing = true;
+});
+```

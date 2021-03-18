@@ -63,6 +63,8 @@ instructions.forEach(instruction => {
   const token = marked.lexer(document)
   const addressingidx = token.findIndex(e => e.type === 'heading' && e.depth === 2 && e.text === 'Addresing Modes')
   const addressing = token[addressingidx + 1];
+  const additionalCodesidx = token.findIndex(e => e.type === 'heading' && e.depth === 2 && e.text === 'Additional Codes')
+  const additionalCodes = additionalCodesidx !== -1 ? token[additionalCodesidx + 1] : { text: '' };
 
   if (addressing?.type === 'table') {
     const mapOpcode = addressing.cells.map(cell => ({
@@ -78,6 +80,7 @@ instructions.forEach(instruction => {
           ${mode}!(self, memory);
           ${instruction}!(self, memory);
         });
+        ${additionalCodes.text}
       },`)
     })
   }
