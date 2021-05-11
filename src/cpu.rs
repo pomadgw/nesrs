@@ -25,13 +25,13 @@ impl Default for CPURegisters {
             y: 0,
             sp: 0,
             p: 0,
-            pc: 0
+            pc: 0,
         }
     }
 }
 
 pub struct CPU {
-    pub regs: CPURegisters
+    pub regs: CPURegisters,
 }
 
 impl CPU {
