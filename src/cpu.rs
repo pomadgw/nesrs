@@ -1,5 +1,7 @@
 mod test;
 
+use crate::memory::Memory;
+
 pub fn hello() {
     println!("Hello");
 }
@@ -36,4 +38,19 @@ impl CPU {
             regs: Default::default(),
         }
     }
+
+    pub fn clock(&mut self, memory: &mut dyn Memory) {
+        let pc = self.get_pc();
+        println!("{}", memory.read(pc, false));
+    }
+
+    // BEGIN PRIVATE
+    fn get_pc(&mut self) -> usize {
+        let pc = self.regs.pc as usize;
+
+        self.regs.pc = self.regs.pc.wrapping_add(1);
+
+        pc
+    }
+    // END PRIVATE
 }
