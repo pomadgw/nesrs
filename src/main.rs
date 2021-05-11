@@ -19,7 +19,7 @@ fn main() {
     let mut cpu = nesrs::cpu::CPU::new();
 
     let mut memory = RAM {
-        a: vec![1, 2, 3, 4]
+        a: vec![0; 0x10000],
     };
 
     println!("{}", cpu.regs.a);

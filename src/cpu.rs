@@ -1,5 +1,7 @@
 mod test;
 
+pub const INTERRUPT_RESET: u16 = 0xFFFC;
+
 use crate::memory::Memory;
 
 pub fn hello() {
@@ -37,6 +39,10 @@ impl CPU {
         CPU {
             regs: Default::default(),
         }
+    }
+
+    pub fn reset(&mut self, memory: &mut dyn Memory) {
+        //
     }
 
     pub fn clock(&mut self, memory: &mut dyn Memory) {
