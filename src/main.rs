@@ -1,5 +1,5 @@
 use nesrs;
 
 fn main() {
-    println!("{}", nesrs::hello());
+    nesrs::cpu::hello();
 }
