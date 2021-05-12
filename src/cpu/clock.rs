@@ -23,7 +23,8 @@ impl CPU {
     // Clock the CPU
     pub fn clock(&mut self, memory: &mut dyn Memory) {
         if self.is_read_instruction {
-            self.opcode = memory.read(self.get_pc(), false);
+            let curr_pc = self.get_pc();
+            self.opcode = self.read(memory, curr_pc);
             self.is_read_instruction = false;
             self.set_instruction();
         }

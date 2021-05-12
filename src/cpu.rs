@@ -24,6 +24,7 @@ pub struct CPU {
     is_read_instruction: bool,
     address_mode: AddressMode,
     opcode_type: Opcode,
+    is_read: bool,
 }
 
 impl CPU {
@@ -38,6 +39,7 @@ impl CPU {
             is_read_instruction: false,
             address_mode: AddressMode::Imp,
             opcode_type: Opcode::Brk,
+            is_read: true,
         }
     }
 
@@ -54,6 +56,16 @@ impl CPU {
     }
 
     // BEGIN PRIVATE
+    fn read(&mut self, memory: &mut dyn Memory, address: usize) -> u8 {
+        self.is_read = true;
+        memory.read(address, false)
+    }
+
+    fn write(&mut self, memory: &mut dyn Memory, address: usize, value: u8) {
+        self.is_read = false;
+        memory.write(address, value);
+    }
+
     fn push_stack(&mut self, memory: &mut dyn Memory, value: u8) {
         let address = 0x0100 + self.regs.sp as usize;
         memory.write(address, value);
