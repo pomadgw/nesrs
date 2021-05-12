@@ -27,8 +27,17 @@ mod cpu_tests {
         memory.a[cpu::INTERRUPT_RESET as usize] = 0x01;
         memory.a[(cpu::INTERRUPT_RESET + 1) as usize] = 0x80;
 
-        cpu.reset(&mut memory);
+        cpu.reset();
+
+        cpu.clock(&mut memory);
+        while !cpu.done() {
+            cpu.clock(&mut memory);
+        }
+
+        assert_eq!(cpu.total_cycles, 7);
 
         assert_eq!(cpu.regs.pc, 0x8001);
+        assert_eq!(cpu.regs.sp, 0xfd);
+        assert_eq!(cpu.regs.p.bits(), 0x24);
     }
 }
