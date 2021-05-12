@@ -92,6 +92,7 @@ bitflags! {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum AddressMode {
     Imp,
     Acc,
@@ -108,6 +109,7 @@ pub enum AddressMode {
     Ind,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum Opcode {
     // Xxx is dummy opcode
     Xxx,
@@ -168,6 +170,265 @@ pub enum Opcode {
     Dex,
     Nop,
 }
+
+const OPCODE_TABLE: [(AddressMode, Opcode, u32); 256] = [
+    (AddressMode::Imp, Opcode::Brk, 7),
+    (AddressMode::Izx, Opcode::Ora, 6),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 3),
+    (AddressMode::Zp0, Opcode::Ora, 3),
+    (AddressMode::Zp0, Opcode::Asl, 5),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imp, Opcode::Php, 3),
+    (AddressMode::Imm, Opcode::Ora, 2),
+    (AddressMode::Acc, Opcode::Asl, 2),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Abs, Opcode::Ora, 4),
+    (AddressMode::Abs, Opcode::Asl, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Rel, Opcode::Bpl, 2),
+    (AddressMode::Izy, Opcode::Ora, 5),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Zpx, Opcode::Ora, 4),
+    (AddressMode::Zpx, Opcode::Asl, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Imp, Opcode::Clc, 2),
+    (AddressMode::Aby, Opcode::Ora, 4),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Abx, Opcode::Ora, 4),
+    (AddressMode::Abx, Opcode::Asl, 7),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Abs, Opcode::Jsr, 6),
+    (AddressMode::Izx, Opcode::And, 6),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Zp0, Opcode::Bit, 3),
+    (AddressMode::Zp0, Opcode::And, 3),
+    (AddressMode::Zp0, Opcode::Rol, 5),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imp, Opcode::Plp, 4),
+    (AddressMode::Imm, Opcode::And, 2),
+    (AddressMode::Acc, Opcode::Rol, 2),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Abs, Opcode::Bit, 4),
+    (AddressMode::Abs, Opcode::And, 4),
+    (AddressMode::Abs, Opcode::Rol, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Rel, Opcode::Bmi, 2),
+    (AddressMode::Izy, Opcode::And, 5),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Zpx, Opcode::And, 4),
+    (AddressMode::Zpx, Opcode::Rol, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Imp, Opcode::Sec, 2),
+    (AddressMode::Aby, Opcode::And, 4),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Abx, Opcode::And, 4),
+    (AddressMode::Abx, Opcode::Rol, 7),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Rti, 6),
+    (AddressMode::Izx, Opcode::Eor, 6),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 3),
+    (AddressMode::Zp0, Opcode::Eor, 3),
+    (AddressMode::Zp0, Opcode::Lsr, 5),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imp, Opcode::Pha, 3),
+    (AddressMode::Imm, Opcode::Eor, 2),
+    (AddressMode::Acc, Opcode::Lsr, 2),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Abs, Opcode::Jmp, 3),
+    (AddressMode::Abs, Opcode::Eor, 4),
+    (AddressMode::Abs, Opcode::Lsr, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Rel, Opcode::Bvc, 2),
+    (AddressMode::Izy, Opcode::Eor, 5),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Zpx, Opcode::Eor, 4),
+    (AddressMode::Zpx, Opcode::Lsr, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Imp, Opcode::Cli, 2),
+    (AddressMode::Aby, Opcode::Eor, 4),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Abx, Opcode::Eor, 4),
+    (AddressMode::Abx, Opcode::Lsr, 7),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Rts, 6),
+    (AddressMode::Izx, Opcode::Adc, 6),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 3),
+    (AddressMode::Zp0, Opcode::Adc, 3),
+    (AddressMode::Zp0, Opcode::Ror, 5),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imp, Opcode::Pla, 4),
+    (AddressMode::Imm, Opcode::Adc, 2),
+    (AddressMode::Acc, Opcode::Ror, 2),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Ind, Opcode::Jmp, 5),
+    (AddressMode::Abs, Opcode::Adc, 4),
+    (AddressMode::Abs, Opcode::Ror, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Rel, Opcode::Bvs, 2),
+    (AddressMode::Izy, Opcode::Adc, 5),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Zpx, Opcode::Adc, 4),
+    (AddressMode::Zpx, Opcode::Ror, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Imp, Opcode::Sei, 2),
+    (AddressMode::Aby, Opcode::Adc, 4),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Abx, Opcode::Adc, 4),
+    (AddressMode::Abx, Opcode::Ror, 7),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Izx, Opcode::Sta, 6),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Zp0, Opcode::Sty, 3),
+    (AddressMode::Zp0, Opcode::Sta, 3),
+    (AddressMode::Zp0, Opcode::Stx, 3),
+    (AddressMode::Imp, Opcode::Xxx, 3),
+    (AddressMode::Imp, Opcode::Dey, 2),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Txa, 2),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Abs, Opcode::Sty, 4),
+    (AddressMode::Abs, Opcode::Sta, 4),
+    (AddressMode::Abs, Opcode::Stx, 4),
+    (AddressMode::Imp, Opcode::Xxx, 4),
+    (AddressMode::Rel, Opcode::Bcc, 2),
+    (AddressMode::Izy, Opcode::Sta, 6),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Zpx, Opcode::Sty, 4),
+    (AddressMode::Zpx, Opcode::Sta, 4),
+    (AddressMode::Zpy, Opcode::Stx, 4),
+    (AddressMode::Imp, Opcode::Xxx, 4),
+    (AddressMode::Imp, Opcode::Tya, 2),
+    (AddressMode::Aby, Opcode::Sta, 5),
+    (AddressMode::Imp, Opcode::Txs, 2),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imp, Opcode::Nop, 5),
+    (AddressMode::Abx, Opcode::Sta, 5),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imm, Opcode::Ldy, 2),
+    (AddressMode::Izx, Opcode::Lda, 6),
+    (AddressMode::Imm, Opcode::Ldx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Zp0, Opcode::Ldy, 3),
+    (AddressMode::Zp0, Opcode::Lda, 3),
+    (AddressMode::Zp0, Opcode::Ldx, 3),
+    (AddressMode::Imp, Opcode::Xxx, 3),
+    (AddressMode::Imp, Opcode::Tay, 2),
+    (AddressMode::Imm, Opcode::Lda, 2),
+    (AddressMode::Imp, Opcode::Tax, 2),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Abs, Opcode::Ldy, 4),
+    (AddressMode::Abs, Opcode::Lda, 4),
+    (AddressMode::Abs, Opcode::Ldx, 4),
+    (AddressMode::Imp, Opcode::Xxx, 4),
+    (AddressMode::Rel, Opcode::Bcs, 2),
+    (AddressMode::Izy, Opcode::Lda, 5),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Zpx, Opcode::Ldy, 4),
+    (AddressMode::Zpx, Opcode::Lda, 4),
+    (AddressMode::Zpy, Opcode::Ldx, 4),
+    (AddressMode::Imp, Opcode::Xxx, 4),
+    (AddressMode::Imp, Opcode::Clv, 2),
+    (AddressMode::Aby, Opcode::Lda, 4),
+    (AddressMode::Imp, Opcode::Tsx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 4),
+    (AddressMode::Abx, Opcode::Ldy, 4),
+    (AddressMode::Abx, Opcode::Lda, 4),
+    (AddressMode::Aby, Opcode::Ldx, 4),
+    (AddressMode::Imp, Opcode::Xxx, 4),
+    (AddressMode::Imm, Opcode::Cpy, 2),
+    (AddressMode::Izx, Opcode::Cmp, 6),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Zp0, Opcode::Cpy, 3),
+    (AddressMode::Zp0, Opcode::Cmp, 3),
+    (AddressMode::Zp0, Opcode::Dec, 5),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imp, Opcode::Iny, 2),
+    (AddressMode::Imm, Opcode::Cmp, 2),
+    (AddressMode::Imp, Opcode::Dex, 2),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Abs, Opcode::Cpy, 4),
+    (AddressMode::Abs, Opcode::Cmp, 4),
+    (AddressMode::Abs, Opcode::Dec, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Rel, Opcode::Bne, 2),
+    (AddressMode::Izy, Opcode::Cmp, 5),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Zpx, Opcode::Cmp, 4),
+    (AddressMode::Zpx, Opcode::Dec, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Imp, Opcode::Cld, 2),
+    (AddressMode::Aby, Opcode::Cmp, 4),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Abx, Opcode::Cmp, 4),
+    (AddressMode::Abx, Opcode::Dec, 7),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imm, Opcode::Cpx, 2),
+    (AddressMode::Izx, Opcode::Sbc, 6),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Zp0, Opcode::Cpx, 3),
+    (AddressMode::Zp0, Opcode::Sbc, 3),
+    (AddressMode::Zp0, Opcode::Inc, 5),
+    (AddressMode::Imp, Opcode::Xxx, 5),
+    (AddressMode::Imp, Opcode::Inx, 2),
+    (AddressMode::Imm, Opcode::Sbc, 2),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Sbc, 2),
+    (AddressMode::Abs, Opcode::Cpx, 4),
+    (AddressMode::Abs, Opcode::Sbc, 4),
+    (AddressMode::Abs, Opcode::Inc, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Rel, Opcode::Beq, 2),
+    (AddressMode::Izy, Opcode::Sbc, 5),
+    (AddressMode::Imp, Opcode::Xxx, 2),
+    (AddressMode::Imp, Opcode::Xxx, 8),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Zpx, Opcode::Sbc, 4),
+    (AddressMode::Zpx, Opcode::Inc, 6),
+    (AddressMode::Imp, Opcode::Xxx, 6),
+    (AddressMode::Imp, Opcode::Sed, 2),
+    (AddressMode::Aby, Opcode::Sbc, 4),
+    (AddressMode::Imp, Opcode::Nop, 2),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+    (AddressMode::Imp, Opcode::Nop, 4),
+    (AddressMode::Abx, Opcode::Sbc, 4),
+    (AddressMode::Abx, Opcode::Inc, 7),
+    (AddressMode::Imp, Opcode::Xxx, 7),
+];
 
 /// Emulating 6502 CPU
 pub struct CPU {
@@ -288,193 +549,12 @@ impl CPU {
     }
 
     fn set_instruction(&mut self) {
-        // set default addressing mode
-        self.address_mode = AddressMode::Imp;
-
-        // decode instructions based on
-        // https://llx.com/Neil/a2/opcodes.html
-        match self.opcode {
-            0 => {
-                self.opcode_type = Opcode::Brk;
-            }
-            0x20 => {
-                self.opcode_type = Opcode::Jsr;
-                self.address_mode = AddressMode::Abs;
-            }
-            0x40 => {
-                self.opcode_type = Opcode::Rti;
-            }
-            0x60 => {
-                self.opcode_type = Opcode::Rts;
-            }
-            0x08 => {
-                self.opcode_type = Opcode::Php;
-            }
-            0x28 => {
-                self.opcode_type = Opcode::Plp;
-            }
-            0x48 => {
-                self.opcode_type = Opcode::Pha;
-            }
-            0x68 => {
-                self.opcode_type = Opcode::Pla;
-            }
-            0x88 => {
-                self.opcode_type = Opcode::Dey;
-            }
-            0xA8 => {
-                self.opcode_type = Opcode::Tay;
-            }
-            0xC8 => {
-                self.opcode_type = Opcode::Iny;
-            }
-            0xE8 => {
-                self.opcode_type = Opcode::Inx;
-            }
-            0x18 => {
-                self.opcode_type = Opcode::Clc;
-            }
-            0x38 => {
-                self.opcode_type = Opcode::Sec;
-            }
-            0x58 => {
-                self.opcode_type = Opcode::Cli;
-            }
-            0x78 => {
-                self.opcode_type = Opcode::Sei;
-            }
-            0x98 => {
-                self.opcode_type = Opcode::Tya;
-            }
-            0xB8 => {
-                self.opcode_type = Opcode::Clv;
-            }
-            0xD8 => {
-                self.opcode_type = Opcode::Cld;
-            }
-            0xF8 => {
-                self.opcode_type = Opcode::Sed;
-            }
-            0x8A => {
-                self.opcode_type = Opcode::Txa;
-            }
-            0x9A => {
-                self.opcode_type = Opcode::Txs;
-            }
-            0xAA => {
-                self.opcode_type = Opcode::Tax;
-            }
-            0xBA => {
-                self.opcode_type = Opcode::Tsx;
-            }
-            0xCA => {
-                self.opcode_type = Opcode::Dex;
-            }
-            0xEA => {
-                self.opcode_type = Opcode::Nop;
-            }
-            _ => {
-                let a = (self.opcode >> 5) & 0x07;
-                let b = (self.opcode >> 2) >> 0x07;
-                let c = self.opcode & 0x03;
-                let is_branching_opcode = (self.opcode & 0x1f) == 0x10;
-
-                if is_branching_opcode {
-                    let x = (self.opcode >> 6) & 0x03;
-                    let y = (self.opcode >> 5) & 0x01;
-                    self.address_mode = AddressMode::Rel;
-
-                    // opcode: status flag is clear
-                    if y == 0 {
-                        self.opcode_type = match x {
-                            0 => Opcode::Bpl,
-                            1 => Opcode::Bvc,
-                            2 => Opcode::Bcc,
-                            3 => Opcode::Bne,
-                            _ => Opcode::Xxx,
-                        };
-                    } else {
-                        self.opcode_type = match x {
-                            0 => Opcode::Bmi,
-                            1 => Opcode::Bvs,
-                            2 => Opcode::Bcs,
-                            3 => Opcode::Beq,
-                            _ => Opcode::Xxx,
-                        };
-                    }
-                } else {
-                    if c == 0 {
-                        self.opcode_type = match a {
-                            1 => Opcode::Bit,
-                            2 => Opcode::Jmp,
-                            3 => Opcode::Jmp,
-                            4 => Opcode::Sty,
-                            5 => Opcode::Ldy,
-                            6 => Opcode::Cpy,
-                            7 => Opcode::Cpx,
-                            _ => Opcode::Xxx,
-                        };
-
-                        self.address_mode = match b {
-                            0 => AddressMode::Imm,
-                            1 => AddressMode::Zp0,
-                            3 => AddressMode::Abs,
-                            5 => AddressMode::Zpx,
-                            7 => AddressMode::Abx,
-                            _ => AddressMode::Imp,
-                        };
-
-                        if a == 3 {
-                            self.address_mode = AddressMode::Ind;
-                        }
-                    } else if c == 1 {
-                        self.opcode_type = match a {
-                            0 => Opcode::Ora,
-                            1 => Opcode::And,
-                            2 => Opcode::Eor,
-                            3 => Opcode::Adc,
-                            4 => Opcode::Sta,
-                            5 => Opcode::Lda,
-                            6 => Opcode::Cmp,
-                            7 => Opcode::Sbc,
-                            _ => Opcode::Xxx,
-                        };
-
-                        self.address_mode = match b {
-                            0 => AddressMode::Izx,
-                            1 => AddressMode::Zp0,
-                            2 => AddressMode::Imm,
-                            3 => AddressMode::Abs,
-                            4 => AddressMode::Izy,
-                            5 => AddressMode::Zpx,
-                            6 => AddressMode::Abx,
-                            7 => AddressMode::Aby,
-                            _ => AddressMode::Imp,
-                        }
-                    } else if c == 2 {
-                        self.opcode_type = match a {
-                            0 => Opcode::Asl,
-                            1 => Opcode::Rol,
-                            2 => Opcode::Lsr,
-                            3 => Opcode::Ror,
-                            4 => Opcode::Stx,
-                            5 => Opcode::Ldx,
-                            6 => Opcode::Dec,
-                            7 => Opcode::Inc,
-                            _ => Opcode::Xxx,
-                        };
-
-                        self.address_mode = match b {
-                            0 => AddressMode::Imm,
-                            1 => AddressMode::Zp0,
-                            2 => AddressMode::Acc,
-                            3 => AddressMode::Abs,
-                            5 => AddressMode::Zpx,
-                            7 => AddressMode::Abx,
-                            _ => AddressMode::Imp,
-                        }
-                    }
-                }
+        let opcode_num = self.opcode as usize;
+        match &OPCODE_TABLE[opcode_num] {
+            (address_mode, opcode, cycle) => {
+                self.address_mode = *address_mode;
+                self.opcode_type = *opcode;
+                self.cycles = *cycle;
             }
         }
     }
