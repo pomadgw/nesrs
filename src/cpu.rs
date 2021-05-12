@@ -94,10 +94,79 @@ bitflags! {
 
 pub enum AddressMode {
     Imp,
+    Acc,
+    Abs,
+    Abx,
+    Aby,
+    Imm,
+    Zp0,
+    Zpx,
+    Zpy,
+    Izx,
+    Izy,
+    Rel,
+    Ind,
 }
 
 pub enum Opcode {
+    // Xxx is dummy opcode
+    Xxx,
     Brk,
+    Jsr,
+    Rti,
+    Rts,
+    Ora,
+    And,
+    Eor,
+    Adc,
+    Sta,
+    Lda,
+    Cmp,
+    Sbc,
+    Asl,
+    Rol,
+    Lsr,
+    Ror,
+    Stx,
+    Ldx,
+    Dec,
+    Inc,
+    Bit,
+    Jmp,
+    Sty,
+    Ldy,
+    Cpy,
+    Cpx,
+    Bpl,
+    Bmi,
+    Bvc,
+    Bvs,
+    Bcc,
+    Bcs,
+    Bne,
+    Beq,
+    Php,
+    Plp,
+    Pha,
+    Pla,
+    Dey,
+    Tay,
+    Iny,
+    Inx,
+    Clc,
+    Sec,
+    Cli,
+    Sei,
+    Tya,
+    Clv,
+    Cld,
+    Sed,
+    Txa,
+    Txs,
+    Tax,
+    Tsx,
+    Dex,
+    Nop,
 }
 
 /// Emulating 6502 CPU
@@ -155,6 +224,7 @@ impl CPU {
                 AddressMode::Imp => {
                     // do nothing
                 }
+                _ => {}
             }
 
             match self.opcode_type {
@@ -203,6 +273,7 @@ impl CPU {
                     let hi = memory.read(vector + 1, false);
                     self.regs.pc = word!(lo, hi);
                 }
+                _ => {}
             }
 
             self.is_read_instruction = true;
@@ -217,16 +288,193 @@ impl CPU {
     }
 
     fn set_instruction(&mut self) {
+        // set default addressing mode
+        self.address_mode = AddressMode::Imp;
+
+        // decode instructions based on
+        // https://llx.com/Neil/a2/opcodes.html
         match self.opcode {
             0 => {
-                // BRK
-                self.cycles = 7;
                 self.opcode_type = Opcode::Brk;
-                self.address_mode = AddressMode::Imp;
+            }
+            0x20 => {
+                self.opcode_type = Opcode::Jsr;
+                self.address_mode = AddressMode::Abs;
+            }
+            0x40 => {
+                self.opcode_type = Opcode::Rti;
+            }
+            0x60 => {
+                self.opcode_type = Opcode::Rts;
+            }
+            0x08 => {
+                self.opcode_type = Opcode::Php;
+            }
+            0x28 => {
+                self.opcode_type = Opcode::Plp;
+            }
+            0x48 => {
+                self.opcode_type = Opcode::Pha;
+            }
+            0x68 => {
+                self.opcode_type = Opcode::Pla;
+            }
+            0x88 => {
+                self.opcode_type = Opcode::Dey;
+            }
+            0xA8 => {
+                self.opcode_type = Opcode::Tay;
+            }
+            0xC8 => {
+                self.opcode_type = Opcode::Iny;
+            }
+            0xE8 => {
+                self.opcode_type = Opcode::Inx;
+            }
+            0x18 => {
+                self.opcode_type = Opcode::Clc;
+            }
+            0x38 => {
+                self.opcode_type = Opcode::Sec;
+            }
+            0x58 => {
+                self.opcode_type = Opcode::Cli;
+            }
+            0x78 => {
+                self.opcode_type = Opcode::Sei;
+            }
+            0x98 => {
+                self.opcode_type = Opcode::Tya;
+            }
+            0xB8 => {
+                self.opcode_type = Opcode::Clv;
+            }
+            0xD8 => {
+                self.opcode_type = Opcode::Cld;
+            }
+            0xF8 => {
+                self.opcode_type = Opcode::Sed;
+            }
+            0x8A => {
+                self.opcode_type = Opcode::Txa;
+            }
+            0x9A => {
+                self.opcode_type = Opcode::Txs;
+            }
+            0xAA => {
+                self.opcode_type = Opcode::Tax;
+            }
+            0xBA => {
+                self.opcode_type = Opcode::Tsx;
+            }
+            0xCA => {
+                self.opcode_type = Opcode::Dex;
+            }
+            0xEA => {
+                self.opcode_type = Opcode::Nop;
             }
             _ => {
-                self.cycles = 1;
-                self.is_read_instruction = true;
+                let a = (self.opcode >> 5) & 0x07;
+                let b = (self.opcode >> 2) >> 0x07;
+                let c = self.opcode & 0x03;
+                let is_branching_opcode = (self.opcode & 0x1f) == 0x10;
+
+                if is_branching_opcode {
+                    let x = (self.opcode >> 6) & 0x03;
+                    let y = (self.opcode >> 5) & 0x01;
+                    self.address_mode = AddressMode::Rel;
+
+                    // opcode: status flag is clear
+                    if y == 0 {
+                        self.opcode_type = match x {
+                            0 => Opcode::Bpl,
+                            1 => Opcode::Bvc,
+                            2 => Opcode::Bcc,
+                            3 => Opcode::Bne,
+                            _ => Opcode::Xxx,
+                        };
+                    } else {
+                        self.opcode_type = match x {
+                            0 => Opcode::Bmi,
+                            1 => Opcode::Bvs,
+                            2 => Opcode::Bcs,
+                            3 => Opcode::Beq,
+                            _ => Opcode::Xxx,
+                        };
+                    }
+                } else {
+                    if c == 0 {
+                        self.opcode_type = match a {
+                            1 => Opcode::Bit,
+                            2 => Opcode::Jmp,
+                            3 => Opcode::Jmp,
+                            4 => Opcode::Sty,
+                            5 => Opcode::Ldy,
+                            6 => Opcode::Cpy,
+                            7 => Opcode::Cpx,
+                            _ => Opcode::Xxx,
+                        };
+
+                        self.address_mode = match b {
+                            0 => AddressMode::Imm,
+                            1 => AddressMode::Zp0,
+                            3 => AddressMode::Abs,
+                            5 => AddressMode::Zpx,
+                            7 => AddressMode::Abx,
+                            _ => AddressMode::Imp,
+                        };
+
+                        if a == 3 {
+                            self.address_mode = AddressMode::Ind;
+                        }
+                    } else if c == 1 {
+                        self.opcode_type = match a {
+                            0 => Opcode::Ora,
+                            1 => Opcode::And,
+                            2 => Opcode::Eor,
+                            3 => Opcode::Adc,
+                            4 => Opcode::Sta,
+                            5 => Opcode::Lda,
+                            6 => Opcode::Cmp,
+                            7 => Opcode::Sbc,
+                            _ => Opcode::Xxx,
+                        };
+
+                        self.address_mode = match b {
+                            0 => AddressMode::Izx,
+                            1 => AddressMode::Zp0,
+                            2 => AddressMode::Imm,
+                            3 => AddressMode::Abs,
+                            4 => AddressMode::Izy,
+                            5 => AddressMode::Zpx,
+                            6 => AddressMode::Abx,
+                            7 => AddressMode::Aby,
+                            _ => AddressMode::Imp,
+                        }
+                    } else if c == 2 {
+                        self.opcode_type = match a {
+                            0 => Opcode::Asl,
+                            1 => Opcode::Rol,
+                            2 => Opcode::Lsr,
+                            3 => Opcode::Ror,
+                            4 => Opcode::Stx,
+                            5 => Opcode::Ldx,
+                            6 => Opcode::Dec,
+                            7 => Opcode::Inc,
+                            _ => Opcode::Xxx,
+                        };
+
+                        self.address_mode = match b {
+                            0 => AddressMode::Imm,
+                            1 => AddressMode::Zp0,
+                            2 => AddressMode::Acc,
+                            3 => AddressMode::Abs,
+                            5 => AddressMode::Zpx,
+                            7 => AddressMode::Abx,
+                            _ => AddressMode::Imp,
+                        }
+                    }
+                }
             }
         }
     }
