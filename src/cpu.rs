@@ -495,10 +495,8 @@ impl CPU {
 
                     let vector = if self.interrupt_type & Interrupt::RESET == Interrupt::RESET {
                         INTERRUPT_RESET
-                    } else if self.interrupt_type & Interrupt::RESET == Interrupt::NMI {
+                    } else if self.interrupt_type & Interrupt::NMI == Interrupt::NMI {
                         INTERRUPT_NMI
-                    } else if self.interrupt_type & Interrupt::RESET == Interrupt::IRQ {
-                        INTERRUPT_IRQ
                     } else {
                         INTERRUPT_IRQ
                     } as usize;
