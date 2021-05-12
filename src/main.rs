@@ -22,8 +22,8 @@ fn main() {
         a: vec![0; 0x10000],
     };
 
-    cpu.regs.p |= nesrs::cpu::StatusFlag::N;
-    cpu.regs.p |= nesrs::cpu::StatusFlag::Z;
+    cpu.regs.p |= nesrs::cpu::types::StatusFlag::N;
+    cpu.regs.p |= nesrs::cpu::types::StatusFlag::Z;
 
     println!("{}", cpu.regs.a);
     println!("{}", cpu.regs.p);
