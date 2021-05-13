@@ -135,8 +135,6 @@ impl CPU {
                     );
                 }
                 Opcode::Lda => {
-                    //
-
                     step!(self, {
                         self.regs.a = self.read(memory, self.absolute_address);
                         self.set_nz(self.regs.a);
