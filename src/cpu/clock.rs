@@ -83,9 +83,9 @@ impl CPU {
                     // the behavior of BRK is defined
                     // according to this article: https://www.pagetable.com/?p=410
 
-                    let vector = if self.interrupt_type & Interrupt::RESET == Interrupt::RESET {
+                    let vector = if self.interrupt_type.contains(Interrupt::RESET) {
                         INTERRUPT_RESET
-                    } else if self.interrupt_type & Interrupt::NMI == Interrupt::NMI {
+                    } else if self.interrupt_type.contains(Interrupt::NMI) {
                         INTERRUPT_NMI
                     } else {
                         INTERRUPT_IRQ
@@ -98,14 +98,14 @@ impl CPU {
                             if self.interrupt_type.bits() == 0 {
                                 self.get_pc();
                             }
-                            if self.interrupt_type & Interrupt::RESET == Interrupt::RESET {
+                            if self.interrupt_type.contains(Interrupt::RESET) {
                                 self.push_stack(memory, 0);
                             } else {
                                 self.push_stack(memory, hi!(self.regs.pc));
                             }
                         }
                         {
-                            if self.interrupt_type & Interrupt::RESET == Interrupt::RESET {
+                            if self.interrupt_type.contains(Interrupt::RESET) {
                                 self.push_stack(memory, 0);
                             } else {
                                 self.push_stack(memory, lo!(self.regs.pc));
@@ -115,7 +115,7 @@ impl CPU {
                             self.regs.p |= StatusFlag::B;
                             self.regs.p |= StatusFlag::U;
 
-                            if self.interrupt_type & Interrupt::RESET == Interrupt::RESET {
+                            if self.interrupt_type.contains(Interrupt::RESET) {
                                 self.push_stack(memory, 0);
                             } else {
                                 self.push_stack(memory, self.regs.p.bits());
