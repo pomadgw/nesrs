@@ -74,9 +74,6 @@ impl CPU {
             _ => {}
         }
 
-        println!("self.opcode_type: {}", self.opcode_type);
-        println!("self.address_mode: {}", self.address_mode);
-
         if let CPUStatus::Execute = self.state {
             match self.opcode_type {
                 Opcode::Brk => {
