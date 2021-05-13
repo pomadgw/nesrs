@@ -62,6 +62,13 @@ bitflags! {
     }
 }
 
+pub enum CPUStatus {
+    FetchOpcode,
+    FetchParameters,
+    DelayedExecute,
+    Execute,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum AddressMode {
     Imp,

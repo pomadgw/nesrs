@@ -31,4 +31,11 @@ fn main() {
     println!("{}", cpu.regs.p);
     cpu.clock(&mut memory);
     cpu.clock(&mut memory);
+
+    cpu.reset();
+
+    cpu.clock(&mut memory);
+    while !cpu.done() {
+        cpu.clock(&mut memory);
+    }
 }

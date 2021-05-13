@@ -21,10 +21,12 @@ pub struct CPU {
     cycles: u32,
     opcode: u8,
     interrupt_type: Interrupt,
-    is_read_instruction: bool,
     address_mode: AddressMode,
     opcode_type: Opcode,
     is_read: bool,
+    lo: u8,
+    hi: u8,
+    state: CPUStatus,
 }
 
 impl CPU {
@@ -36,10 +38,12 @@ impl CPU {
             cycles: 0,
             opcode: 0,
             interrupt_type: Interrupt::empty(),
-            is_read_instruction: false,
             address_mode: AddressMode::Imp,
             opcode_type: Opcode::Brk,
             is_read: true,
+            lo: 0,
+            hi: 0,
+            state: CPUStatus::FetchOpcode,
         }
     }
 
@@ -47,38 +51,43 @@ impl CPU {
     pub fn reset(&mut self) {
         self.opcode = 0; // change opcode to BRK
         self.interrupt_type |= Interrupt::RESET; // Set interrupt type to reset
-        self.is_read_instruction = false;
+        self.next_state(CPUStatus::FetchOpcode);
         self.set_instruction();
     }
 
     pub fn done(&self) -> bool {
-        self.is_read_instruction
+        match self.state {
+            CPUStatus::FetchOpcode => true,
+            _ => false,
+        }
     }
 
     // BEGIN PRIVATE
     fn read(&mut self, memory: &mut dyn Memory, address: usize) -> u8 {
         self.is_read = true;
+        self.advance_cycle();
         memory.read(address, false)
     }
 
     fn write(&mut self, memory: &mut dyn Memory, address: usize, value: u8) {
         self.is_read = false;
+        self.advance_cycle();
         memory.write(address, value);
     }
 
     fn push_stack(&mut self, memory: &mut dyn Memory, value: u8) {
         let address = 0x0100 + self.regs.sp as usize;
-        memory.write(address, value);
+        self.write(memory, address, value);
         self.regs.sp = self.regs.sp.wrapping_sub(1);
     }
 
     fn set_instruction(&mut self) {
         let opcode_num = self.opcode as usize;
         match &OPCODE_TABLE[opcode_num] {
-            (address_mode, opcode, cycle) => {
+            (address_mode, opcode, _cycle) => {
                 self.address_mode = *address_mode;
                 self.opcode_type = *opcode;
-                self.cycles = *cycle;
+                // self.cycles = *cycle;
             }
         }
     }
@@ -89,6 +98,23 @@ impl CPU {
         self.regs.pc = self.regs.pc.wrapping_add(1);
 
         pc
+    }
+
+    fn get_curr_word(&self) -> u16 {
+        (self.hi as u16) << 8 | (self.lo as u16)
+    }
+
+    fn next_state(&mut self, state: CPUStatus) {
+        self.cycles = 0;
+        self.state = state;
+    }
+
+    fn advance_cycle(&mut self) {
+        self.cycles += 1;
+    }
+
+    fn fetch_opcode(&mut self) {
+        self.next_state(CPUStatus::FetchOpcode);
     }
     // END PRIVATE
 }
