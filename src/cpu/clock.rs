@@ -32,12 +32,26 @@ macro_rules! step {
 }
 
 impl CPU {
+    fn set_nz(&mut self, value: u8) {
+        if value == 0 {
+            self.regs.p |= StatusFlag::Z;
+        }
+
+        if (value & 0x80) > 0 {
+            self.regs.p |= StatusFlag::N;
+        }
+    }
+
+    fn get_next_pc_value(&mut self, memory: &mut dyn Memory) -> u8 {
+        let curr_pc = self.get_pc();
+        self.read(memory, curr_pc)
+    }
+
     // Clock the CPU
     pub fn clock(&mut self, memory: &mut dyn Memory) {
         match self.state {
             CPUStatus::FetchOpcode => {
-                let curr_pc = self.get_pc();
-                self.opcode = self.read(memory, curr_pc);
+                self.opcode = self.get_next_pc_value(memory);
                 self.set_instruction();
                 self.next_state(CPUStatus::FetchParameters);
             }
@@ -47,11 +61,21 @@ impl CPU {
                         // do nothing
                         self.next_state(CPUStatus::Execute);
                     }
-                    _ => {}
+                    AddressMode::Imm => {
+                        // the parameter right next to the opcode
+                        self.absolute_address = self.get_pc();
+                        self.next_state(CPUStatus::Execute);
+                    }
+                    _ => {
+                        self.next_state(CPUStatus::FetchOpcode);
+                    }
                 }
             }
             _ => {}
         }
+
+        println!("self.opcode_type: {}", self.opcode_type);
+        println!("self.address_mode: {}", self.address_mode);
 
         if let CPUStatus::Execute = self.state {
             match self.opcode_type {
@@ -112,6 +136,15 @@ impl CPU {
                             self.fetch_opcode();
                         }
                     );
+                }
+                Opcode::Lda => {
+                    //
+
+                    step!(self, {
+                        self.regs.a = self.read(memory, self.absolute_address);
+                        self.set_nz(self.regs.a);
+                        self.next_state(CPUStatus::FetchOpcode);
+                    });
                 }
                 _ => {}
             }

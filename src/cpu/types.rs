@@ -148,6 +148,18 @@ pub enum Opcode {
     Nop,
 }
 
+impl fmt::Display for AddressMode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl fmt::Display for Opcode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 pub const OPCODE_TABLE: [(AddressMode, Opcode, u32); 256] = [
     (AddressMode::Imp, Opcode::Brk, 7),
     (AddressMode::Izx, Opcode::Ora, 6),
