@@ -1,38 +1,24 @@
+mod test_utils;
+
+#[macro_use]
+#[path = "../src/macros.rs"]
+mod macros;
+
 #[cfg(test)]
 mod cpu_tests {
-    use nesrs::*;
-
-    struct RAM {
-        a: Vec<u8>,
-    }
-
-    impl memory::Memory for RAM {
-        fn read(&self, address: usize, _is_read_only: bool) -> u8 {
-            self.a[address]
-        }
-
-        fn write(&mut self, address: usize, value: u8) {
-            self.a[address] = value;
-        }
-    }
+    use crate::test_utils::RAM;
+    use nesrs::cpu::*;
 
     #[test]
     fn it_can_reset() {
-        let mut cpu = nesrs::cpu::CPU::new();
+        let mut cpu = CPU::new();
 
-        let mut memory = RAM {
-            a: vec![0; 0x10000],
-        };
-
-        memory.a[cpu::INTERRUPT_RESET as usize] = 0x01;
-        memory.a[(cpu::INTERRUPT_RESET + 1) as usize] = 0x80;
+        let mut memory = RAM::new();
+        set_reset!(memory, 0x8001);
 
         cpu.reset();
 
-        cpu.clock(&mut memory);
-        while !cpu.done() {
-            cpu.clock(&mut memory);
-        }
+        loop_cpu!(cpu, memory);
 
         assert_eq!(cpu.total_cycles, 7);
 
