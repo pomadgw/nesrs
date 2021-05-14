@@ -66,6 +66,17 @@ impl CPU {
                         self.absolute_address = self.get_pc();
                         self.next_state(CPUStatus::Execute);
                     }
+                    AddressMode::Abs => {
+                        step!(self,
+                        {
+                            self.lo = self.get_next_pc_value(memory);
+                        }
+                        {
+                            self.hi = self.get_next_pc_value(memory);
+                            self.absolute_address = self.get_curr_word() as usize;
+                            self.next_state(CPUStatus::DelayedExecute);
+                        });
+                    }
                     _ => {
                         self.next_state(CPUStatus::FetchOpcode);
                     }
