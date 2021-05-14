@@ -1,3 +1,8 @@
-pub fn hello() -> String {
-    String::from("Hello")
-}
+#[macro_use]
+extern crate bitflags;
+
+#[macro_use]
+pub mod macros;
+
+pub mod cpu;
+pub mod memory;
