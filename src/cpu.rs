@@ -10,10 +10,6 @@ pub const INTERRUPT_IRQ: u16 = 0xFFFE;
 
 use crate::memory::Memory;
 
-pub fn hello() {
-    println!("Hello");
-}
-
 /// Emulating 6502 CPU
 pub struct CPU {
     pub regs: CPURegisters,

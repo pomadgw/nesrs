@@ -15,7 +15,6 @@ impl nesrs::memory::Memory for RAM {
 }
 
 fn main() {
-    nesrs::cpu::hello();
     let mut cpu = nesrs::cpu::CPU::new();
 
     let mut memory = RAM {
