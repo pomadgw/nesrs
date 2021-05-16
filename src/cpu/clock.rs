@@ -204,6 +204,13 @@ impl CPU {
                         self.next_state(CPUStatus::FetchOpcode);
                     });
                 }
+                Opcode::Ldx => {
+                    step!(self, {
+                        self.regs.x = self.read(memory, self.absolute_address);
+                        self.set_nz(self.regs.x);
+                        self.next_state(CPUStatus::FetchOpcode);
+                    });
+                }
                 _ => {}
             }
         }

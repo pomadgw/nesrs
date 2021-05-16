@@ -203,4 +203,30 @@ mod cpu_addresing_modes_tests {
         assert_eq!(cpu.regs.a, 0xaa);
         assert_eq!(cpu.total_cycles - prev_cycle, 4);
     }
+
+    #[test]
+    fn it_can_fetch_zpy() {
+        println!("BEGIN TEST LDx");
+        let mut cpu = CPU::new();
+        let offset = 0x10;
+
+        let mut memory = RAM::new();
+        set_reset!(memory, 0x8001);
+
+        cpu.reset();
+
+        loop_cpu!(cpu, memory);
+        cpu.regs.y = offset as u8;
+
+        let prev_cycle = cpu.total_cycles;
+
+        memory.write(0x55 + offset, 0xaa);
+
+        set_ram!(memory, 0x8001, [0xb6, 0x55]);
+
+        loop_cpu!(cpu, memory);
+
+        assert_eq!(cpu.regs.x, 0xaa);
+        assert_eq!(cpu.total_cycles - prev_cycle, 4);
+    }
 }
