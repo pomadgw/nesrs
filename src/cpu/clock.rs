@@ -112,14 +112,19 @@ impl CPU {
                             self.next_state(CPUStatus::DelayedExecute);
                         });
                     }
-                    AddressMode::Zpx => {
+                    AddressMode::Zpx | AddressMode::Zpy => {
+                        let offset = match self.address_mode {
+                            AddressMode::Zpx => self.regs.x,
+                            AddressMode::Zpy => self.regs.y,
+                            _ => 0,
+                        } as usize;
+
                         step!(self,
                         {
                             self.lo = self.get_next_pc_value(memory);
                         }
                         {
-                            println!("2");
-                            self.lo = self.lo.wrapping_add(self.regs.x);
+                            self.lo = self.lo.wrapping_add(offset);
                             self.absolute_address = self.lo as usize;
                             self.next_state(CPUStatus::DelayedExecute);
                         });
