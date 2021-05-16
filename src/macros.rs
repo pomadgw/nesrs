@@ -1,3 +1,4 @@
+#[allow(unused_macros)]
 macro_rules! set_ram {
     ($memory:ident, $start:expr, [ $( $content:expr ),* ]) => {
         {
