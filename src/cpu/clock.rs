@@ -54,6 +54,8 @@ impl CPU {
                 self.opcode = self.get_next_pc_value(memory);
                 self.set_instruction();
                 self.next_state(CPUStatus::FetchParameters);
+                println!("{}", self.address_mode);
+                println!("x {}", self.cycles);
             }
             CPUStatus::FetchParameters => {
                 match self.address_mode {
@@ -81,7 +83,7 @@ impl CPU {
                         let offset = match self.address_mode {
                             AddressMode::Abx => self.regs.x,
                             AddressMode::Aby => self.regs.y,
-                            _ => 0
+                            _ => 0,
                         } as usize;
 
                         step!(self,
@@ -101,6 +103,24 @@ impl CPU {
                         }
                         {
                             self.absolute_address += offset;
+                            self.next_state(CPUStatus::DelayedExecute);
+                        });
+                    }
+                    AddressMode::Zp0 => {
+                        step!(self, {
+                            self.absolute_address = self.get_next_pc_value(memory) as usize;
+                            self.next_state(CPUStatus::DelayedExecute);
+                        });
+                    }
+                    AddressMode::Zpx => {
+                        step!(self,
+                        {
+                            self.lo = self.get_next_pc_value(memory);
+                        }
+                        {
+                            println!("2");
+                            self.lo = self.lo.wrapping_add(self.regs.x);
+                            self.absolute_address = self.lo as usize;
                             self.next_state(CPUStatus::DelayedExecute);
                         });
                     }

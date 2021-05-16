@@ -155,6 +155,56 @@ mod cpu_lda_tests {
     }
 
     #[test]
+    fn it_can_fetch_zp0() {
+        println!("BEGIN TEST LDA");
+        let mut cpu = CPU::new();
+
+        let mut memory = RAM::new();
+        set_reset!(memory, 0x8001);
+
+        cpu.reset();
+
+        loop_cpu!(cpu, memory);
+
+        let prev_cycle = cpu.total_cycles;
+
+        memory.write(0x55, 0xaa);
+
+        set_ram!(memory, 0x8001, [0xa5, 0x55]);
+
+        loop_cpu!(cpu, memory);
+
+        assert_eq!(cpu.regs.a, 0xaa);
+        assert_eq!(cpu.total_cycles - prev_cycle, 3);
+    }
+
+    #[test]
+    fn it_can_fetch_zpx() {
+        println!("BEGIN TEST LDA");
+        let mut cpu = CPU::new();
+        let offset = 0x10;
+
+        let mut memory = RAM::new();
+        set_reset!(memory, 0x8001);
+
+        cpu.reset();
+
+        loop_cpu!(cpu, memory);
+        cpu.regs.x = offset as u8;
+
+        let prev_cycle = cpu.total_cycles;
+
+        memory.write(0x55 + offset, 0xaa);
+
+        set_ram!(memory, 0x8001, [0xb5, 0x55]);
+
+        loop_cpu!(cpu, memory);
+
+        assert_eq!(cpu.regs.a, 0xaa);
+        assert_eq!(cpu.total_cycles - prev_cycle, 4);
+    }
+
+    #[test]
     fn it_can_set_flags() {
         println!("BEGIN TEST LDA");
         let mut cpu = CPU::new();
