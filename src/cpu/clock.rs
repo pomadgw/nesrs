@@ -117,7 +117,7 @@ impl CPU {
                             AddressMode::Zpx => self.regs.x,
                             AddressMode::Zpy => self.regs.y,
                             _ => 0,
-                        } as usize;
+                        } as u8;
 
                         step!(self,
                         {
