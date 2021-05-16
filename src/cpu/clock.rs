@@ -232,7 +232,7 @@ impl CPU {
                                 self.set_nz(self.regs.a);
                                 self.next_state(CPUStatus::FetchOpcode);
                             });
-                        },
+                        }
                         _ => {
                             step!(self,
                             {
