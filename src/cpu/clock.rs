@@ -59,7 +59,7 @@ impl CPU {
             }
             CPUStatus::FetchParameters => {
                 match self.address_mode {
-                    AddressMode::Imp => {
+                    AddressMode::Imp | AddressMode::Acc => {
                         // do nothing
                         self.next_state(CPUStatus::Execute);
                     }
@@ -96,7 +96,12 @@ impl CPU {
 
                             let new_lo = (self.lo as usize) + offset;
 
-                            if new_lo < 0x0100 {
+                            let do_inplace_writing = match self.opcode_type {
+                                Opcode::Asl => true,
+                                _ => false
+                            };
+
+                            if new_lo < 0x0100 && !do_inplace_writing {
                                 self.absolute_address += offset;
                                 self.next_state(CPUStatus::DelayedExecute);
                             }
@@ -210,6 +215,47 @@ impl CPU {
                         self.set_nz(self.regs.x);
                         self.next_state(CPUStatus::FetchOpcode);
                     });
+                }
+                Opcode::Asl => {
+                    match self.address_mode {
+                        AddressMode::Acc => {
+                            step!(self, {
+                                let mut fetched = self.regs.a as u16;
+                                fetched = fetched << 1;
+                                let result = (fetched & 0xff) as u8;
+                                self.regs.a = result;
+                                if fetched > 0xff {
+                                    self.regs.p |= StatusFlag::C;
+                                } else {
+                                    self.regs.p &= !StatusFlag::C;
+                                }
+                                self.set_nz(self.regs.a);
+                                self.next_state(CPUStatus::FetchOpcode);
+                            });
+                        },
+                        _ => {
+                            step!(self,
+                            {
+                                self.fetched_data = self.read(memory, self.absolute_address);
+                            }
+                            {
+                                self.write(memory, self.absolute_address, self.fetched_data);
+                            }
+                            {
+                                let mut fetched = self.fetched_data as u16;
+                                fetched = fetched << 1;
+                                let result = (fetched & 0xff) as u8;
+                                if fetched > 0xff {
+                                    self.regs.p |= StatusFlag::C;
+                                } else {
+                                    self.regs.p &= !StatusFlag::C;
+                                }
+                                self.write(memory, self.absolute_address, result);
+                                self.set_nz(result);
+                                self.next_state(CPUStatus::FetchOpcode);
+                            });
+                        }
+                    };
                 }
                 _ => {}
             }

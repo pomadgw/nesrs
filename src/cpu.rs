@@ -24,6 +24,7 @@ pub struct CPU {
     hi: u8,
     state: CPUStatus,
     absolute_address: usize,
+    fetched_data: u8,
 }
 
 impl CPU {
@@ -42,6 +43,7 @@ impl CPU {
             hi: 0,
             state: CPUStatus::FetchOpcode,
             absolute_address: 0,
+            fetched_data: 0,
         }
     }
 
