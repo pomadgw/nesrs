@@ -98,6 +98,13 @@ impl CPU {
                     self.next_state(CPUStatus::FetchOpcode);
                 });
             }
+            Opcode::Ldy => {
+                step!(self, {
+                    self.regs.y = self.read(memory, self.absolute_address);
+                    self.set_nz(self.regs.y);
+                    self.next_state(CPUStatus::FetchOpcode);
+                });
+            }
             Opcode::Asl => {
                 match self.address_mode {
                     AddressMode::Acc => {
