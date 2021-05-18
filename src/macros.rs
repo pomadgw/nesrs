@@ -1,3 +1,15 @@
+macro_rules! step {
+    ($self:ident ; $n:expr; ) => {};
+    ($self:ident ; $n:expr; $block:block $(, $rest:block)*) => {
+        if ($self.cycles == $n) {
+            $block
+        } else {
+            step!($self; $n + 1; $($rest),*);
+        }
+    };
+    ($self:ident, $($blocks:block)+) => { step!($self; 0; $($blocks),*); };
+}
+
 #[allow(unused_macros)]
 macro_rules! set_ram {
     ($memory:ident, $start:expr, [ $( $content:expr ),* ]) => {

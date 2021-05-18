@@ -1,4 +1,6 @@
+mod addressing_mode;
 mod clock;
+mod opcodes;
 pub mod types;
 
 use crate::cpu::types::*;
