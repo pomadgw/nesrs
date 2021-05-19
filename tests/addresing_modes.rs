@@ -229,4 +229,72 @@ mod cpu_addresing_modes_tests {
         assert_eq!(cpu.regs.x, 0xaa);
         assert_eq!(cpu.total_cycles - prev_cycle, 4);
     }
+
+    #[test]
+    fn it_can_fetch_izx() {
+        println!("BEGIN TEST LDA");
+        let mut cpu = CPU::new();
+        let offset = 0x10;
+
+        let mut memory = RAM::new();
+        set_reset!(memory, 0x8001);
+
+        cpu.reset();
+
+        loop_cpu!(cpu, memory);
+        cpu.regs.x = offset as u8;
+
+        let prev_cycle = cpu.total_cycles;
+
+        memory.write(0x55 + offset, 0x50);
+        memory.write(0x55 + offset + 1, 0xc0);
+        memory.write(0xc050, 0xaa);
+
+        set_ram!(memory, 0x8001, [0xa1, 0x55]);
+
+        loop_cpu!(cpu, memory);
+
+        assert_eq!(cpu.regs.a, 0xaa);
+        assert_eq!(cpu.total_cycles - prev_cycle, 6);
+    }
+
+    #[test]
+    fn it_can_fetch_izx_wrap_up() {
+        println!("BEGIN TEST LDA");
+        let mut cpu = CPU::new();
+        let offset = 0xff;
+
+        let mut memory = RAM::new();
+        set_reset!(memory, 0x8001);
+
+        cpu.reset();
+
+        loop_cpu!(cpu, memory);
+        cpu.regs.x = offset as u8;
+
+        let address = (0x55 + offset) & 0xff;
+
+        memory.write(address, 0x55);
+        memory.write(address + 1, 0xc0);
+        memory.write(0xc055, 0xaa);
+
+        set_ram!(memory, 0x8001, [0xa1, 0x55]);
+
+        loop_cpu!(cpu, memory);
+
+        assert_eq!(cpu.regs.a, 0xaa);
+
+        cpu.reset();
+        loop_cpu!(cpu, memory);
+
+        let offset = 0x01;
+        cpu.regs.x = offset as u8;
+
+        memory.write(0xff, 0x55);
+        memory.write(0x00, 0xc0);
+        memory.write(0xc055, 0xab);
+        set_ram!(memory, 0x8001, [0xa1, 0xfe]);
+        loop_cpu!(cpu, memory);
+        assert_eq!(cpu.regs.a, 0xab);
+    }
 }

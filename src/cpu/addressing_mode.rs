@@ -74,8 +74,29 @@ impl CPU {
                     self.lo = self.get_next_pc_value(memory);
                 }
                 {
+                    // XPZ & ZPY waste one cycle
+                    self.read(memory, self.lo as usize);
                     self.lo = self.lo.wrapping_add(offset);
                     self.absolute_address = self.lo as usize;
+                    self.next_state(CPUStatus::DelayedExecute);
+                });
+            }
+            AddressMode::Izx => {
+                let offset = self.regs.x;
+
+                step!(self,
+                {
+                    self.lo = self.get_next_pc_value(memory);
+                }
+                {
+                    self.absolute_address = self.read(memory, self.lo as usize) as usize;
+                }
+                {
+                    self.lo = self.lo.wrapping_add(offset);
+                    self.absolute_address = self.read(memory, self.lo as usize) as usize;
+                }
+                {
+                    self.absolute_address |= (self.read(memory, self.lo.wrapping_add(1) as usize) as usize) << 8;
                     self.next_state(CPUStatus::DelayedExecute);
                 });
             }
