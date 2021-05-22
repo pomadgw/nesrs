@@ -157,7 +157,6 @@ ASL:
       cpu:
         a: 0x01
       read_from: a
-      target_address: 0x55
       expected_value: 0x02
       cycles: 2
     - mode: ACC
@@ -166,7 +165,6 @@ ASL:
       cpu:
         a: 0x7f
       read_from: a
-      target_address: 0x55
       expected_value: 0xfe
       check_n: true
     - mode: ACC
@@ -175,7 +173,6 @@ ASL:
       cpu:
         a: 0x80
       read_from: a
-      target_address: 0x55
       expected_value: 0x00
       check_z: true
       check_c: true
@@ -185,7 +182,6 @@ ASL:
       cpu:
         a: 0x00
       read_from: a
-      target_address: 0x55
       expected_value: 0x00
       check_z: true
       check_c: false

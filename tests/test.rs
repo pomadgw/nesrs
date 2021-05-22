@@ -40,7 +40,7 @@ mod cpu_lda_tests {
         mode: String,
         code: Vec<u8>,
         expected_value: u16,
-        target_address: usize,
+        target_address: Option<usize>,
         read_from: String,
         cycles: Option<u32>,
         cpu: Option<CPUMock>,
@@ -85,7 +85,7 @@ mod cpu_lda_tests {
                 }
 
                 if let Some(value) = &case.init_memory_value {
-                    memory.write(case.target_address, *value);
+                    memory.write(case.target_address.unwrap_or(0), *value);
                 }
 
                 if let Some(config) = &case.init_memories {
@@ -122,7 +122,7 @@ mod cpu_lda_tests {
                     }
                     "address" => {
                         assert_eq!(
-                            memory.read(case.target_address, false),
+                            memory.read(case.target_address.unwrap_or(0), false),
                             case.expected_value as u8
                         );
                     }
