@@ -23,19 +23,16 @@ macro_rules! set_ram {
     }
 }
 
-
 #[allow(unused_macros)]
 macro_rules! set_ram_from_vec {
-    ($memory:ident, $start:expr, $content:expr) => {
-        {
-            let mut offset: usize = 0;
+    ($memory:ident, $start:expr, $content:expr) => {{
+        let mut offset: usize = 0;
 
-            for v in $content {
-                $memory.ram[$start + offset] = *v;
-                offset += 1;
-            }
+        for v in $content {
+            $memory.ram[$start + offset] = *v;
+            offset += 1;
         }
-    }
+    }};
 }
 
 macro_rules! set_reset {

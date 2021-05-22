@@ -9,21 +9,20 @@ mod macros;
 
 #[cfg(test)]
 mod cpu_lda_tests {
+    use crate::test_utils::*;
+    use nesrs::cpu::types::*;
+    use nesrs::cpu::*;
+    use nesrs::memory::*;
+    use serde::{Deserialize, Serialize};
+    use serde_yaml;
+    use std::collections::BTreeMap;
     use std::fs::File;
     use std::io::prelude::*;
-    use serde::{Serialize, Deserialize};
-    use std::collections::BTreeMap;
-    use serde_yaml;
-    use crate::test_utils::*;
-    use nesrs::cpu::*;
-    use nesrs::cpu::types::*;
-    use nesrs::memory::*;
-
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct InitMemory {
         start: usize,
-        values: Vec<u8>
+        values: Vec<u8>,
     }
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -49,12 +48,12 @@ mod cpu_lda_tests {
         check_z: Option<bool>,
         check_c: Option<bool>,
         init_memory_value: Option<u8>,
-        init_memories: Option<InitMemory>
+        init_memories: Option<InitMemory>,
     }
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct OpcodeCase {
-        cases: Vec<Case>
+        cases: Vec<Case>,
     }
 
     #[test]
@@ -63,7 +62,8 @@ mod cpu_lda_tests {
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
 
-        let deserialized_map: BTreeMap<String, OpcodeCase> = serde_yaml::from_str(&contents).unwrap();
+        let deserialized_map: BTreeMap<String, OpcodeCase> =
+            serde_yaml::from_str(&contents).unwrap();
         for (key, value) in deserialized_map.iter() {
             println!("[TEST] Opcode {}", key);
 
@@ -77,7 +77,6 @@ mod cpu_lda_tests {
 
                 cpu.reset();
                 loop_cpu!(cpu, memory);
-
 
                 if let Some(regs) = &case.cpu {
                     cpu.regs.a = regs.a.unwrap_or(0);
@@ -122,7 +121,10 @@ mod cpu_lda_tests {
                         assert_eq!(cpu.regs.pc, case.expected_value);
                     }
                     "address" => {
-                        assert_eq!(memory.read(case.target_address, false), case.expected_value as u8);
+                        assert_eq!(
+                            memory.read(case.target_address, false),
+                            case.expected_value as u8
+                        );
                     }
                     _ => {}
                 }
