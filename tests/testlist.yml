@@ -178,6 +178,22 @@ LDX:
       target_address: 0x55
       expected_value: 0x55
       cycles: 2
+    - mode: IMM
+      code:
+        - 0xa2
+        - 0x00
+      read_from: x
+      expected_value: 0x00
+      cycles: 2
+      check_z: true
+    - mode: IMM
+      code:
+        - 0xa2
+        - 0x80
+      read_from: x
+      expected_value: 0x80
+      cycles: 2
+      check_n: true
     - mode: ZP0
       code:
         - 0xa6
@@ -228,6 +244,86 @@ LDX:
       read_from: x
       cpu:
         y: 0xff
+      target_address: 0x5600
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 5
+LDY:
+  cases:
+    - mode: IMM
+      code:
+        - 0xa0
+        - 0x55
+      read_from: y
+      target_address: 0x55
+      expected_value: 0x55
+      cycles: 2
+    - mode: IMM
+      code:
+        - 0xa0
+        - 0x00
+      read_from: y
+      expected_value: 0x00
+      cycles: 2
+      check_z: true
+    - mode: IMM
+      code:
+        - 0xa0
+        - 0x80
+      read_from: y
+      expected_value: 0x80
+      cycles: 2
+      check_n: true
+    - mode: ZP0
+      code:
+        - 0xa4
+        - 0x55
+      read_from: y
+      target_address: 0x55
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 3
+    - mode: ZPX
+      code:
+        - 0xb4
+        - 0x55
+      read_from: y
+      cpu:
+        x: 0x10
+      target_address: 0x65
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: ABS
+      code:
+        - 0xac
+        - 0x00
+        - 0x55
+      read_from: y
+      target_address: 0x5500
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: ABX
+      code:
+        - 0xbc
+        - 0x00
+        - 0x55
+      read_from: y
+      cpu:
+        x: 0x10
+      target_address: 0x5510
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: ABX (cross page)
+      code:
+        - 0xbc
+        - 0x01
+        - 0x55
+      read_from: y
+      cpu:
+        x: 0xff
       target_address: 0x5600
       init_memory_value: 0xaa
       expected_value: 0xaa
