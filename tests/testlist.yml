@@ -170,7 +170,24 @@ LDA:
       cycles: 6
 LDX:
   cases:
-    - mode: ZPX
+    - mode: IMM
+      code:
+        - 0xa2
+        - 0x55
+      read_from: x
+      target_address: 0x55
+      expected_value: 0x55
+      cycles: 2
+    - mode: ZP0
+      code:
+        - 0xa6
+        - 0x55
+      read_from: x
+      target_address: 0x55
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 3
+    - mode: ZPY
       code:
         - 0xb6
         - 0x55
@@ -181,6 +198,40 @@ LDX:
       init_memory_value: 0xaa
       expected_value: 0xaa
       cycles: 4
+    - mode: ABS
+      code:
+        - 0xae
+        - 0x00
+        - 0x55
+      read_from: x
+      target_address: 0x5500
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: ABY
+      code:
+        - 0xbe
+        - 0x00
+        - 0x55
+      read_from: x
+      cpu:
+        y: 0x10
+      target_address: 0x5510
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: ABY (cross page)
+      code:
+        - 0xbe
+        - 0x01
+        - 0x55
+      read_from: x
+      cpu:
+        y: 0xff
+      target_address: 0x5600
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 5
 ASL:
   cases:
     - mode: ACC
