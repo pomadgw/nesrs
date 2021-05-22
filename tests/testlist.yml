@@ -216,3 +216,14 @@ ASL:
       init_memory_value: 0x01
       expected_value: 0x02
       cycles: 5
+    - mode: ZPX
+      code:
+        - 0x16
+        - 0x00
+      cpu:
+        x: 0x10
+      read_from: address
+      target_address: 0x10
+      init_memory_value: 0x01
+      expected_value: 0x02
+      cycles: 6
