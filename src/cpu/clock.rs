@@ -20,8 +20,6 @@ impl CPU {
                 self.opcode = self.get_next_pc_value(memory);
                 self.set_instruction();
                 self.next_state(CPUStatus::FetchParameters);
-                println!("{}", self.address_mode);
-                println!("x {}", self.cycles);
             }
             CPUStatus::FetchParameters => {
                 self.do_addressing_mode(memory);
@@ -34,7 +32,6 @@ impl CPU {
         }
 
         if let CPUStatus::DelayedExecute = self.state {
-            println!("EXECUTE AFTER THIS");
             self.next_state(CPUStatus::Execute);
         }
 

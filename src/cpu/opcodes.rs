@@ -146,7 +146,9 @@ impl CPU {
                     }
                 };
             }
-            _ => {}
+            _ => {
+                self.next_state(CPUStatus::FetchOpcode);
+            }
         }
     }
 }
