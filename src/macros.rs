@@ -1,3 +1,16 @@
+macro_rules! step {
+    ($self:ident ; $n:expr; ) => {};
+    ($self:ident ; $n:expr; $block:block $(, $rest:block)*) => {
+        if ($self.cycles == $n) {
+            $block
+        } else {
+            step!($self; $n + 1; $($rest),*);
+        }
+    };
+    ($self:ident, $($blocks:block)+) => { step!($self; 0; $($blocks),*); };
+}
+
+#[allow(unused_macros)]
 macro_rules! set_ram {
     ($memory:ident, $start:expr, [ $( $content:expr ),* ]) => {
         {
@@ -8,6 +21,18 @@ macro_rules! set_ram {
             )*
         }
     }
+}
+
+#[allow(unused_macros)]
+macro_rules! set_ram_from_vec {
+    ($memory:ident, $start:expr, $content:expr) => {{
+        let mut offset: usize = 0;
+
+        for v in $content {
+            $memory.ram[$start + offset] = *v;
+            offset += 1;
+        }
+    }};
 }
 
 macro_rules! set_reset {

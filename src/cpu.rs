@@ -1,4 +1,6 @@
+mod addressing_mode;
 mod clock;
+mod opcodes;
 pub mod types;
 
 use crate::cpu::types::*;
@@ -22,8 +24,10 @@ pub struct CPU {
     is_read: bool,
     lo: u8,
     hi: u8,
+    temp: u8,
     state: CPUStatus,
     absolute_address: usize,
+    fetched_data: u8,
 }
 
 impl CPU {
@@ -40,8 +44,10 @@ impl CPU {
             is_read: true,
             lo: 0,
             hi: 0,
+            temp: 0,
             state: CPUStatus::FetchOpcode,
             absolute_address: 0,
+            fetched_data: 0,
         }
     }
 
