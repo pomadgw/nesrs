@@ -100,6 +100,37 @@ impl CPU {
                     self.next_state(CPUStatus::DelayedExecute);
                 });
             }
+            AddressMode::Izy => {
+                let offset = self.regs.y as usize;
+
+                step!(self,
+                {
+                    self.temp = self.get_next_pc_value(memory);
+                }
+                {
+                    self.lo = self.read(memory, self.temp as usize);
+                }
+                {
+                    self.hi = self.read(memory, self.temp.wrapping_add(1) as usize);
+                    self.absolute_address = self.get_curr_word() as usize;
+
+                    let new_lo = (self.lo as usize) + offset;
+
+                    let do_inplace_writing = match self.opcode_type {
+                        Opcode::Asl => true,
+                        _ => false
+                    };
+
+                    if new_lo < 0x0100 && !do_inplace_writing {
+                        self.absolute_address += offset;
+                        self.next_state(CPUStatus::DelayedExecute);
+                    }
+                }
+                {
+                    self.absolute_address += offset;
+                    self.next_state(CPUStatus::DelayedExecute);
+                });
+            }
             _ => {
                 self.next_state(CPUStatus::FetchOpcode);
             }

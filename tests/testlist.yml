@@ -136,6 +136,38 @@ LDA:
           - 0xc0
       expected_value: 0xaa
       cycles: 6
+    - mode: IZY
+      code:
+        - 0xb1
+        - 0x55
+      read_from: a
+      cpu:
+        y: 0x10
+      target_address: 0xc060
+      init_memory_value: 0xaa
+      init_memories:
+        start: 0x55
+        values:
+          - 0x50
+          - 0xc0
+      expected_value: 0xaa
+      cycles: 5
+    - mode: IZY (cross page)
+      code:
+        - 0xb1
+        - 0x55
+      read_from: a
+      cpu:
+        y: 0xff
+      target_address: 0xc100
+      init_memory_value: 0xaa
+      init_memories:
+        start: 0x55
+        values:
+          - 0x01
+          - 0xc0
+      expected_value: 0xaa
+      cycles: 6
 LDX:
   cases:
     - mode: ZPX
