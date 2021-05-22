@@ -146,6 +146,16 @@ impl CPU {
                     }
                 };
             }
+            Opcode::Tax => {
+                self.regs.x = self.regs.a;
+                self.set_nz(self.regs.x);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Tay => {
+                self.regs.y = self.regs.a;
+                self.set_nz(self.regs.y);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
             _ => {
                 self.next_state(CPUStatus::FetchOpcode);
             }

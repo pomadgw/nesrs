@@ -406,3 +406,63 @@ ASL:
       init_memory_value: 0x01
       expected_value: 0x02
       cycles: 6
+
+# Register Instructions
+TAX:
+  cases:
+    - mode: IMM
+      code:
+        - 0xaa
+      cpu:
+        a: 0x12
+        x: 0x00
+      read_from: x
+      expected_value: 0x12
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xaa
+      cpu:
+        a: 0x80
+        x: 0x00
+      read_from: x
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xaa
+      cpu:
+        a: 0x00
+        x: 0x10
+      read_from: x
+      expected_value: 0x00
+      check_z: true
+TAY:
+  cases:
+    - mode: IMM
+      code:
+        - 0xa8
+      cpu:
+        a: 0x12
+        y: 0x00
+      read_from: y
+      expected_value: 0x12
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xa8
+      cpu:
+        a: 0x80
+        y: 0x00
+      read_from: y
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xa8
+      cpu:
+        a: 0x00
+        y: 0x10
+      read_from: y
+      expected_value: 0x00
+      check_z: true
