@@ -1,0 +1,222 @@
+LDA:
+  cases:
+    - mode: IMM
+      code:
+        - 0xa9
+        - 0x55
+      read_from: a
+      target_address: 0x55
+      expected_value: 0x55
+      cycles: 2
+    - mode: IMM
+      code:
+        - 0xa9
+        - 0x00
+      read_from: a
+      target_address: 0x55
+      expected_value: 0x00
+      cycles: 2
+      check_z: true
+    - mode: IMM
+      code:
+        - 0xa9
+        - 0x80
+      read_from: a
+      target_address: 0x55
+      expected_value: 0x80
+      cycles: 2
+      check_n: true
+    - mode: ABS
+      code:
+        - 0xad
+        - 0x55
+        - 0x54
+      read_from: a
+      target_address: 0x5455
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: ABX
+      code:
+        - 0xbd
+        - 0x55
+        - 0x54
+      read_from: a
+      cpu:
+        x: 0x10
+      target_address: 0x5465
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: ABX (cross page)
+      code:
+        - 0xbd
+        - 0xf5
+        - 0x54
+      read_from: a
+      cpu:
+        x: 0x10
+      target_address: 0x5505
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 5
+    - mode: ABY
+      code:
+        - 0xb9
+        - 0x55
+        - 0x54
+      read_from: a
+      cpu:
+        y: 0x10
+      target_address: 0x5465
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: ABY (cross page)
+      code:
+        - 0xb9
+        - 0xf5
+        - 0x54
+      read_from: a
+      cpu:
+        y: 0x10
+      target_address: 0x5505
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 5
+    - mode: ZP0
+      code:
+        - 0xa5
+        - 0x55
+      read_from: a
+      target_address: 0x55
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 3
+    - mode: ZPX
+      code:
+        - 0xb5
+        - 0x55
+      read_from: a
+      cpu:
+        x: 0x10
+      target_address: 0x65
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+    - mode: IZX
+      code:
+        - 0xa1
+        - 0x55
+      read_from: a
+      cpu:
+        x: 0x10
+      target_address: 0xc050
+      init_memory_value: 0xaa
+      init_memories:
+        start: 0x65
+        values:
+          - 0x50
+          - 0xc0
+      expected_value: 0xaa
+      cycles: 6
+    - mode: IZX (wrap up)
+      code:
+        - 0xa1
+        - 0x55
+      read_from: a
+      cpu:
+        x: 0xff
+      target_address: 0xc050
+      init_memory_value: 0xaa
+      init_memories:
+        start: 0x54
+        values:
+          - 0x50
+          - 0xc0
+      expected_value: 0xaa
+      cycles: 6
+LDX:
+  cases:
+    - mode: ZPX
+      code:
+        - 0xb6
+        - 0x55
+      read_from: x
+      cpu:
+        y: 0x10
+      target_address: 0x65
+      init_memory_value: 0xaa
+      expected_value: 0xaa
+      cycles: 4
+ASL:
+  cases:
+    - mode: ACC
+      code:
+        - 0x0a
+      cpu:
+        a: 0x01
+      read_from: a
+      target_address: 0x55
+      expected_value: 0x02
+      cycles: 2
+    - mode: ACC
+      code:
+        - 0x0a
+      cpu:
+        a: 0x7f
+      read_from: a
+      target_address: 0x55
+      expected_value: 0xfe
+      check_n: true
+    - mode: ACC
+      code:
+        - 0x0a
+      cpu:
+        a: 0x80
+      read_from: a
+      target_address: 0x55
+      expected_value: 0x00
+      check_z: true
+      check_c: true
+    - mode: ACC
+      code:
+        - 0x0a
+      cpu:
+        a: 0x00
+      read_from: a
+      target_address: 0x55
+      expected_value: 0x00
+      check_z: true
+      check_c: false
+    - mode: ABS
+      code:
+        - 0x0e
+        - 0x00
+        - 0x50
+      read_from: address
+      target_address: 0x5000
+      init_memory_value: 0x01
+      expected_value: 0x02
+      cycles: 6
+    - mode: ABX
+      code:
+        - 0x1e
+        - 0x00
+        - 0x50
+      cpu:
+        x: 0x10
+      read_from: address
+      target_address: 0x5010
+      init_memory_value: 0x01
+      expected_value: 0x02
+      cycles: 7
+    - mode: ZP0
+      code:
+        - 0x06
+        - 0x00
+      read_from: address
+      target_address: 0x00
+      init_memory_value: 0x01
+      expected_value: 0x02
+      cycles: 5
