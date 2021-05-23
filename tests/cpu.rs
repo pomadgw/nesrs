@@ -8,6 +8,7 @@ mod macros;
 mod cpu_tests {
     use crate::test_utils::RAM;
     use nesrs::cpu::*;
+    use nesrs::memory::*;
 
     #[test]
     fn it_can_reset() {

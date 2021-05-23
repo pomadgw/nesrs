@@ -1,4 +1,4 @@
-use nesrs::*;
+use nesrs::memory::*;
 
 pub struct RAM {
     pub ram: Vec<u8>,
@@ -12,7 +12,7 @@ impl RAM {
     }
 }
 
-impl memory::Memory for RAM {
+impl Memory for RAM {
     fn read(&self, address: usize, _is_read_only: bool) -> u8 {
         self.ram[address]
     }

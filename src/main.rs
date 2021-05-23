@@ -1,10 +1,15 @@
 use nesrs;
+use nesrs::cpu::*;
+use nesrs::memory::*;
+
+#[macro_use]
+mod macros;
 
 struct RAM {
     a: Vec<u8>,
 }
 
-impl nesrs::memory::Memory for RAM {
+impl Memory for RAM {
     fn read(&self, address: usize, _is_read_only: bool) -> u8 {
         self.a[address]
     }
@@ -21,20 +26,17 @@ fn main() {
         a: vec![0; 0x10000],
     };
 
-    cpu.regs.p |= nesrs::cpu::types::StatusFlag::N;
-    cpu.regs.p |= nesrs::cpu::types::StatusFlag::Z;
-
-    println!("{}", cpu.regs.a);
-    println!("{}", cpu.regs.p);
-    cpu.regs.p.set_from_byte(0x11);
-    println!("{}", cpu.regs.p);
-    cpu.clock(&mut memory);
-    cpu.clock(&mut memory);
-
+    set_reset!(memory, 0x8000);
     cpu.reset();
+    loop_cpu!(cpu, memory);
 
-    cpu.clock(&mut memory);
-    while !cpu.done() {
-        cpu.clock(&mut memory);
-    }
+    set_ram!(memory, 0x8000, [0xa9, 0x10, 0xaa, 0xa8]);
+    loop_cpu!(cpu, memory);
+    loop_cpu!(cpu, memory);
+    loop_cpu!(cpu, memory);
+
+    println!(
+        "${:04X}: A: ${:02X} X: ${:02X} Y: ${:02X}",
+        cpu.regs.pc, cpu.regs.a, cpu.regs.x, cpu.regs.y
+    );
 }
