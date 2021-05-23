@@ -466,3 +466,61 @@ TAY:
       read_from: y
       expected_value: 0x00
       check_z: true
+TXA:
+  cases:
+    - mode: IMM
+      code:
+        - 0x8a
+      cpu:
+        a: 0x00
+        x: 0x12
+      read_from: a
+      expected_value: 0x12
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0x8a
+      cpu:
+        x: 0x80
+        a: 0x00
+      read_from: a
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0x8a
+      cpu:
+        x: 0x00
+        a: 0x10
+      read_from: a
+      expected_value: 0x00
+      check_z: true
+TYA:
+  cases:
+    - mode: IMM
+      code:
+        - 0x98
+      cpu:
+        y: 0x12
+        a: 0x00
+      read_from: a
+      expected_value: 0x12
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0x98
+      cpu:
+        y: 0x80
+        a: 0x00
+      read_from: a
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0x98
+      cpu:
+        y: 0x00
+        a: 0x10
+      read_from: a
+      expected_value: 0x00
+      check_z: true

@@ -156,6 +156,16 @@ impl CPU {
                 self.set_nz(self.regs.y);
                 self.next_state(CPUStatus::FetchOpcode);
             }
+            Opcode::Txa => {
+                self.regs.a = self.regs.x;
+                self.set_nz(self.regs.a);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Tya => {
+                self.regs.a = self.regs.y;
+                self.set_nz(self.regs.a);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
             _ => {
                 self.next_state(CPUStatus::FetchOpcode);
             }
