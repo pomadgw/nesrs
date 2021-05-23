@@ -5,12 +5,19 @@ impl CPU {
     pub fn do_addressing_mode(&mut self, memory: &mut dyn Memory) {
         match self.address_mode {
             AddressMode::Imp | AddressMode::Acc => {
-                // do nothing
+                // it read next opcode
+                let curr_pc = self.regs.pc as usize;
+                self.read(memory, curr_pc);
                 self.next_state(CPUStatus::Execute);
             }
             AddressMode::Imm => {
                 // the parameter right next to the opcode
                 self.absolute_address = self.get_pc();
+
+                // it read next opcode
+                let curr_pc = self.regs.pc as usize;
+                self.read(memory, curr_pc);
+
                 self.next_state(CPUStatus::Execute);
             }
             AddressMode::Abs => {
