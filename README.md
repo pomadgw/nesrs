@@ -1,2 +1,2 @@
 # nesrs
-NES emulator in Rust
+NES and 6502 emulator in Rust.
