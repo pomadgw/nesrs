@@ -26,6 +26,24 @@ mod cpu_lda_tests {
     }
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct CheckFlag {
+        n: Option<bool>,
+        c: Option<bool>,
+        z: Option<bool>,
+        i: Option<bool>,
+        v: Option<bool>,
+    }
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct Expected {
+        read_from: String,
+        target_address: Option<usize>,
+        value: u16,
+        cycles: Option<u32>,
+        check_flag: Option<CheckFlag>,
+    }
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct CPUMock {
         a: Option<u8>,
         x: Option<u8>,
@@ -37,18 +55,11 @@ mod cpu_lda_tests {
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct Case {
-        mode: String,
+        description: String,
         code: Vec<u8>,
-        expected_value: u16,
-        target_address: Option<usize>,
-        read_from: String,
-        cycles: Option<u32>,
+        expected: Expected,
         cpu: Option<CPUMock>,
-        check_n: Option<bool>,
-        check_z: Option<bool>,
-        check_c: Option<bool>,
-        init_memory_value: Option<u8>,
-        init_memories: Option<InitMemory>,
+        init_memories: Option<Vec<InitMemory>>,
     }
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -68,7 +79,7 @@ mod cpu_lda_tests {
             println!("[TEST] Opcode {}", key);
 
             for case in &value.cases {
-                println!("[TEST]   > in addressing mode: {}", case.mode);
+                println!("[TEST]   > testing: {}", case.description);
 
                 let mut cpu = CPU::new();
 
@@ -84,15 +95,14 @@ mod cpu_lda_tests {
                     cpu.regs.y = regs.y.unwrap_or(0);
                 }
 
-                if let Some(value) = &case.init_memory_value {
-                    memory.write(case.target_address.unwrap_or(0), *value);
-                }
+                if let Some(configs) = &case.init_memories {
+                    for config in configs {
+                        let mut offset = 0;
 
-                if let Some(config) = &case.init_memories {
-                    let mut offset = 0;
-                    for v in &config.values {
-                        memory.write(config.start + offset, *v);
-                        offset += 1;
+                        for v in &config.values {
+                            memory.write(config.start + offset, *v);
+                            offset += 1;
+                        }
                     }
                 }
 
@@ -101,51 +111,63 @@ mod cpu_lda_tests {
 
                 loop_cpu!(cpu, memory);
 
-                match &case.read_from[..] {
+                match &case.expected.read_from[..] {
                     "a" => {
-                        assert_eq!(cpu.regs.a, case.expected_value as u8);
+                        assert_eq!(cpu.regs.a, case.expected.value as u8);
                     }
                     "x" => {
-                        assert_eq!(cpu.regs.x, case.expected_value as u8);
+                        assert_eq!(cpu.regs.x, case.expected.value as u8);
                     }
                     "y" => {
-                        assert_eq!(cpu.regs.y, case.expected_value as u8);
+                        assert_eq!(cpu.regs.y, case.expected.value as u8);
                     }
                     "sp" => {
-                        assert_eq!(cpu.regs.sp, case.expected_value as u8);
+                        assert_eq!(cpu.regs.sp, case.expected.value as u8);
                     }
                     "p" => {
-                        assert_eq!(cpu.regs.p.bits(), case.expected_value as u8);
+                        assert_eq!(cpu.regs.p.bits(), case.expected.value as u8);
                     }
                     "pc" => {
-                        assert_eq!(cpu.regs.pc, case.expected_value);
+                        assert_eq!(cpu.regs.pc, case.expected.value);
                     }
                     "address" => {
                         assert_eq!(
-                            memory.read(case.target_address.unwrap_or(0), false),
-                            case.expected_value as u8
+                            memory.read(case.expected.target_address.unwrap_or(0), false),
+                            case.expected.value as u8
                         );
                     }
                     _ => {}
                 }
 
-                if let Some(expected_cycle) = case.cycles {
+                if let Some(expected_cycle) = case.expected.cycles {
                     assert_eq!(cpu.total_cycles - prev_cycle, expected_cycle);
                 }
 
-                if let Some(expected_value) = case.check_n {
-                    println!("[TEST]      > Test N flag");
-                    assert_eq!(cpu.regs.p.contains(StatusFlag::N), expected_value);
-                }
+                if let Some(flag_check) = &case.expected.check_flag {
+                    if let Some(expected_value) = flag_check.n {
+                        println!("[TEST]      > Test N flag");
+                        assert_eq!(cpu.regs.p.contains(StatusFlag::N), expected_value);
+                    }
 
-                if let Some(expected_value) = case.check_z {
-                    println!("[TEST]      > Test Z flag");
-                    assert_eq!(cpu.regs.p.contains(StatusFlag::Z), expected_value);
-                }
+                    if let Some(expected_value) = flag_check.z {
+                        println!("[TEST]      > Test Z flag");
+                        assert_eq!(cpu.regs.p.contains(StatusFlag::Z), expected_value);
+                    }
 
-                if let Some(expected_value) = case.check_c {
-                    println!("[TEST]      > Test C flag");
-                    assert_eq!(cpu.regs.p.contains(StatusFlag::C), expected_value);
+                    if let Some(expected_value) = flag_check.c {
+                        println!("[TEST]      > Test C flag");
+                        assert_eq!(cpu.regs.p.contains(StatusFlag::C), expected_value);
+                    }
+
+                    if let Some(expected_value) = flag_check.i {
+                        println!("[TEST]      > Test C flag");
+                        assert_eq!(cpu.regs.p.contains(StatusFlag::I), expected_value);
+                    }
+
+                    if let Some(expected_value) = flag_check.v {
+                        println!("[TEST]      > Test C flag");
+                        assert_eq!(cpu.regs.p.contains(StatusFlag::V), expected_value);
+                    }
                 }
             }
         }
