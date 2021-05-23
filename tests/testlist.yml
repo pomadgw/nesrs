@@ -524,3 +524,55 @@ TYA:
       read_from: a
       expected_value: 0x00
       check_z: true
+INX:
+  cases:
+    - mode: IMM
+      code:
+        - 0xe8
+      cpu:
+        x: 0x12
+      read_from: x
+      expected_value: 0x13
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xe8
+      cpu:
+        x: 0x7f
+      read_from: x
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xe8
+      cpu:
+        x: 0xff
+      read_from: x
+      expected_value: 0x00
+      check_z: true
+INY:
+  cases:
+    - mode: IMM
+      code:
+        - 0xc8
+      cpu:
+        y: 0x12
+      read_from: y
+      expected_value: 0x13
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xc8
+      cpu:
+        y: 0x7f
+      read_from: y
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xc8
+      cpu:
+        y: 0xff
+      read_from: y
+      expected_value: 0x00
+      check_z: true

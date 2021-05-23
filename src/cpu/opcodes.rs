@@ -166,6 +166,16 @@ impl CPU {
                 self.set_nz(self.regs.a);
                 self.next_state(CPUStatus::FetchOpcode);
             }
+            Opcode::Inx => {
+                self.regs.x = self.regs.x.wrapping_add(1);
+                self.set_nz(self.regs.x);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Iny => {
+                self.regs.y = self.regs.y.wrapping_add(1);
+                self.set_nz(self.regs.y);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
             _ => {
                 self.next_state(CPUStatus::FetchOpcode);
             }
