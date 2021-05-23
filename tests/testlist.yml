@@ -406,3 +406,225 @@ ASL:
       init_memory_value: 0x01
       expected_value: 0x02
       cycles: 6
+
+# Register Instructions
+TAX:
+  cases:
+    - mode: IMM
+      code:
+        - 0xaa
+      cpu:
+        a: 0x12
+        x: 0x00
+      read_from: x
+      expected_value: 0x12
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xaa
+      cpu:
+        a: 0x80
+        x: 0x00
+      read_from: x
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xaa
+      cpu:
+        a: 0x00
+        x: 0x10
+      read_from: x
+      expected_value: 0x00
+      check_z: true
+TAY:
+  cases:
+    - mode: IMM
+      code:
+        - 0xa8
+      cpu:
+        a: 0x12
+        y: 0x00
+      read_from: y
+      expected_value: 0x12
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xa8
+      cpu:
+        a: 0x80
+        y: 0x00
+      read_from: y
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xa8
+      cpu:
+        a: 0x00
+        y: 0x10
+      read_from: y
+      expected_value: 0x00
+      check_z: true
+TXA:
+  cases:
+    - mode: IMM
+      code:
+        - 0x8a
+      cpu:
+        a: 0x00
+        x: 0x12
+      read_from: a
+      expected_value: 0x12
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0x8a
+      cpu:
+        x: 0x80
+        a: 0x00
+      read_from: a
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0x8a
+      cpu:
+        x: 0x00
+        a: 0x10
+      read_from: a
+      expected_value: 0x00
+      check_z: true
+TYA:
+  cases:
+    - mode: IMM
+      code:
+        - 0x98
+      cpu:
+        y: 0x12
+        a: 0x00
+      read_from: a
+      expected_value: 0x12
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0x98
+      cpu:
+        y: 0x80
+        a: 0x00
+      read_from: a
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0x98
+      cpu:
+        y: 0x00
+        a: 0x10
+      read_from: a
+      expected_value: 0x00
+      check_z: true
+INX:
+  cases:
+    - mode: IMM
+      code:
+        - 0xe8
+      cpu:
+        x: 0x12
+      read_from: x
+      expected_value: 0x13
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xe8
+      cpu:
+        x: 0x7f
+      read_from: x
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xe8
+      cpu:
+        x: 0xff
+      read_from: x
+      expected_value: 0x00
+      check_z: true
+INY:
+  cases:
+    - mode: IMM
+      code:
+        - 0xc8
+      cpu:
+        y: 0x12
+      read_from: y
+      expected_value: 0x13
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xc8
+      cpu:
+        y: 0x7f
+      read_from: y
+      expected_value: 0x80
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xc8
+      cpu:
+        y: 0xff
+      read_from: y
+      expected_value: 0x00
+      check_z: true
+DEX:
+  cases:
+    - mode: IMM
+      code:
+        - 0xca
+      cpu:
+        x: 0x12
+      read_from: x
+      expected_value: 0x11
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xca
+      cpu:
+        x: 0x00
+      read_from: x
+      expected_value: 0xff
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xca
+      cpu:
+        x: 0x01
+      read_from: x
+      expected_value: 0x00
+      check_z: true
+DEY:
+  cases:
+    - mode: IMM
+      code:
+        - 0x88
+      cpu:
+        y: 0x12
+      read_from: y
+      expected_value: 0x11
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0x88
+      cpu:
+        y: 0x00
+      read_from: y
+      expected_value: 0xff
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0x88
+      cpu:
+        y: 0x01
+      read_from: y
+      expected_value: 0x00
+      check_z: true

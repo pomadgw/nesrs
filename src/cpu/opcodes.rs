@@ -146,6 +146,46 @@ impl CPU {
                     }
                 };
             }
+            Opcode::Tax => {
+                self.regs.x = self.regs.a;
+                self.set_nz(self.regs.x);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Tay => {
+                self.regs.y = self.regs.a;
+                self.set_nz(self.regs.y);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Txa => {
+                self.regs.a = self.regs.x;
+                self.set_nz(self.regs.a);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Tya => {
+                self.regs.a = self.regs.y;
+                self.set_nz(self.regs.a);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Inx => {
+                self.regs.x = self.regs.x.wrapping_add(1);
+                self.set_nz(self.regs.x);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Iny => {
+                self.regs.y = self.regs.y.wrapping_add(1);
+                self.set_nz(self.regs.y);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Dex => {
+                self.regs.x = self.regs.x.wrapping_sub(1);
+                self.set_nz(self.regs.x);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
+            Opcode::Dey => {
+                self.regs.y = self.regs.y.wrapping_sub(1);
+                self.set_nz(self.regs.y);
+                self.next_state(CPUStatus::FetchOpcode);
+            }
             _ => {
                 self.next_state(CPUStatus::FetchOpcode);
             }
