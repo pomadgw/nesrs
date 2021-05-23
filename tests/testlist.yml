@@ -576,3 +576,55 @@ INY:
       read_from: y
       expected_value: 0x00
       check_z: true
+DEX:
+  cases:
+    - mode: IMM
+      code:
+        - 0xca
+      cpu:
+        x: 0x12
+      read_from: x
+      expected_value: 0x11
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0xca
+      cpu:
+        x: 0x00
+      read_from: x
+      expected_value: 0xff
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0xca
+      cpu:
+        x: 0x01
+      read_from: x
+      expected_value: 0x00
+      check_z: true
+DEY:
+  cases:
+    - mode: IMM
+      code:
+        - 0x88
+      cpu:
+        y: 0x12
+      read_from: y
+      expected_value: 0x11
+      cycles: 2
+    - mode: IMM (check N)
+      code:
+        - 0x88
+      cpu:
+        y: 0x00
+      read_from: y
+      expected_value: 0xff
+      check_n: true
+    - mode: IMM (check Z)
+      code:
+        - 0x88
+      cpu:
+        y: 0x01
+      read_from: y
+      expected_value: 0x00
+      check_z: true
