@@ -151,6 +151,9 @@ pub enum Microcode {
     FetchOpcode,
     FetchParameters,
 
+    // IMM
+    FetchImm,
+
     // ABS
     FetchLo,
     FetchHi,
@@ -165,11 +168,20 @@ pub enum Microcode {
     FetchHiY,
     FetchHiY2,
 
-    // ZP0, ZPX, ZPY
+    // ZP0
     FetchLoZP,
+
+    // ZPX, ZPY
+    FetchLoZP1,
 
     DelayedExecute,
     Execute,
+
+    // ASL
+    AslA,
+    AslFetch,
+    AslWrite,
+    AslAddAndWrite,
 
     // BRK
     BrkPushPCHi,

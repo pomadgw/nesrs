@@ -126,7 +126,10 @@ impl CPU {
     }
 
     fn is_write_instruction(&self) -> bool {
-        false
+        match self.opcode_type {
+            Opcode::Asl => true,
+            _ => false,
+        }
     }
 
     fn vector_address(&self) -> usize {
@@ -136,6 +139,16 @@ impl CPU {
             INTERRUPT_NMI as usize
         } else {
             INTERRUPT_IRQ as usize
+        }
+    }
+
+    fn set_nz(&mut self, value: u8) {
+        if value == 0 {
+            self.regs.p |= StatusFlag::Z;
+        }
+
+        if (value & 0x80) > 0 {
+            self.regs.p |= StatusFlag::N;
         }
     }
     // END PRIVATE

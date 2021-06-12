@@ -41,6 +41,10 @@ impl CPU {
                         self.next_state(Microcode::Execute);
                         self.run_next_state(memory);
                     }
+                    AddressMode::Imm => {
+                        self.register_access = RegisterAccess::None;
+                        self.next_state(Microcode::FetchImm);
+                    }
                     AddressMode::Abs => {
                         self.next_state(Microcode::FetchLo);
                         self.register_access = RegisterAccess::None;
@@ -70,8 +74,10 @@ impl CPU {
                     }
                 }
             }
-            Microcode::FetchParameters => {
-                self.do_addressing_mode(memory);
+            Microcode::FetchImm => {
+                self.absolute_address = self.get_pc();
+                self.next_state(Microcode::Execute);
+                self.run_next_state(memory);
             }
             Microcode::FetchLo => {
                 self.address.lo = self.get_next_pc_value(memory);
@@ -92,12 +98,20 @@ impl CPU {
                 match self.register_access {
                     RegisterAccess::X => {
                         self.address.lo += self.regs.x;
+                        self.next_state(Microcode::FetchLoZP1);
                     }
                     RegisterAccess::Y => {
                         self.address.lo += self.regs.y;
+                        self.next_state(Microcode::FetchLoZP1);
                     }
-                    _ => {}
+                    _ => {
+                        self.absolute_address = self.address.to_usize();
+                        self.next_state(Microcode::Execute);
+                    }
                 }
+            }
+            Microcode::FetchLoZP1 => {
+                self.absolute_address = self.address.to_usize();
                 self.next_state(Microcode::Execute);
             }
             Microcode::FetchHi => {
@@ -137,13 +151,63 @@ impl CPU {
                 self.absolute_address = self.address.to_usize();
                 self.next_state(Microcode::Execute);
             }
-            Microcode::Execute => {
-                match self.opcode_type {
-                    Opcode::Brk => {
-                        self.next_state(Microcode::BrkPushPCHi);
-                    }
-                    _ => {}
+            Microcode::Execute => match self.opcode_type {
+                Opcode::Brk => {
+                    self.next_state(Microcode::BrkPushPCHi);
                 }
+                Opcode::Lda => {
+                    println!("{:04X}", self.absolute_address);
+                    self.regs.a = self.read(memory, self.absolute_address);
+                    self.set_nz(self.regs.a);
+                    self.fetch_opcode();
+                }
+                Opcode::Asl => match self.register_access {
+                    RegisterAccess::A => {
+                        self.next_state(Microcode::AslA);
+                    }
+                    _ => {
+                        self.next_state(Microcode::AslFetch);
+                        self.run_next_state(memory);
+                    }
+                },
+                _ => {}
+            },
+
+            // ASL
+            Microcode::AslA => {
+                let mut fetched = self.regs.a as u16;
+                fetched = fetched << 1;
+                let result = (fetched & 0xff) as u8;
+                self.regs.a = result;
+                if fetched > 0xff {
+                    self.regs.p |= StatusFlag::C;
+                } else {
+                    self.regs.p &= !StatusFlag::C;
+                }
+                self.set_nz(self.regs.a);
+                self.next_state(Microcode::FetchOpcode);
+            }
+
+            Microcode::AslFetch => {
+                self.fetched_data = self.read(memory, self.absolute_address);
+                self.next_state(Microcode::AslWrite);
+            }
+            Microcode::AslWrite => {
+                self.write(memory, self.absolute_address, self.fetched_data);
+                self.next_state(Microcode::AslAddAndWrite);
+            }
+            Microcode::AslAddAndWrite => {
+                let mut fetched = self.fetched_data as u16;
+                fetched = fetched << 1;
+                let result = (fetched & 0xff) as u8;
+                if fetched > 0xff {
+                    self.regs.p |= StatusFlag::C;
+                } else {
+                    self.regs.p &= !StatusFlag::C;
+                }
+                self.write(memory, self.absolute_address, result);
+                self.set_nz(result);
+                self.next_state(Microcode::FetchOpcode);
             }
 
             // BRK
@@ -201,10 +265,10 @@ impl CPU {
             }
             Microcode::BrkSetPC => {
                 self.regs.pc = self.address.to_u16();
-                self.next_state(Microcode::FetchOpcode);
+                self.fetch_opcode();
             }
             _ => {
-                self.next_state(Microcode::FetchOpcode);
+                self.fetch_opcode();
             }
         }
     }
