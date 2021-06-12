@@ -156,9 +156,18 @@ impl CPU {
                     self.next_state(Microcode::BrkPushPCHi);
                 }
                 Opcode::Lda => {
-                    println!("{:04X}", self.absolute_address);
                     self.regs.a = self.read(memory, self.absolute_address);
                     self.set_nz(self.regs.a);
+                    self.fetch_opcode();
+                }
+                Opcode::Ldx => {
+                    self.regs.x = self.read(memory, self.absolute_address);
+                    self.set_nz(self.regs.x);
+                    self.fetch_opcode();
+                }
+                Opcode::Ldy => {
+                    self.regs.y = self.read(memory, self.absolute_address);
+                    self.set_nz(self.regs.y);
                     self.fetch_opcode();
                 }
                 Opcode::Asl => match self.register_access {

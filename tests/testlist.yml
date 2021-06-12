@@ -210,214 +210,214 @@ LDA:
 #         target_address: 0xc100
 #         value: 0xaa
 #         cycles: 6
-# LDX:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0xa2
-#         - 0x55
-#       expected:
-#         read_from: x
-#         value: 0x55
-#         cycles: 2
-#     - description: IMM
-#       code:
-#         - 0xa2
-#         - 0x00
-#       expected:
-#         read_from: x
-#         value: 0x00
-#         cycles: 2
-#         check_flag:
-#           z: true
-#     - description: IMM
-#       code:
-#         - 0xa2
-#         - 0x80
-#       expected:
-#         read_from: x
-#         value: 0x80
-#         cycles: 2
-#         check_flag:
-#           n: true
-#     - description: ZP0
-#       code:
-#         - 0xa6
-#         - 0x55
-#       init_memories:
-#         - start: 0x55
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: x
-#         target_address: 0x55
-#         value: 0xaa
-#         cycles: 3
-#     - description: ZPY
-#       code:
-#         - 0xb6
-#         - 0x55
-#       cpu:
-#         y: 0x10
-#       init_memories:
-#         - start: 0x65
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: x
-#         target_address: 0x65
-#         value: 0xaa
-#         cycles: 4
-#     - description: ABS
-#       code:
-#         - 0xae
-#         - 0x00
-#         - 0x55
-#       init_memories:
-#         - start: 0x5500
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: x
-#         target_address: 0x5500
-#         value: 0xaa
-#         cycles: 4
-#     - description: ABY
-#       code:
-#         - 0xbe
-#         - 0x00
-#         - 0x55
-#       cpu:
-#         y: 0x10
-#       init_memories:
-#         - start: 0x5510
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: x
-#         target_address: 0x5510
-#         value: 0xaa
-#         cycles: 4
-#     - description: ABY (cross page)
-#       code:
-#         - 0xbe
-#         - 0x01
-#         - 0x55
-#       cpu:
-#         y: 0xff
-#       init_memories:
-#         - start: 0x5600
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: x
-#         target_address: 0x5600
-#         value: 0xaa
-#         cycles: 5
-# LDY:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0xa0
-#         - 0x55
-#       expected:
-#         read_from: y
-#         value: 0x55
-#         cycles: 2
-#     - description: IMM
-#       code:
-#         - 0xa0
-#         - 0x00
-#       expected:
-#         read_from: y
-#         value: 0x00
-#         cycles: 2
-#         check_flag:
-#           z: true
-#     - description: IMM
-#       code:
-#         - 0xa0
-#         - 0x80
-#       expected:
-#         read_from: y
-#         value: 0x80
-#         cycles: 2
-#         check_flag:
-#           n: true
-#     - description: ZP0
-#       code:
-#         - 0xa4
-#         - 0x55
-#       init_memories:
-#         - start: 0x55
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: y
-#         target_address: 0x55
-#         value: 0xaa
-#         cycles: 3
-#     - description: ZPX
-#       code:
-#         - 0xb4
-#         - 0x55
-#       cpu:
-#         x: 0x10
-#       init_memories:
-#         - start: 0x65
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: y
-#         target_address: 0x65
-#         value: 0xaa
-#         cycles: 4
-#     - description: ABS
-#       code:
-#         - 0xac
-#         - 0x00
-#         - 0x55
-#       init_memories:
-#         - start: 0x5500
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: y
-#         target_address: 0x5500
-#         value: 0xaa
-#         cycles: 4
-#     - description: ABX
-#       code:
-#         - 0xbc
-#         - 0x00
-#         - 0x55
-#       cpu:
-#         x: 0x10
-#       init_memories:
-#         - start: 0x5510
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: y
-#         target_address: 0x5510
-#         value: 0xaa
-#         cycles: 4
-#     - description: ABX (cross page)
-#       code:
-#         - 0xbc
-#         - 0x01
-#         - 0x55
-#       cpu:
-#         x: 0xff
-#       init_memories:
-#         - start: 0x5600
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: y
-#         target_address: 0x5600
-#         value: 0xaa
-#         cycles: 5
+LDX:
+  cases:
+    - description: IMM
+      code:
+        - 0xa2
+        - 0x55
+      expected:
+        read_from: x
+        value: 0x55
+        cycles: 2
+    - description: IMM
+      code:
+        - 0xa2
+        - 0x00
+      expected:
+        read_from: x
+        value: 0x00
+        cycles: 2
+        check_flag:
+          z: true
+    - description: IMM
+      code:
+        - 0xa2
+        - 0x80
+      expected:
+        read_from: x
+        value: 0x80
+        cycles: 2
+        check_flag:
+          n: true
+    - description: ZP0
+      code:
+        - 0xa6
+        - 0x55
+      init_memories:
+        - start: 0x55
+          values:
+            - 0xaa
+      expected:
+        read_from: x
+        target_address: 0x55
+        value: 0xaa
+        cycles: 3
+    - description: ZPY
+      code:
+        - 0xb6
+        - 0x55
+      cpu:
+        y: 0x10
+      init_memories:
+        - start: 0x65
+          values:
+            - 0xaa
+      expected:
+        read_from: x
+        target_address: 0x65
+        value: 0xaa
+        cycles: 4
+    - description: ABS
+      code:
+        - 0xae
+        - 0x00
+        - 0x55
+      init_memories:
+        - start: 0x5500
+          values:
+            - 0xaa
+      expected:
+        read_from: x
+        target_address: 0x5500
+        value: 0xaa
+        cycles: 4
+    - description: ABY
+      code:
+        - 0xbe
+        - 0x00
+        - 0x55
+      cpu:
+        y: 0x10
+      init_memories:
+        - start: 0x5510
+          values:
+            - 0xaa
+      expected:
+        read_from: x
+        target_address: 0x5510
+        value: 0xaa
+        cycles: 4
+    - description: ABY (cross page)
+      code:
+        - 0xbe
+        - 0x01
+        - 0x55
+      cpu:
+        y: 0xff
+      init_memories:
+        - start: 0x5600
+          values:
+            - 0xaa
+      expected:
+        read_from: x
+        target_address: 0x5600
+        value: 0xaa
+        cycles: 5
+LDY:
+  cases:
+    - description: IMM
+      code:
+        - 0xa0
+        - 0x55
+      expected:
+        read_from: y
+        value: 0x55
+        cycles: 2
+    - description: IMM
+      code:
+        - 0xa0
+        - 0x00
+      expected:
+        read_from: y
+        value: 0x00
+        cycles: 2
+        check_flag:
+          z: true
+    - description: IMM
+      code:
+        - 0xa0
+        - 0x80
+      expected:
+        read_from: y
+        value: 0x80
+        cycles: 2
+        check_flag:
+          n: true
+    - description: ZP0
+      code:
+        - 0xa4
+        - 0x55
+      init_memories:
+        - start: 0x55
+          values:
+            - 0xaa
+      expected:
+        read_from: y
+        target_address: 0x55
+        value: 0xaa
+        cycles: 3
+    - description: ZPX
+      code:
+        - 0xb4
+        - 0x55
+      cpu:
+        x: 0x10
+      init_memories:
+        - start: 0x65
+          values:
+            - 0xaa
+      expected:
+        read_from: y
+        target_address: 0x65
+        value: 0xaa
+        cycles: 4
+    - description: ABS
+      code:
+        - 0xac
+        - 0x00
+        - 0x55
+      init_memories:
+        - start: 0x5500
+          values:
+            - 0xaa
+      expected:
+        read_from: y
+        target_address: 0x5500
+        value: 0xaa
+        cycles: 4
+    - description: ABX
+      code:
+        - 0xbc
+        - 0x00
+        - 0x55
+      cpu:
+        x: 0x10
+      init_memories:
+        - start: 0x5510
+          values:
+            - 0xaa
+      expected:
+        read_from: y
+        target_address: 0x5510
+        value: 0xaa
+        cycles: 4
+    - description: ABX (cross page)
+      code:
+        - 0xbc
+        - 0x01
+        - 0x55
+      cpu:
+        x: 0xff
+      init_memories:
+        - start: 0x5600
+          values:
+            - 0xaa
+      expected:
+        read_from: y
+        target_address: 0x5600
+        value: 0xaa
+        cycles: 5
 ASL:
   cases:
     - description: ACC
