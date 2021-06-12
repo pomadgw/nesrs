@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::Add;
+use std::ops::{Add, AddAssign};
 
 bitflags! {
     pub struct StatusFlag: u8 {
@@ -103,6 +103,10 @@ impl Int16 {
     pub fn clear_carry(&mut self) {
         self.is_carry = false;
     }
+
+    pub fn has_carry(&self) -> bool {
+        self.is_carry
+    }
 }
 
 impl Add<u8> for Int16 {
@@ -121,6 +125,16 @@ impl Add<u8> for Int16 {
     }
 }
 
+impl AddAssign<u8> for Int16 {
+    fn add_assign(&mut self, number: u8) {
+        let lo = self.lo as u16;
+        let result = lo.wrapping_add(number as u16);
+
+        self.is_carry = result >= 0x100;
+        self.lo = (result & 0xff) as u8;
+    }
+}
+
 pub enum Microcode {
     FetchOpcode,
     FetchParameters,
@@ -128,6 +142,11 @@ pub enum Microcode {
     // ABS
     FetchLo,
     FetchHi,
+
+    // ABX
+    FetchLoX,
+    FetchHiX,
+    FetchHiX2,
 
     DelayedExecute,
     Execute,

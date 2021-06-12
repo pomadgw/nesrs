@@ -24,6 +24,7 @@ pub struct CPU {
     is_read: bool,
     lo: u8,
     hi: u8,
+    address: Int16,
     temp: u8,
     state: Microcode,
     absolute_address: usize,
@@ -48,6 +49,7 @@ impl CPU {
             state: Microcode::FetchOpcode,
             absolute_address: 0,
             fetched_data: 0,
+            address: Int16::new_from_16(0),
         }
     }
 
