@@ -128,5 +128,15 @@ impl CPU {
     fn is_write_instruction(&self) -> bool {
         false
     }
+
+    fn vector_address(&self) -> usize {
+        if self.interrupt_type.contains(Interrupt::RESET) {
+            INTERRUPT_RESET as usize
+        } else if self.interrupt_type.contains(Interrupt::NMI) {
+            INTERRUPT_NMI as usize
+        } else {
+            INTERRUPT_IRQ as usize
+        }
+    }
     // END PRIVATE
 }

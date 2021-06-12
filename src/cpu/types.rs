@@ -82,6 +82,11 @@ impl Int16 {
         Self::new((number & 0xff) as u8, ((number >> 8) & 0xff) as u8)
     }
 
+    pub fn set_u16(&mut self, number: u16) {
+        self.lo = (number & 0xff) as u8;
+        self.hi = ((number >> 8) & 0xff) as u8;
+    }
+
     pub fn to_u16(&self) -> u16 {
         let hi = self.hi as u16;
         let lo = self.lo as u16;
@@ -165,6 +170,14 @@ pub enum Microcode {
 
     DelayedExecute,
     Execute,
+
+    // BRK
+    BrkPushPCHi,
+    BrkPushPCLo,
+    BrkPushStatus,
+    BrkPushReadPCLo,
+    BrkPushReadPCHi,
+    BrkSetPC,
 }
 
 #[derive(Debug, Clone, Copy)]

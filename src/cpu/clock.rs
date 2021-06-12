@@ -15,6 +15,12 @@ impl CPU {
 
     // Clock the CPU
     pub fn clock(&mut self, memory: &mut dyn Memory) {
+        self.run_next_state(memory);
+
+        self.total_cycles += 1;
+    }
+
+    fn run_next_state(&mut self, memory: &mut dyn Memory) {
         match self.state {
             Microcode::FetchOpcode => {
                 self.opcode = self.get_next_pc_value(memory);
@@ -28,9 +34,12 @@ impl CPU {
                     AddressMode::Acc => {
                         self.register_access = RegisterAccess::A;
                         self.next_state(Microcode::Execute);
+                        self.run_next_state(memory);
                     }
                     AddressMode::Imp => {
+                        self.register_access = RegisterAccess::None;
                         self.next_state(Microcode::Execute);
+                        self.run_next_state(memory);
                     }
                     AddressMode::Abs => {
                         self.next_state(Microcode::FetchLo);
@@ -129,11 +138,74 @@ impl CPU {
                 self.next_state(Microcode::Execute);
             }
             Microcode::Execute => {
-                self.do_instruction(memory);
+                match self.opcode_type {
+                    Opcode::Brk => {
+                        self.next_state(Microcode::BrkPushPCHi);
+                    }
+                    _ => {}
+                }
             }
-            _ => {}
-        }
 
-        self.total_cycles += 1;
+            // BRK
+            Microcode::BrkPushPCHi => {
+                // Skip next PC if it is invoked from BRK instruction
+                // (not interupted by any means)
+                if self.interrupt_type.bits() == 0 {
+                    self.get_pc();
+                }
+
+                self.address.set_u16(self.regs.pc);
+
+                if self.interrupt_type.contains(Interrupt::RESET) {
+                    self.push_stack(memory, 0);
+                } else {
+                    self.push_stack(memory, self.address.hi);
+                }
+
+                self.next_state(Microcode::BrkPushPCLo);
+            }
+            Microcode::BrkPushPCLo => {
+                if self.interrupt_type.contains(Interrupt::RESET) {
+                    self.push_stack(memory, 0);
+                } else {
+                    self.push_stack(memory, self.address.lo);
+                }
+
+                self.next_state(Microcode::BrkPushStatus);
+            }
+            Microcode::BrkPushStatus => {
+                self.regs.p |= StatusFlag::B;
+                self.regs.p |= StatusFlag::U;
+
+                if self.interrupt_type.contains(Interrupt::RESET) {
+                    self.push_stack(memory, 0);
+                } else {
+                    self.push_stack(memory, self.regs.p.bits());
+                    self.regs.p &= !StatusFlag::U;
+                }
+
+                self.regs.p &= !StatusFlag::B;
+                self.regs.p |= StatusFlag::I;
+
+                self.next_state(Microcode::BrkPushReadPCLo);
+            }
+            Microcode::BrkPushReadPCLo => {
+                self.address.lo = self.read(memory, self.vector_address());
+
+                self.next_state(Microcode::BrkPushReadPCHi);
+            }
+            Microcode::BrkPushReadPCHi => {
+                self.address.hi = self.read(memory, self.vector_address() + 1);
+
+                self.next_state(Microcode::BrkSetPC);
+            }
+            Microcode::BrkSetPC => {
+                self.regs.pc = self.address.to_u16();
+                self.next_state(Microcode::FetchOpcode);
+            }
+            _ => {
+                self.next_state(Microcode::FetchOpcode);
+            }
+        }
     }
 }
