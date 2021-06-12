@@ -135,6 +135,13 @@ impl AddAssign<u8> for Int16 {
     }
 }
 
+pub enum RegisterAccess {
+    A,
+    X,
+    Y,
+    None,
+}
+
 pub enum Microcode {
     FetchOpcode,
     FetchParameters,
@@ -144,9 +151,17 @@ pub enum Microcode {
     FetchHi,
 
     // ABX
-    FetchLoX,
+    // FetchLoX,
     FetchHiX,
     FetchHiX2,
+
+    // ABY
+    // FetchLoY,
+    FetchHiY,
+    FetchHiY2,
+
+    // ZP0, ZPX, ZPY
+    FetchLoZP,
 
     DelayedExecute,
     Execute,

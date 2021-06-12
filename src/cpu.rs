@@ -29,6 +29,7 @@ pub struct CPU {
     state: Microcode,
     absolute_address: usize,
     fetched_data: u8,
+    register_access: RegisterAccess,
 }
 
 impl CPU {
@@ -50,6 +51,7 @@ impl CPU {
             absolute_address: 0,
             fetched_data: 0,
             address: Int16::new_from_16(0),
+            register_access: RegisterAccess::None,
         }
     }
 
@@ -121,6 +123,10 @@ impl CPU {
 
     fn fetch_opcode(&mut self) {
         self.next_state(Microcode::FetchOpcode);
+    }
+
+    fn is_write_instruction(&self) -> bool {
+        false
     }
     // END PRIVATE
 }
