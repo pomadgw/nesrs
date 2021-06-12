@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::Add;
 
 bitflags! {
     pub struct StatusFlag: u8 {
@@ -62,9 +63,72 @@ bitflags! {
     }
 }
 
-pub enum CPUStatus {
+pub struct Int16 {
+    pub lo: u8,
+    pub hi: u8,
+    is_carry: bool,
+}
+
+impl Int16 {
+    pub fn new(lo: u8, hi: u8) -> Self {
+        Self {
+            lo,
+            hi,
+            is_carry: false,
+        }
+    }
+
+    pub fn new_from_16(number: u16) -> Self {
+        Self::new((number & 0xff) as u8, ((number >> 8) & 0xff) as u8)
+    }
+
+    pub fn to_u16(&self) -> u16 {
+        let hi = self.hi as u16;
+        let lo = self.lo as u16;
+
+        (hi << 8) | lo
+    }
+
+    pub fn to_usize(&self) -> usize {
+        self.to_u16() as usize
+    }
+
+    pub fn add_hi_from_carry(&mut self) {
+        if self.is_carry {
+            self.hi += 1;
+            self.clear_carry();
+        }
+    }
+
+    pub fn clear_carry(&mut self) {
+        self.is_carry = false;
+    }
+}
+
+impl Add<u8> for Int16 {
+    type Output = Int16;
+
+    fn add(self, number: u8) -> Self {
+        let hi = self.hi as u16;
+        let lo = self.lo as u16;
+        let result = lo.wrapping_add(number as u16);
+
+        Self {
+            lo: (result & 0xff) as u8,
+            hi: hi as u8,
+            is_carry: result >= 0x100,
+        }
+    }
+}
+
+pub enum Microcode {
     FetchOpcode,
     FetchParameters,
+
+    // ABS
+    FetchLo,
+    FetchHi,
+
     DelayedExecute,
     Execute,
 }

@@ -16,23 +16,23 @@ impl CPU {
     // Clock the CPU
     pub fn clock(&mut self, memory: &mut dyn Memory) {
         match self.state {
-            CPUStatus::FetchOpcode => {
+            Microcode::FetchOpcode => {
                 self.opcode = self.get_next_pc_value(memory);
                 self.set_instruction();
-                self.next_state(CPUStatus::FetchParameters);
+                self.next_state(Microcode::FetchParameters);
             }
-            CPUStatus::FetchParameters => {
+            Microcode::FetchParameters => {
                 self.do_addressing_mode(memory);
             }
             _ => {}
         }
 
-        if let CPUStatus::Execute = self.state {
+        if let Microcode::Execute = self.state {
             self.do_instruction(memory);
         }
 
-        if let CPUStatus::DelayedExecute = self.state {
-            self.next_state(CPUStatus::Execute);
+        if let Microcode::DelayedExecute = self.state {
+            self.next_state(Microcode::Execute);
         }
 
         self.total_cycles += 1;

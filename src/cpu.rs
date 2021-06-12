@@ -25,7 +25,7 @@ pub struct CPU {
     lo: u8,
     hi: u8,
     temp: u8,
-    state: CPUStatus,
+    state: Microcode,
     absolute_address: usize,
     fetched_data: u8,
 }
@@ -45,7 +45,7 @@ impl CPU {
             lo: 0,
             hi: 0,
             temp: 0,
-            state: CPUStatus::FetchOpcode,
+            state: Microcode::FetchOpcode,
             absolute_address: 0,
             fetched_data: 0,
         }
@@ -55,13 +55,13 @@ impl CPU {
     pub fn reset(&mut self) {
         self.opcode = 0; // change opcode to BRK
         self.interrupt_type |= Interrupt::RESET; // Set interrupt type to reset
-        self.next_state(CPUStatus::FetchOpcode);
+        self.next_state(Microcode::FetchOpcode);
         self.set_instruction();
     }
 
     pub fn done(&self) -> bool {
         match self.state {
-            CPUStatus::FetchOpcode => true,
+            Microcode::FetchOpcode => true,
             _ => false,
         }
     }
@@ -108,7 +108,7 @@ impl CPU {
         (self.hi as u16) << 8 | (self.lo as u16)
     }
 
-    fn next_state(&mut self, state: CPUStatus) {
+    fn next_state(&mut self, state: Microcode) {
         self.cycles = 0;
         self.state = state;
     }
@@ -118,7 +118,7 @@ impl CPU {
     }
 
     fn fetch_opcode(&mut self) {
-        self.next_state(CPUStatus::FetchOpcode);
+        self.next_state(Microcode::FetchOpcode);
     }
     // END PRIVATE
 }
