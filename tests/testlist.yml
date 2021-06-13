@@ -520,7 +520,7 @@ ASL:
         value: 0x02
         cycles: 6
 
-# # Register Instructions
+# Register Instructions
 TAX:
   cases:
     - description: IMM
