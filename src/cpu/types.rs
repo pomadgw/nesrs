@@ -180,6 +180,12 @@ pub enum Microcode {
     FetchIZX3,
     FetchIZX4,
 
+    // IZY
+    FetchIZY1,
+    FetchIZY2,
+    FetchIZY3,
+    FetchIZY4,
+
     DelayedExecute,
     Execute,
 

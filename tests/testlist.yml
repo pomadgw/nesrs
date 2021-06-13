@@ -172,44 +172,44 @@ LDA:
         - start: 0xc050
           values:
             - 0xaa
-#     - description: IZY
-#       code:
-#         - 0xb1
-#         - 0x55
-#       cpu:
-#         y: 0x10
-#       init_memories:
-#         - start: 0x55
-#           values:
-#             - 0x50
-#             - 0xc0
-#         - start: 0xc060
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: a
-#         target_address: 0xc060
-#         value: 0xaa
-#         cycles: 5
-#     - description: IZY (cross page)
-#       code:
-#         - 0xb1
-#         - 0x55
-#       cpu:
-#         y: 0xff
-#       init_memories:
-#         - start: 0x55
-#           values:
-#             - 0x01
-#             - 0xc0
-#         - start: 0xc100
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: a
-#         target_address: 0xc100
-#         value: 0xaa
-#         cycles: 6
+    - description: IZY
+      code:
+        - 0xb1
+        - 0x55
+      cpu:
+        y: 0x10
+      init_memories:
+        - start: 0x55
+          values:
+            - 0x50
+            - 0xc0
+        - start: 0xc060
+          values:
+            - 0xaa
+      expected:
+        read_from: a
+        target_address: 0xc060
+        value: 0xaa
+        cycles: 5
+    - description: IZY (cross page)
+      code:
+        - 0xb1
+        - 0x55
+      cpu:
+        y: 0xff
+      init_memories:
+        - start: 0x55
+          values:
+            - 0x01
+            - 0xc0
+        - start: 0xc100
+          values:
+            - 0xaa
+      expected:
+        read_from: a
+        target_address: 0xc100
+        value: 0xaa
+        cycles: 6
 LDX:
   cases:
     - description: IMM
