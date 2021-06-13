@@ -39,7 +39,6 @@ impl CPU {
                     AddressMode::Imp => {
                         self.register_access = RegisterAccess::None;
                         self.next_state(Microcode::Execute);
-                        self.run_next_state(memory);
                     }
                     AddressMode::Imm => {
                         self.register_access = RegisterAccess::None;

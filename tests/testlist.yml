@@ -521,263 +521,263 @@ ASL:
         cycles: 6
 
 # # Register Instructions
-# TAX:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0xaa
-#       cpu:
-#         a: 0x12
-#         x: 0x00
-#       expected:
-#         read_from: x
-#         value: 0x12
-#         cycles: 2
-#     - description: IMM (check N)
-#       code:
-#         - 0xaa
-#       cpu:
-#         a: 0x80
-#         x: 0x00
-#       expected:
-#         read_from: x
-#         value: 0x80
-#         check_flag:
-#           n: true
-#     - description: IMM (check Z)
-#       code:
-#         - 0xaa
-#       cpu:
-#         a: 0x00
-#         x: 0x10
-#       expected:
-#         read_from: x
-#         value: 0x00
-#         check_flag:
-#           z: true
-# TAY:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0xa8
-#       cpu:
-#         a: 0x12
-#         y: 0x00
-#       expected:
-#         read_from: y
-#         value: 0x12
-#         cycles: 2
-#     - description: IMM (check N)
-#       code:
-#         - 0xa8
-#       cpu:
-#         a: 0x80
-#         y: 0x00
-#       expected:
-#         read_from: y
-#         value: 0x80
-#         check_flag:
-#           n: true
-#     - description: IMM (check Z)
-#       code:
-#         - 0xa8
-#       cpu:
-#         a: 0x00
-#         y: 0x10
-#       expected:
-#         read_from: y
-#         value: 0x00
-#         check_flag:
-#           z: true
-# TXA:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0x8a
-#       cpu:
-#         a: 0x00
-#         x: 0x12
-#       expected:
-#         read_from: a
-#         value: 0x12
-#         cycles: 2
-#     - description: IMM (check N)
-#       code:
-#         - 0x8a
-#       cpu:
-#         x: 0x80
-#         a: 0x00
-#       expected:
-#         read_from: a
-#         value: 0x80
-#         check_flag:
-#           n: true
-#     - description: IMM (check Z)
-#       code:
-#         - 0x8a
-#       cpu:
-#         x: 0x00
-#         a: 0x10
-#       expected:
-#         read_from: a
-#         value: 0x00
-#         check_flag:
-#           z: true
-# TYA:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0x98
-#       cpu:
-#         y: 0x12
-#         a: 0x00
-#       expected:
-#         read_from: a
-#         value: 0x12
-#         cycles: 2
-#     - description: IMM (check N)
-#       code:
-#         - 0x98
-#       cpu:
-#         y: 0x80
-#         a: 0x00
-#       expected:
-#         read_from: a
-#         value: 0x80
-#         check_flag:
-#           n: true
-#     - description: IMM (check Z)
-#       code:
-#         - 0x98
-#       cpu:
-#         y: 0x00
-#         a: 0x10
-#       expected:
-#         read_from: a
-#         value: 0x00
-#         check_flag:
-#           z: true
-# INX:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0xe8
-#       cpu:
-#         x: 0x12
-#       expected:
-#         read_from: x
-#         value: 0x13
-#         cycles: 2
-#     - description: IMM (check N)
-#       code:
-#         - 0xe8
-#       cpu:
-#         x: 0x7f
-#       expected:
-#         read_from: x
-#         value: 0x80
-#         check_flag:
-#           n: true
-#     - description: IMM (check Z)
-#       code:
-#         - 0xe8
-#       cpu:
-#         x: 0xff
-#       expected:
-#         read_from: x
-#         value: 0x00
-#         check_flag:
-#           z: true
-# INY:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0xc8
-#       cpu:
-#         y: 0x12
-#       expected:
-#         read_from: y
-#         value: 0x13
-#         cycles: 2
-#     - description: IMM (check N)
-#       code:
-#         - 0xc8
-#       cpu:
-#         y: 0x7f
-#       expected:
-#         read_from: y
-#         value: 0x80
-#         check_flag:
-#           n: true
-#     - description: IMM (check Z)
-#       code:
-#         - 0xc8
-#       cpu:
-#         y: 0xff
-#       expected:
-#         read_from: y
-#         value: 0x00
-#         check_flag:
-#           z: true
-# DEX:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0xca
-#       cpu:
-#         x: 0x12
-#       expected:
-#         read_from: x
-#         value: 0x11
-#         cycles: 2
-#     - description: IMM (check N)
-#       code:
-#         - 0xca
-#       cpu:
-#         x: 0x00
-#       expected:
-#         read_from: x
-#         value: 0xff
-#         check_flag:
-#           n: true
-#     - description: IMM (check Z)
-#       code:
-#         - 0xca
-#       cpu:
-#         x: 0x01
-#       expected:
-#         read_from: x
-#         value: 0x00
-#         check_flag:
-#           z: true
-# DEY:
-#   cases:
-#     - description: IMM
-#       code:
-#         - 0x88
-#       cpu:
-#         y: 0x12
-#       expected:
-#         read_from: y
-#         value: 0x11
-#         cycles: 2
-#     - description: IMM (check N)
-#       code:
-#         - 0x88
-#       cpu:
-#         y: 0x00
-#       expected:
-#         read_from: y
-#         value: 0xff
-#         check_flag:
-#           n: true
-#     - description: IMM (check Z)
-#       code:
-#         - 0x88
-#       cpu:
-#         y: 0x01
-#       expected:
-#         read_from: y
-#         value: 0x00
-#         check_flag:
-#           z: true
+TAX:
+  cases:
+    - description: IMM
+      code:
+        - 0xaa
+      cpu:
+        a: 0x12
+        x: 0x00
+      expected:
+        read_from: x
+        value: 0x12
+        cycles: 2
+    - description: IMM (check N)
+      code:
+        - 0xaa
+      cpu:
+        a: 0x80
+        x: 0x00
+      expected:
+        read_from: x
+        value: 0x80
+        check_flag:
+          n: true
+    - description: IMM (check Z)
+      code:
+        - 0xaa
+      cpu:
+        a: 0x00
+        x: 0x10
+      expected:
+        read_from: x
+        value: 0x00
+        check_flag:
+          z: true
+TAY:
+  cases:
+    - description: IMM
+      code:
+        - 0xa8
+      cpu:
+        a: 0x12
+        y: 0x00
+      expected:
+        read_from: y
+        value: 0x12
+        cycles: 2
+    - description: IMM (check N)
+      code:
+        - 0xa8
+      cpu:
+        a: 0x80
+        y: 0x00
+      expected:
+        read_from: y
+        value: 0x80
+        check_flag:
+          n: true
+    - description: IMM (check Z)
+      code:
+        - 0xa8
+      cpu:
+        a: 0x00
+        y: 0x10
+      expected:
+        read_from: y
+        value: 0x00
+        check_flag:
+          z: true
+TXA:
+  cases:
+    - description: IMM
+      code:
+        - 0x8a
+      cpu:
+        a: 0x00
+        x: 0x12
+      expected:
+        read_from: a
+        value: 0x12
+        cycles: 2
+    - description: IMM (check N)
+      code:
+        - 0x8a
+      cpu:
+        x: 0x80
+        a: 0x00
+      expected:
+        read_from: a
+        value: 0x80
+        check_flag:
+          n: true
+    - description: IMM (check Z)
+      code:
+        - 0x8a
+      cpu:
+        x: 0x00
+        a: 0x10
+      expected:
+        read_from: a
+        value: 0x00
+        check_flag:
+          z: true
+TYA:
+  cases:
+    - description: IMM
+      code:
+        - 0x98
+      cpu:
+        y: 0x12
+        a: 0x00
+      expected:
+        read_from: a
+        value: 0x12
+        cycles: 2
+    - description: IMM (check N)
+      code:
+        - 0x98
+      cpu:
+        y: 0x80
+        a: 0x00
+      expected:
+        read_from: a
+        value: 0x80
+        check_flag:
+          n: true
+    - description: IMM (check Z)
+      code:
+        - 0x98
+      cpu:
+        y: 0x00
+        a: 0x10
+      expected:
+        read_from: a
+        value: 0x00
+        check_flag:
+          z: true
+INX:
+  cases:
+    - description: IMM
+      code:
+        - 0xe8
+      cpu:
+        x: 0x12
+      expected:
+        read_from: x
+        value: 0x13
+        cycles: 2
+    - description: IMM (check N)
+      code:
+        - 0xe8
+      cpu:
+        x: 0x7f
+      expected:
+        read_from: x
+        value: 0x80
+        check_flag:
+          n: true
+    - description: IMM (check Z)
+      code:
+        - 0xe8
+      cpu:
+        x: 0xff
+      expected:
+        read_from: x
+        value: 0x00
+        check_flag:
+          z: true
+INY:
+  cases:
+    - description: IMM
+      code:
+        - 0xc8
+      cpu:
+        y: 0x12
+      expected:
+        read_from: y
+        value: 0x13
+        cycles: 2
+    - description: IMM (check N)
+      code:
+        - 0xc8
+      cpu:
+        y: 0x7f
+      expected:
+        read_from: y
+        value: 0x80
+        check_flag:
+          n: true
+    - description: IMM (check Z)
+      code:
+        - 0xc8
+      cpu:
+        y: 0xff
+      expected:
+        read_from: y
+        value: 0x00
+        check_flag:
+          z: true
+DEX:
+  cases:
+    - description: IMM
+      code:
+        - 0xca
+      cpu:
+        x: 0x12
+      expected:
+        read_from: x
+        value: 0x11
+        cycles: 2
+    - description: IMM (check N)
+      code:
+        - 0xca
+      cpu:
+        x: 0x00
+      expected:
+        read_from: x
+        value: 0xff
+        check_flag:
+          n: true
+    - description: IMM (check Z)
+      code:
+        - 0xca
+      cpu:
+        x: 0x01
+      expected:
+        read_from: x
+        value: 0x00
+        check_flag:
+          z: true
+DEY:
+  cases:
+    - description: IMM
+      code:
+        - 0x88
+      cpu:
+        y: 0x12
+      expected:
+        read_from: y
+        value: 0x11
+        cycles: 2
+    - description: IMM (check N)
+      code:
+        - 0x88
+      cpu:
+        y: 0x00
+      expected:
+        read_from: y
+        value: 0xff
+        check_flag:
+          n: true
+    - description: IMM (check Z)
+      code:
+        - 0x88
+      cpu:
+        y: 0x01
+      expected:
+        read_from: y
+        value: 0x00
+        check_flag:
+          z: true
