@@ -878,3 +878,40 @@ STA:
         target_address: 0x6aab
         value: 0x55
         cycles: 6
+STX:
+  cases:
+    - description: ZP0
+      code:
+        - 0x86
+        - 0x3f
+      cpu:
+        x: 0x55
+      expected:
+        read_from: address
+        target_address: 0x3f
+        value: 0x55
+        cycles: 3
+    - description: ZPY
+      code:
+        - 0x96
+        - 0x3f
+      cpu:
+        x: 0x55
+        y: 0x01
+      expected:
+        read_from: address
+        target_address: 0x40
+        value: 0x55
+        cycles: 4
+    - description: ABS
+      code:
+        - 0x8e
+        - 0x3f
+        - 0x60
+      cpu:
+        x: 0x55
+      expected:
+        read_from: address
+        target_address: 0x603f
+        value: 0x55
+        cycles: 4

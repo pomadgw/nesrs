@@ -27,6 +27,10 @@ impl CPU {
                 self.write(memory, self.absolute_address, self.regs.a);
                 self.fetch_opcode();
             }
+            Opcode::Stx => {
+                self.write(memory, self.absolute_address, self.regs.x);
+                self.fetch_opcode();
+            }
             Opcode::Asl => match self.register_access {
                 RegisterAccess::A => {
                     self.next_state(Microcode::AslA);
