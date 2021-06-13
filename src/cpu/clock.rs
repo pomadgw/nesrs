@@ -20,7 +20,7 @@ impl CPU {
         self.total_cycles += 1;
     }
 
-    fn run_next_state(&mut self, memory: &mut dyn Memory) {
+    pub fn run_next_state(&mut self, memory: &mut dyn Memory) {
         match self.state {
             Microcode::FetchOpcode => {
                 self.opcode = self.get_next_pc_value(memory);
@@ -190,36 +190,9 @@ impl CPU {
                 self.absolute_address = self.address.to_usize();
                 self.next_state(Microcode::Execute);
             }
-            Microcode::Execute => match self.opcode_type {
-                Opcode::Brk => {
-                    self.next_state(Microcode::BrkPushPCHi);
-                }
-                Opcode::Lda => {
-                    self.regs.a = self.read(memory, self.absolute_address);
-                    self.set_nz(self.regs.a);
-                    self.fetch_opcode();
-                }
-                Opcode::Ldx => {
-                    self.regs.x = self.read(memory, self.absolute_address);
-                    self.set_nz(self.regs.x);
-                    self.fetch_opcode();
-                }
-                Opcode::Ldy => {
-                    self.regs.y = self.read(memory, self.absolute_address);
-                    self.set_nz(self.regs.y);
-                    self.fetch_opcode();
-                }
-                Opcode::Asl => match self.register_access {
-                    RegisterAccess::A => {
-                        self.next_state(Microcode::AslA);
-                    }
-                    _ => {
-                        self.next_state(Microcode::AslFetch);
-                        self.run_next_state(memory);
-                    }
-                },
-                _ => {}
-            },
+            Microcode::Execute => {
+                self.do_instruction(memory);
+            }
 
             // ASL
             Microcode::AslA => {
