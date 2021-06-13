@@ -94,7 +94,6 @@ mod cpu_lda_tests {
                     cpu.regs.x = regs.x.unwrap_or(0);
                     cpu.regs.y = regs.y.unwrap_or(0);
                     cpu.regs.sp = regs.sp.unwrap_or(0);
-                    cpu.regs.sp = regs.sp.unwrap_or(0);
                     if let Some(p) = regs.p {
                         cpu.regs.p.set_from_byte(p);
                     }
