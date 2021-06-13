@@ -122,7 +122,7 @@ impl CPU {
 
     fn is_write_instruction(&self) -> bool {
         match self.opcode_type {
-            Opcode::Asl => true,
+            Opcode::Asl | Opcode::Sta => true,
             _ => false,
         }
     }
