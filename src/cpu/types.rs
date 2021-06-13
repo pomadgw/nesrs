@@ -202,6 +202,10 @@ pub enum Microcode {
     BrkPushReadPCLo,
     BrkPushReadPCHi,
     BrkSetPC,
+
+    // PHA
+    PhaReadA,
+    PhaPushStack,
 }
 
 #[derive(Debug, Clone, Copy)]

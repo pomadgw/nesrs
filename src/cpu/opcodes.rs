@@ -93,6 +93,10 @@ impl CPU {
                 self.regs.x = self.regs.sp;
                 self.fetch_opcode();
             }
+            Opcode::Pha => {
+                self.next_state(Microcode::PhaReadA);
+                self.run_next_state(memory);
+            }
             _ => {
                 self.fetch_opcode();
             }

@@ -287,6 +287,15 @@ impl CPU {
                 self.regs.pc = self.address.to_u16();
                 self.fetch_opcode();
             }
+            // PHA
+            Microcode::PhaReadA => {
+                self.fetched_data = self.regs.a;
+                self.next_state(Microcode::PhaPushStack);
+            }
+            Microcode::PhaPushStack => {
+                self.push_stack(memory, self.fetched_data);
+                self.fetch_opcode();
+            }
             _ => {
                 self.fetch_opcode();
             }
