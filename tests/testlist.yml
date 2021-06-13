@@ -1093,3 +1093,14 @@ PLP:
         read_from: p
         value: 0xaa
         cycles: 4
+JMP:
+  cases:
+    - description: ABS
+      code:
+        - 0x4c
+        - 0xff
+        - 0x81
+      expected:
+        read_from: pc
+        value: 0x81ff
+        cycles: 3

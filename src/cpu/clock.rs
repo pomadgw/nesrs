@@ -122,7 +122,14 @@ impl CPU {
             Microcode::FetchHi => {
                 self.address.hi = self.get_next_pc_value(memory);
                 self.absolute_address = self.address.to_usize();
-                self.next_state(Microcode::Execute);
+
+                if let Opcode::Jmp = self.opcode_type {
+                    // JMP ABS use 3 cycles -_-
+                    self.regs.pc = self.absolute_address as u16;
+                    self.fetch_opcode();
+                } else {
+                    self.next_state(Microcode::Execute);
+                }
             }
             Microcode::FetchHiX => {
                 self.address.hi = self.get_next_pc_value(memory);

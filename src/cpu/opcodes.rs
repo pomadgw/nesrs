@@ -105,6 +105,14 @@ impl CPU {
             Opcode::Plp => {
                 self.next_state(Microcode::PlpPull);
             }
+            // For documentation only
+            //
+            // Copy of the code in clock fn is the one that
+            // will be executed
+            Opcode::Jmp => {
+                self.regs.pc = self.absolute_address as u16;
+                self.fetch_opcode();
+            }
             _ => {
                 self.fetch_opcode();
             }
