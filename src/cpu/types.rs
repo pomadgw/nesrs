@@ -182,7 +182,6 @@ pub enum Microcode {
     FetchIZY1,
     FetchIZY2,
     FetchIZY3,
-    FetchIZY4,
 
     // ABX, ABY, IZY
     SetCrossPage,
