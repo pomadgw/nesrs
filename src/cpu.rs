@@ -88,6 +88,12 @@ impl CPU {
         self.regs.sp = self.regs.sp.wrapping_sub(1);
     }
 
+    fn pull_stack(&mut self, memory: &mut dyn Memory) -> u8 {
+        self.regs.sp = self.regs.sp.wrapping_add(1);
+        let address = 0x0100 + self.regs.sp as usize;
+        self.read(memory, address)
+    }
+
     fn set_instruction(&mut self) {
         let opcode_num = self.opcode as usize;
         match &OPCODE_TABLE[opcode_num] {

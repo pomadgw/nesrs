@@ -289,11 +289,17 @@ impl CPU {
             }
             // PHA
             Microcode::PhaReadA => {
-                self.fetched_data = self.regs.a;
-                self.next_state(Microcode::PhaPushStack);
+                self.push_stack(memory, self.regs.a);
+                self.fetch_opcode();
             }
-            Microcode::PhaPushStack => {
-                self.push_stack(memory, self.fetched_data);
+            // PLA
+            Microcode::PlaPull => {
+                self.fetched_data = self.pull_stack(memory);
+                self.next_state(Microcode::PlaPull1);
+            }
+            Microcode::PlaPull1 => {
+                self.regs.a = self.fetched_data;
+                self.set_nz(self.fetched_data);
                 self.fetch_opcode();
             }
             _ => {

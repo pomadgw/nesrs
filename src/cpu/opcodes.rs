@@ -95,7 +95,9 @@ impl CPU {
             }
             Opcode::Pha => {
                 self.next_state(Microcode::PhaReadA);
-                self.run_next_state(memory);
+            }
+            Opcode::Pla => {
+                self.next_state(Microcode::PlaPull);
             }
             _ => {
                 self.fetch_opcode();

@@ -998,3 +998,28 @@ PHA:
       expected:
         read_from: sp
         value: 0xfd
+PLA:
+  cases:
+    - description: IMP
+      code:
+        - 0x68
+      cpu:
+        a: 0x12
+        sp: 0xfd
+      init_memories:
+        - start: 0x01fe
+          values:
+            - 0xaa
+      expected:
+        read_from: a
+        value: 0xaa
+        cycles: 4
+    - description: Check SP
+      code:
+        - 0x68
+      cpu:
+        a: 0x12
+        sp: 0xfd
+      expected:
+        read_from: sp
+        value: 0xfe
