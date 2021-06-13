@@ -210,7 +210,6 @@ pub enum Microcode {
     // PGA
     PlaPull,
     PlaPull1,
-    PlaPull2,
 }
 
 #[derive(Debug, Clone, Copy)]
