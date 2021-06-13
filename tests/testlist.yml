@@ -1014,6 +1014,36 @@ PLA:
         read_from: a
         value: 0xaa
         cycles: 4
+    - description: Check Z
+      code:
+        - 0x68
+      cpu:
+        a: 0x12
+        sp: 0xfd
+      init_memories:
+        - start: 0x01fe
+          values:
+            - 0x00
+      expected:
+        read_from: a
+        value: 0x00
+        check_flag:
+          z: true
+    - description: Check N
+      code:
+        - 0x68
+      cpu:
+        a: 0x12
+        sp: 0xfd
+      init_memories:
+        - start: 0x01fe
+          values:
+            - 0x80
+      expected:
+        read_from: a
+        value: 0x80
+        heck_flag:
+          n: true
     - description: Check SP
       code:
         - 0x68
