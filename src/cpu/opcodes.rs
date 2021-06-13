@@ -84,6 +84,15 @@ impl CPU {
                 self.set_nz(self.regs.y);
                 self.fetch_opcode();
             }
+            // stack-related
+            Opcode::Txs => {
+                self.regs.sp = self.regs.x;
+                self.fetch_opcode();
+            }
+            Opcode::Tsx => {
+                self.regs.x = self.regs.sp;
+                self.fetch_opcode();
+            }
             _ => {
                 self.fetch_opcode();
             }

@@ -93,6 +93,7 @@ mod cpu_lda_tests {
                     cpu.regs.a = regs.a.unwrap_or(0);
                     cpu.regs.x = regs.x.unwrap_or(0);
                     cpu.regs.y = regs.y.unwrap_or(0);
+                    cpu.regs.sp = regs.sp.unwrap_or(0);
                 }
 
                 if let Some(configs) = &case.init_memories {

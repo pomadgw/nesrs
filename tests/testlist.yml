@@ -952,3 +952,27 @@ STY:
         target_address: 0x603f
         value: 0x55
         cycles: 4
+TXS:
+  cases:
+    - description: IMP
+      code:
+        - 0x9a
+      cpu:
+        x: 0x12
+        sp: 0x00
+      expected:
+        read_from: sp
+        value: 0x12
+        cycles: 2
+TSX:
+  cases:
+    - description: IMP
+      code:
+        - 0xba
+      cpu:
+        x: 0x12
+        sp: 0xfe
+      expected:
+        read_from: x
+        value: 0xfe
+        cycles: 2
