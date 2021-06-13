@@ -23,11 +23,13 @@ impl CPU {
     pub fn run_next_state(&mut self, memory: &mut dyn Memory) {
         match self.state {
             Microcode::FetchOpcode => {
+                self.instruction_debug.clear();
                 self.opcode = self.get_next_pc_value(memory);
                 self.set_instruction();
                 self.address.lo = 0;
                 self.address.hi = 0;
                 self.address.clear_carry();
+                self.instruction_debug.push(self.opcode);
                 // self.next_state(Microcode::FetchParameters);
 
                 match self.address_mode {
@@ -81,11 +83,13 @@ impl CPU {
             }
             Microcode::FetchImm => {
                 self.absolute_address = self.get_pc();
+                self.instruction_debug.push(memory.read(self.absolute_address, true));
                 self.next_state(Microcode::Execute);
                 self.run_next_state(memory);
             }
             Microcode::FetchLo => {
                 self.address.lo = self.get_next_pc_value(memory);
+                self.instruction_debug.push(self.address.lo);
                 match self.register_access {
                     RegisterAccess::X => {
                         self.next_state(Microcode::FetchHiX);
@@ -100,6 +104,7 @@ impl CPU {
             }
             Microcode::FetchLoZP => {
                 self.address.lo = self.get_next_pc_value(memory);
+                self.instruction_debug.push(self.address.lo);
                 match self.register_access {
                     RegisterAccess::X => {
                         self.address.lo += self.regs.x;
@@ -121,6 +126,7 @@ impl CPU {
             }
             Microcode::FetchHi => {
                 self.address.hi = self.get_next_pc_value(memory);
+                self.instruction_debug.push(self.address.hi);
                 self.absolute_address = self.address.to_usize();
                 self.next_state(Microcode::Execute);
             }
@@ -148,6 +154,7 @@ impl CPU {
             }
             Microcode::FetchIZX1 => {
                 self.temp = self.get_next_pc_value(memory);
+                self.instruction_debug.push(self.temp);
                 self.next_state(Microcode::FetchIZX2);
             }
             Microcode::FetchIZX2 => {
@@ -167,6 +174,7 @@ impl CPU {
             }
             Microcode::FetchIZY1 => {
                 self.temp = self.get_next_pc_value(memory);
+                self.instruction_debug.push(self.temp);
                 self.next_state(Microcode::FetchIZY2);
             }
             Microcode::FetchIZY2 => {

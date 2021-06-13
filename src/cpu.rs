@@ -27,6 +27,9 @@ pub struct CPU {
     absolute_address: usize,
     fetched_data: u8,
     register_access: RegisterAccess,
+
+    // for debug
+    instruction_debug: Vec<u8>,
 }
 
 impl CPU {
@@ -47,6 +50,8 @@ impl CPU {
             fetched_data: 0,
             address: Int16::new_from_16(0),
             register_access: RegisterAccess::None,
+
+            instruction_debug: Vec::new(),
         }
     }
 
@@ -67,6 +72,15 @@ impl CPU {
 
     pub fn is_read(&self) -> bool {
         self.is_read
+    }
+
+    pub fn see_prev_instruction(&self) -> String {
+        match self.instruction_debug.len() {
+            1 => format!("{:02X}", self.instruction_debug[0]),
+            2 => format!("{:02X} {:02X}", self.instruction_debug[0], self.instruction_debug[1]),
+            3 => format!("{:02X} {:02X} {:02X}", self.instruction_debug[0], self.instruction_debug[1], self.instruction_debug[2]),
+            _ => format!("")
+        }
     }
 
     // BEGIN PRIVATE
