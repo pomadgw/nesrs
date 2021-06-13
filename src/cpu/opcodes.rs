@@ -72,7 +72,9 @@ impl CPU {
                 self.set_nz(self.regs.y);
                 self.fetch_opcode();
             }
-            _ => {}
+            _ => {
+                self.fetch_opcode();
+            }
         }
     }
 }
