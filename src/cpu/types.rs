@@ -186,6 +186,12 @@ pub enum Microcode {
     // ABX, ABY, IZY
     SetCrossPage,
 
+    // JMP IND
+    IndReadLo,
+    IndReadHi,
+    IndReadActualLo,
+    IndReadActualHiAndJump,
+
     DelayedExecute,
     Execute,
 

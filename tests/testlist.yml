@@ -1104,3 +1104,34 @@ JMP:
         read_from: pc
         value: 0x81ff
         cycles: 3
+    - description: IND
+      code:
+        - 0x6c
+        - 0x00
+        - 0x81
+      init_memories:
+        - start: 0x8100
+          values:
+            - 0xaa
+            - 0xaa
+      expected:
+        read_from: pc
+        value: 0xaaaa
+        cycles: 5
+    - description: IND (check bug)
+      code:
+        - 0x6c
+        - 0xff
+        - 0x81
+      init_memories:
+        - start: 0x81ff
+          values:
+            - 0xaa
+            - 0xbb
+        - start: 0x8100
+          values:
+            - 0xaa
+      expected:
+        read_from: pc
+        value: 0xaaaa
+        cycles: 5

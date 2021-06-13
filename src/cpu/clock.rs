@@ -74,6 +74,9 @@ impl CPU {
                     AddressMode::Izy => {
                         self.next_state(Microcode::FetchIZY1);
                     }
+                    AddressMode::Ind => {
+                        self.next_state(Microcode::IndReadLo);
+                    }
                     _ => {
                         self.next_state(Microcode::FetchOpcode);
                     }
@@ -195,6 +198,29 @@ impl CPU {
                 self.address.add_hi_from_carry();
                 self.absolute_address = self.address.to_usize();
                 self.next_state(Microcode::Execute);
+            }
+            Microcode::IndReadLo => {
+                self.ind_address.lo = self.get_next_pc_value(memory);
+                self.next_state(Microcode::IndReadHi);
+            }
+            Microcode::IndReadHi => {
+                self.ind_address.hi = self.get_next_pc_value(memory);
+                self.next_state(Microcode::IndReadActualLo);
+            }
+            Microcode::IndReadActualLo => {
+                self.address.lo = self.read(memory, self.ind_address.to_usize());
+                self.next_state(Microcode::IndReadActualHiAndJump);
+            }
+            Microcode::IndReadActualHiAndJump => {
+                // JMP indirect has a bug:
+                // if address is $xxff, the actual jump fetched
+                // is in $xxff and $xx00 (instead of $xxff + 1)
+                self.ind_address += 1;
+                self.address.hi = self.read(memory, self.ind_address.to_usize());
+
+                // Jump immediately
+                self.regs.pc = self.address.to_u16();
+                self.fetch_opcode();
             }
             Microcode::Execute => {
                 self.do_instruction(memory);
