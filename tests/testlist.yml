@@ -915,3 +915,40 @@ STX:
         target_address: 0x603f
         value: 0x55
         cycles: 4
+STY:
+  cases:
+    - description: ZP0
+      code:
+        - 0x84
+        - 0x3f
+      cpu:
+        y: 0x55
+      expected:
+        read_from: address
+        target_address: 0x3f
+        value: 0x55
+        cycles: 3
+    - description: ZPX
+      code:
+        - 0x94
+        - 0x3f
+      cpu:
+        y: 0x55
+        x: 0x01
+      expected:
+        read_from: address
+        target_address: 0x40
+        value: 0x55
+        cycles: 4
+    - description: ABS
+      code:
+        - 0x8c
+        - 0x3f
+        - 0x60
+      cpu:
+        y: 0x55
+      expected:
+        read_from: address
+        target_address: 0x603f
+        value: 0x55
+        cycles: 4
