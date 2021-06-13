@@ -288,7 +288,7 @@ impl CPU {
                 self.fetch_opcode();
             }
             // PHA
-            Microcode::PhaReadA => {
+            Microcode::PhaPushStack => {
                 self.push_stack(memory, self.regs.a);
                 self.fetch_opcode();
             }
@@ -303,7 +303,7 @@ impl CPU {
                 self.fetch_opcode();
             }
             // PHP
-            Microcode::PhpReadP => {
+            Microcode::PhpPushStack => {
                 self.push_stack(memory, self.regs.p.bits() | 0b00110000);
                 self.fetch_opcode();
             }

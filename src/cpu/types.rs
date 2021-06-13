@@ -204,7 +204,6 @@ pub enum Microcode {
     BrkSetPC,
 
     // PHA
-    PhaReadA,
     PhaPushStack,
 
     // PLA
@@ -212,7 +211,6 @@ pub enum Microcode {
     PlaPull1,
 
     // PHP
-    PhpReadP,
     PhpPushStack,
 
     // PLP

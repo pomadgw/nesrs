@@ -94,13 +94,13 @@ impl CPU {
                 self.fetch_opcode();
             }
             Opcode::Pha => {
-                self.next_state(Microcode::PhaReadA);
+                self.next_state(Microcode::PhaPushStack);
             }
             Opcode::Pla => {
                 self.next_state(Microcode::PlaPull);
             }
             Opcode::Php => {
-                self.next_state(Microcode::PhpReadP);
+                self.next_state(Microcode::PhpPushStack);
             }
             Opcode::Plp => {
                 self.next_state(Microcode::PlpPull);
