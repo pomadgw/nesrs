@@ -15,26 +15,281 @@ impl CPU {
 
     // Clock the CPU
     pub fn clock(&mut self, memory: &mut dyn Memory) {
-        match self.state {
-            CPUStatus::FetchOpcode => {
-                self.opcode = self.get_next_pc_value(memory);
-                self.set_instruction();
-                self.next_state(CPUStatus::FetchParameters);
-            }
-            CPUStatus::FetchParameters => {
-                self.do_addressing_mode(memory);
-            }
-            _ => {}
-        }
-
-        if let CPUStatus::Execute = self.state {
-            self.do_instruction(memory);
-        }
-
-        if let CPUStatus::DelayedExecute = self.state {
-            self.next_state(CPUStatus::Execute);
-        }
+        self.run_next_state(memory);
 
         self.total_cycles += 1;
+    }
+
+    pub fn run_next_state(&mut self, memory: &mut dyn Memory) {
+        match self.state {
+            Microcode::FetchOpcode => {
+                self.opcode = self.get_next_pc_value(memory);
+                self.set_instruction();
+                self.address.lo = 0;
+                self.address.hi = 0;
+                self.address.clear_carry();
+                // self.next_state(Microcode::FetchParameters);
+
+                match self.address_mode {
+                    AddressMode::Acc => {
+                        self.register_access = RegisterAccess::A;
+                        self.next_state(Microcode::Execute);
+                        self.run_next_state(memory);
+                    }
+                    AddressMode::Imp => {
+                        self.register_access = RegisterAccess::None;
+                        self.next_state(Microcode::Execute);
+                    }
+                    AddressMode::Imm => {
+                        self.register_access = RegisterAccess::None;
+                        self.next_state(Microcode::FetchImm);
+                    }
+                    AddressMode::Abs => {
+                        self.next_state(Microcode::FetchLo);
+                        self.register_access = RegisterAccess::None;
+                    }
+                    AddressMode::Abx => {
+                        self.next_state(Microcode::FetchLo);
+                        self.register_access = RegisterAccess::X;
+                    }
+                    AddressMode::Aby => {
+                        self.next_state(Microcode::FetchLo);
+                        self.register_access = RegisterAccess::Y;
+                    }
+                    AddressMode::Zp0 => {
+                        self.next_state(Microcode::FetchLoZP);
+                        self.register_access = RegisterAccess::None;
+                    }
+                    AddressMode::Zpx => {
+                        self.next_state(Microcode::FetchLoZP);
+                        self.register_access = RegisterAccess::X;
+                    }
+                    AddressMode::Zpy => {
+                        self.next_state(Microcode::FetchLoZP);
+                        self.register_access = RegisterAccess::Y;
+                    }
+                    AddressMode::Izx => {
+                        self.next_state(Microcode::FetchIZX1);
+                    }
+                    AddressMode::Izy => {
+                        self.next_state(Microcode::FetchIZY1);
+                    }
+                    _ => {
+                        self.next_state(Microcode::FetchOpcode);
+                    }
+                }
+            }
+            Microcode::FetchImm => {
+                self.absolute_address = self.get_pc();
+                self.next_state(Microcode::Execute);
+                self.run_next_state(memory);
+            }
+            Microcode::FetchLo => {
+                self.address.lo = self.get_next_pc_value(memory);
+                match self.register_access {
+                    RegisterAccess::X => {
+                        self.next_state(Microcode::FetchHiX);
+                    }
+                    RegisterAccess::Y => {
+                        self.next_state(Microcode::FetchHiY);
+                    }
+                    _ => {
+                        self.next_state(Microcode::FetchHi);
+                    }
+                }
+            }
+            Microcode::FetchLoZP => {
+                self.address.lo = self.get_next_pc_value(memory);
+                match self.register_access {
+                    RegisterAccess::X => {
+                        self.address.lo += self.regs.x;
+                        self.next_state(Microcode::FetchLoZP1);
+                    }
+                    RegisterAccess::Y => {
+                        self.address.lo += self.regs.y;
+                        self.next_state(Microcode::FetchLoZP1);
+                    }
+                    _ => {
+                        self.absolute_address = self.address.to_usize();
+                        self.next_state(Microcode::Execute);
+                    }
+                }
+            }
+            Microcode::FetchLoZP1 => {
+                self.absolute_address = self.address.to_usize();
+                self.next_state(Microcode::Execute);
+            }
+            Microcode::FetchHi => {
+                self.address.hi = self.get_next_pc_value(memory);
+                self.absolute_address = self.address.to_usize();
+                self.next_state(Microcode::Execute);
+            }
+            Microcode::FetchHiX => {
+                self.address.hi = self.get_next_pc_value(memory);
+                self.address += self.regs.x;
+
+                if self.address.has_carry() || self.is_write_instruction() {
+                    self.next_state(Microcode::SetCrossPage);
+                } else {
+                    self.absolute_address = self.address.to_usize();
+                    self.next_state(Microcode::Execute);
+                }
+            }
+            Microcode::FetchHiY => {
+                self.address.hi = self.get_next_pc_value(memory);
+                self.address += self.regs.y;
+
+                if self.address.has_carry() || self.is_write_instruction() {
+                    self.next_state(Microcode::SetCrossPage);
+                } else {
+                    self.absolute_address = self.address.to_usize();
+                    self.next_state(Microcode::Execute);
+                }
+            }
+            Microcode::FetchIZX1 => {
+                self.temp = self.get_next_pc_value(memory);
+                self.next_state(Microcode::FetchIZX2);
+            }
+            Microcode::FetchIZX2 => {
+                self.absolute_address = self.read(memory, self.temp as usize) as usize;
+                self.next_state(Microcode::FetchIZX3);
+            }
+            Microcode::FetchIZX3 => {
+                self.temp = self.temp.wrapping_add(self.regs.x);
+                self.address.lo = self.read(memory, self.temp as usize);
+                self.next_state(Microcode::FetchIZX4);
+            }
+            Microcode::FetchIZX4 => {
+                self.temp = self.temp.wrapping_add(1);
+                self.address.hi = self.read(memory, self.temp as usize);
+                self.absolute_address = self.address.to_usize();
+                self.next_state(Microcode::Execute);
+            }
+            Microcode::FetchIZY1 => {
+                self.temp = self.get_next_pc_value(memory);
+                self.next_state(Microcode::FetchIZY2);
+            }
+            Microcode::FetchIZY2 => {
+                self.address.lo = self.read(memory, self.temp as usize);
+                self.next_state(Microcode::FetchIZY3);
+            }
+            Microcode::FetchIZY3 => {
+                self.address.hi = self.read(memory, self.temp.wrapping_add(1) as usize);
+                self.address += self.regs.y;
+
+                if self.address.has_carry() || self.is_write_instruction() {
+                    self.next_state(Microcode::SetCrossPage);
+                } else {
+                    self.absolute_address = self.address.to_usize();
+                    self.next_state(Microcode::Execute);
+                }
+            }
+            Microcode::SetCrossPage => {
+                self.address.add_hi_from_carry();
+                self.absolute_address = self.address.to_usize();
+                self.next_state(Microcode::Execute);
+            }
+            Microcode::Execute => {
+                self.do_instruction(memory);
+            }
+
+            // ASL
+            Microcode::AslA => {
+                let mut fetched = self.regs.a as u16;
+                fetched = fetched << 1;
+                let result = (fetched & 0xff) as u8;
+                self.regs.a = result;
+                if fetched > 0xff {
+                    self.regs.p |= StatusFlag::C;
+                } else {
+                    self.regs.p &= !StatusFlag::C;
+                }
+                self.set_nz(self.regs.a);
+                self.next_state(Microcode::FetchOpcode);
+            }
+
+            Microcode::AslFetch => {
+                self.fetched_data = self.read(memory, self.absolute_address);
+                self.next_state(Microcode::AslWrite);
+            }
+            Microcode::AslWrite => {
+                self.write(memory, self.absolute_address, self.fetched_data);
+                self.next_state(Microcode::AslAddAndWrite);
+            }
+            Microcode::AslAddAndWrite => {
+                let mut fetched = self.fetched_data as u16;
+                fetched = fetched << 1;
+                let result = (fetched & 0xff) as u8;
+                if fetched > 0xff {
+                    self.regs.p |= StatusFlag::C;
+                } else {
+                    self.regs.p &= !StatusFlag::C;
+                }
+                self.write(memory, self.absolute_address, result);
+                self.set_nz(result);
+                self.next_state(Microcode::FetchOpcode);
+            }
+
+            // BRK
+            Microcode::BrkPushPCHi => {
+                // Skip next PC if it is invoked from BRK instruction
+                // (not interupted by any means)
+                if self.interrupt_type.bits() == 0 {
+                    self.get_pc();
+                }
+
+                self.address.set_u16(self.regs.pc);
+
+                if self.interrupt_type.contains(Interrupt::RESET) {
+                    self.push_stack(memory, 0);
+                } else {
+                    self.push_stack(memory, self.address.hi);
+                }
+
+                self.next_state(Microcode::BrkPushPCLo);
+            }
+            Microcode::BrkPushPCLo => {
+                if self.interrupt_type.contains(Interrupt::RESET) {
+                    self.push_stack(memory, 0);
+                } else {
+                    self.push_stack(memory, self.address.lo);
+                }
+
+                self.next_state(Microcode::BrkPushStatus);
+            }
+            Microcode::BrkPushStatus => {
+                self.regs.p |= StatusFlag::B;
+                self.regs.p |= StatusFlag::U;
+
+                if self.interrupt_type.contains(Interrupt::RESET) {
+                    self.push_stack(memory, 0);
+                } else {
+                    self.push_stack(memory, self.regs.p.bits());
+                    self.regs.p &= !StatusFlag::U;
+                }
+
+                self.regs.p &= !StatusFlag::B;
+                self.regs.p |= StatusFlag::I;
+
+                self.next_state(Microcode::BrkPushReadPCLo);
+            }
+            Microcode::BrkPushReadPCLo => {
+                self.address.lo = self.read(memory, self.vector_address());
+
+                self.next_state(Microcode::BrkPushReadPCHi);
+            }
+            Microcode::BrkPushReadPCHi => {
+                self.address.hi = self.read(memory, self.vector_address() + 1);
+
+                self.next_state(Microcode::BrkSetPC);
+            }
+            Microcode::BrkSetPC => {
+                self.regs.pc = self.address.to_u16();
+                self.fetch_opcode();
+            }
+            _ => {
+                self.fetch_opcode();
+            }
+        }
     }
 }

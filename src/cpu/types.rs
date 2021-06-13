@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::{Add, AddAssign};
 
 bitflags! {
     pub struct StatusFlag: u8 {
@@ -62,11 +63,145 @@ bitflags! {
     }
 }
 
-pub enum CPUStatus {
+pub struct Int16 {
+    pub lo: u8,
+    pub hi: u8,
+    is_carry: bool,
+}
+
+impl Int16 {
+    pub fn new(lo: u8, hi: u8) -> Self {
+        Self {
+            lo,
+            hi,
+            is_carry: false,
+        }
+    }
+
+    pub fn new_from_16(number: u16) -> Self {
+        Self::new((number & 0xff) as u8, ((number >> 8) & 0xff) as u8)
+    }
+
+    pub fn set_u16(&mut self, number: u16) {
+        self.lo = (number & 0xff) as u8;
+        self.hi = ((number >> 8) & 0xff) as u8;
+    }
+
+    pub fn to_u16(&self) -> u16 {
+        let hi = self.hi as u16;
+        let lo = self.lo as u16;
+
+        (hi << 8) | lo
+    }
+
+    pub fn to_usize(&self) -> usize {
+        self.to_u16() as usize
+    }
+
+    pub fn add_hi_from_carry(&mut self) {
+        if self.is_carry {
+            self.hi += 1;
+            self.clear_carry();
+        }
+    }
+
+    pub fn clear_carry(&mut self) {
+        self.is_carry = false;
+    }
+
+    pub fn has_carry(&self) -> bool {
+        self.is_carry
+    }
+}
+
+impl Add<u8> for Int16 {
+    type Output = Int16;
+
+    fn add(self, number: u8) -> Self {
+        let hi = self.hi as u16;
+        let lo = self.lo as u16;
+        let result = lo.wrapping_add(number as u16);
+
+        Self {
+            lo: (result & 0xff) as u8,
+            hi: hi as u8,
+            is_carry: result >= 0x100,
+        }
+    }
+}
+
+impl AddAssign<u8> for Int16 {
+    fn add_assign(&mut self, number: u8) {
+        let lo = self.lo as u16;
+        let result = lo.wrapping_add(number as u16);
+
+        self.is_carry = result >= 0x100;
+        self.lo = (result & 0xff) as u8;
+    }
+}
+
+pub enum RegisterAccess {
+    A,
+    X,
+    Y,
+    None,
+}
+
+pub enum Microcode {
     FetchOpcode,
     FetchParameters,
+
+    // IMM
+    FetchImm,
+
+    // ABS
+    FetchLo,
+    FetchHi,
+
+    // ABX
+    // FetchLoX,
+    FetchHiX,
+
+    // ABY
+    // FetchLoY,
+    FetchHiY,
+
+    // ZP0
+    FetchLoZP,
+
+    // ZPX, ZPY
+    FetchLoZP1,
+
+    // IZX
+    FetchIZX1,
+    FetchIZX2,
+    FetchIZX3,
+    FetchIZX4,
+
+    // IZY
+    FetchIZY1,
+    FetchIZY2,
+    FetchIZY3,
+
+    // ABX, ABY, IZY
+    SetCrossPage,
+
     DelayedExecute,
     Execute,
+
+    // ASL
+    AslA,
+    AslFetch,
+    AslWrite,
+    AslAddAndWrite,
+
+    // BRK
+    BrkPushPCHi,
+    BrkPushPCLo,
+    BrkPushStatus,
+    BrkPushReadPCLo,
+    BrkPushReadPCHi,
+    BrkSetPC,
 }
 
 #[derive(Debug, Clone, Copy)]

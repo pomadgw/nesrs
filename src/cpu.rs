@@ -1,4 +1,3 @@
-mod addressing_mode;
 mod clock;
 mod opcodes;
 pub mod types;
@@ -22,12 +21,12 @@ pub struct CPU {
     address_mode: AddressMode,
     opcode_type: Opcode,
     is_read: bool,
-    lo: u8,
-    hi: u8,
+    address: Int16,
     temp: u8,
-    state: CPUStatus,
+    state: Microcode,
     absolute_address: usize,
     fetched_data: u8,
+    register_access: RegisterAccess,
 }
 
 impl CPU {
@@ -42,12 +41,12 @@ impl CPU {
             address_mode: AddressMode::Imp,
             opcode_type: Opcode::Brk,
             is_read: true,
-            lo: 0,
-            hi: 0,
             temp: 0,
-            state: CPUStatus::FetchOpcode,
+            state: Microcode::FetchOpcode,
             absolute_address: 0,
             fetched_data: 0,
+            address: Int16::new_from_16(0),
+            register_access: RegisterAccess::None,
         }
     }
 
@@ -55,15 +54,19 @@ impl CPU {
     pub fn reset(&mut self) {
         self.opcode = 0; // change opcode to BRK
         self.interrupt_type |= Interrupt::RESET; // Set interrupt type to reset
-        self.next_state(CPUStatus::FetchOpcode);
+        self.next_state(Microcode::FetchOpcode);
         self.set_instruction();
     }
 
     pub fn done(&self) -> bool {
         match self.state {
-            CPUStatus::FetchOpcode => true,
+            Microcode::FetchOpcode => true,
             _ => false,
         }
+    }
+
+    pub fn is_read(&self) -> bool {
+        self.is_read
     }
 
     // BEGIN PRIVATE
@@ -104,11 +107,7 @@ impl CPU {
         pc
     }
 
-    fn get_curr_word(&self) -> u16 {
-        (self.hi as u16) << 8 | (self.lo as u16)
-    }
-
-    fn next_state(&mut self, state: CPUStatus) {
+    fn next_state(&mut self, state: Microcode) {
         self.cycles = 0;
         self.state = state;
     }
@@ -118,7 +117,34 @@ impl CPU {
     }
 
     fn fetch_opcode(&mut self) {
-        self.next_state(CPUStatus::FetchOpcode);
+        self.next_state(Microcode::FetchOpcode);
+    }
+
+    fn is_write_instruction(&self) -> bool {
+        match self.opcode_type {
+            Opcode::Asl => true,
+            _ => false,
+        }
+    }
+
+    fn vector_address(&self) -> usize {
+        if self.interrupt_type.contains(Interrupt::RESET) {
+            INTERRUPT_RESET as usize
+        } else if self.interrupt_type.contains(Interrupt::NMI) {
+            INTERRUPT_NMI as usize
+        } else {
+            INTERRUPT_IRQ as usize
+        }
+    }
+
+    fn set_nz(&mut self, value: u8) {
+        if value == 0 {
+            self.regs.p |= StatusFlag::Z;
+        }
+
+        if (value & 0x80) > 0 {
+            self.regs.p |= StatusFlag::N;
+        }
     }
     // END PRIVATE
 }
