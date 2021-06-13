@@ -134,44 +134,44 @@ LDA:
         target_address: 0x65
         value: 0xaa
         cycles: 4
-#     - description: IZX
-#       code:
-#         - 0xa1
-#         - 0x55
-#       cpu:
-#         x: 0x10
-#       init_memories:
-#         - start: 0x65
-#           values:
-#             - 0x50
-#             - 0xc0
-#         - start: 0xc050
-#           values:
-#             - 0xaa
-#       expected:
-#         read_from: a
-#         target_address: 0xc050
-#         value: 0xaa
-#         cycles: 6
-#     - description: IZX (wrap up)
-#       code:
-#         - 0xa1
-#         - 0x55
-#       cpu:
-#         x: 0xff
-#       expected:
-#         read_from: a
-#         target_address: 0xc050
-#         value: 0xaa
-#         cycles: 6
-#       init_memories:
-#         - start: 0x54
-#           values:
-#             - 0x50
-#             - 0xc0
-#         - start: 0xc050
-#           values:
-#             - 0xaa
+    - description: IZX
+      code:
+        - 0xa1
+        - 0x55
+      cpu:
+        x: 0x10
+      init_memories:
+        - start: 0x65
+          values:
+            - 0x50
+            - 0xc0
+        - start: 0xc050
+          values:
+            - 0xaa
+      expected:
+        read_from: a
+        target_address: 0xc050
+        value: 0xaa
+        cycles: 6
+    - description: IZX (wrap up)
+      code:
+        - 0xa1
+        - 0x55
+      cpu:
+        x: 0xff
+      expected:
+        read_from: a
+        target_address: 0xc050
+        value: 0xaa
+        cycles: 6
+      init_memories:
+        - start: 0x54
+          values:
+            - 0x50
+            - 0xc0
+        - start: 0xc050
+          values:
+            - 0xaa
 #     - description: IZY
 #       code:
 #         - 0xb1

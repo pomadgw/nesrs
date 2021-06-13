@@ -69,6 +69,9 @@ impl CPU {
                         self.next_state(Microcode::FetchLoZP);
                         self.register_access = RegisterAccess::Y;
                     }
+                    AddressMode::Izx => {
+                        self.next_state(Microcode::FetchIZX1);
+                    }
                     _ => {
                         self.next_state(Microcode::FetchOpcode);
                     }
@@ -148,6 +151,25 @@ impl CPU {
             }
             Microcode::FetchHiY2 => {
                 self.address.add_hi_from_carry();
+                self.absolute_address = self.address.to_usize();
+                self.next_state(Microcode::Execute);
+            }
+            Microcode::FetchIZX1 => {
+                self.temp = self.get_next_pc_value(memory);
+                self.next_state(Microcode::FetchIZX2);
+            }
+            Microcode::FetchIZX2 => {
+                self.absolute_address = self.read(memory, self.temp as usize) as usize;
+                self.next_state(Microcode::FetchIZX3);
+            }
+            Microcode::FetchIZX3 => {
+                self.temp = self.temp.wrapping_add(self.regs.x);
+                self.address.lo = self.read(memory, self.temp as usize);
+                self.next_state(Microcode::FetchIZX4);
+            }
+            Microcode::FetchIZX4 => {
+                self.temp = self.temp.wrapping_add(1);
+                self.address.hi = self.read(memory, self.temp as usize);
                 self.absolute_address = self.address.to_usize();
                 self.next_state(Microcode::Execute);
             }

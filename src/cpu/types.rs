@@ -174,6 +174,12 @@ pub enum Microcode {
     // ZPX, ZPY
     FetchLoZP1,
 
+    // IZX
+    FetchIZX1,
+    FetchIZX2,
+    FetchIZX3,
+    FetchIZX4,
+
     DelayedExecute,
     Execute,
 
