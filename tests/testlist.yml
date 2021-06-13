@@ -952,3 +952,144 @@ STY:
         target_address: 0x603f
         value: 0x55
         cycles: 4
+TXS:
+  cases:
+    - description: IMP
+      code:
+        - 0x9a
+      cpu:
+        x: 0x12
+        sp: 0x00
+      expected:
+        read_from: sp
+        value: 0x12
+        cycles: 2
+TSX:
+  cases:
+    - description: IMP
+      code:
+        - 0xba
+      cpu:
+        x: 0x12
+        sp: 0xfe
+      expected:
+        read_from: x
+        value: 0xfe
+        cycles: 2
+PHA:
+  cases:
+    - description: IMP
+      code:
+        - 0x48
+      cpu:
+        a: 0x12
+        sp: 0xfe
+      expected:
+        read_from: address
+        target_address: 0x01fe
+        value: 0x12
+        cycles: 3
+    - description: Check SP
+      code:
+        - 0x48
+      cpu:
+        a: 0x12
+        sp: 0xfe
+      expected:
+        read_from: sp
+        value: 0xfd
+PLA:
+  cases:
+    - description: IMP
+      code:
+        - 0x68
+      cpu:
+        a: 0x12
+        sp: 0xfd
+      init_memories:
+        - start: 0x01fe
+          values:
+            - 0xaa
+      expected:
+        read_from: a
+        value: 0xaa
+        cycles: 4
+    - description: Check Z
+      code:
+        - 0x68
+      cpu:
+        a: 0x12
+        sp: 0xfd
+      init_memories:
+        - start: 0x01fe
+          values:
+            - 0x00
+      expected:
+        read_from: a
+        value: 0x00
+        check_flag:
+          z: true
+    - description: Check N
+      code:
+        - 0x68
+      cpu:
+        a: 0x12
+        sp: 0xfd
+      init_memories:
+        - start: 0x01fe
+          values:
+            - 0x80
+      expected:
+        read_from: a
+        value: 0x80
+        heck_flag:
+          n: true
+    - description: Check SP
+      code:
+        - 0x68
+      cpu:
+        a: 0x12
+        sp: 0xfd
+      expected:
+        read_from: sp
+        value: 0xfe
+PHP:
+  cases:
+    - description: IMP
+      code:
+        - 0x08
+      cpu:
+        p: 0x12
+        sp: 0xfe
+      expected:
+        read_from: address
+        target_address: 0x01fe
+        value: 0x32
+        cycles: 3
+    - description: IMP
+      code:
+        - 0x08
+      cpu:
+        p: 0x12
+        sp: 0xfe
+      expected:
+        read_from: address
+        target_address: 0x01fe
+        value: 0x32
+        cycles: 3
+PLP:
+  cases:
+    - description: IMP
+      code:
+        - 0x28
+      cpu:
+        p: 0x12
+        sp: 0xfd
+      init_memories:
+        - start: 0x01fe
+          values:
+            - 0xaa
+      expected:
+        read_from: p
+        value: 0xaa
+        cycles: 4

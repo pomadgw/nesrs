@@ -287,6 +287,35 @@ impl CPU {
                 self.regs.pc = self.address.to_u16();
                 self.fetch_opcode();
             }
+            // PHA
+            Microcode::PhaPushStack => {
+                self.push_stack(memory, self.regs.a);
+                self.fetch_opcode();
+            }
+            // PLA
+            Microcode::PlaPull => {
+                self.fetched_data = self.pull_stack(memory);
+                self.next_state(Microcode::PlaPull1);
+            }
+            Microcode::PlaPull1 => {
+                self.regs.a = self.fetched_data;
+                self.set_nz(self.fetched_data);
+                self.fetch_opcode();
+            }
+            // PHP
+            Microcode::PhpPushStack => {
+                self.push_stack(memory, self.regs.p.bits() | 0b00110000);
+                self.fetch_opcode();
+            }
+            // PLP
+            Microcode::PlpPull => {
+                self.fetched_data = self.pull_stack(memory);
+                self.next_state(Microcode::PlpPull1);
+            }
+            Microcode::PlpPull1 => {
+                self.regs.p.set_from_byte(self.fetched_data);
+                self.fetch_opcode();
+            }
             _ => {
                 self.fetch_opcode();
             }

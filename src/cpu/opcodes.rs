@@ -84,6 +84,27 @@ impl CPU {
                 self.set_nz(self.regs.y);
                 self.fetch_opcode();
             }
+            // stack-related
+            Opcode::Txs => {
+                self.regs.sp = self.regs.x;
+                self.fetch_opcode();
+            }
+            Opcode::Tsx => {
+                self.regs.x = self.regs.sp;
+                self.fetch_opcode();
+            }
+            Opcode::Pha => {
+                self.next_state(Microcode::PhaPushStack);
+            }
+            Opcode::Pla => {
+                self.next_state(Microcode::PlaPull);
+            }
+            Opcode::Php => {
+                self.next_state(Microcode::PhpPushStack);
+            }
+            Opcode::Plp => {
+                self.next_state(Microcode::PlpPull);
+            }
             _ => {
                 self.fetch_opcode();
             }

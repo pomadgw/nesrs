@@ -202,6 +202,20 @@ pub enum Microcode {
     BrkPushReadPCLo,
     BrkPushReadPCHi,
     BrkSetPC,
+
+    // PHA
+    PhaPushStack,
+
+    // PLA
+    PlaPull,
+    PlaPull1,
+
+    // PHP
+    PhpPushStack,
+
+    // PLP
+    PlpPull,
+    PlpPull1,
 }
 
 #[derive(Debug, Clone, Copy)]
