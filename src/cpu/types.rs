@@ -161,12 +161,10 @@ pub enum Microcode {
     // ABX
     // FetchLoX,
     FetchHiX,
-    FetchHiX2,
 
     // ABY
     // FetchLoY,
     FetchHiY,
-    FetchHiY2,
 
     // ZP0
     FetchLoZP,
@@ -185,6 +183,9 @@ pub enum Microcode {
     FetchIZY2,
     FetchIZY3,
     FetchIZY4,
+
+    // ABX, ABY, IZY
+    SetCrossPage,
 
     DelayedExecute,
     Execute,

@@ -130,32 +130,22 @@ impl CPU {
                 self.address += self.regs.x;
 
                 if self.address.has_carry() || self.is_write_instruction() {
-                    self.next_state(Microcode::FetchHiX2);
+                    self.next_state(Microcode::SetCrossPage);
                 } else {
                     self.absolute_address = self.address.to_usize();
                     self.next_state(Microcode::Execute);
                 }
-            }
-            Microcode::FetchHiX2 => {
-                self.address.add_hi_from_carry();
-                self.absolute_address = self.address.to_usize();
-                self.next_state(Microcode::Execute);
             }
             Microcode::FetchHiY => {
                 self.address.hi = self.get_next_pc_value(memory);
                 self.address += self.regs.y;
 
                 if self.address.has_carry() || self.is_write_instruction() {
-                    self.next_state(Microcode::FetchHiY2);
+                    self.next_state(Microcode::SetCrossPage);
                 } else {
                     self.absolute_address = self.address.to_usize();
                     self.next_state(Microcode::Execute);
                 }
-            }
-            Microcode::FetchHiY2 => {
-                self.address.add_hi_from_carry();
-                self.absolute_address = self.address.to_usize();
-                self.next_state(Microcode::Execute);
             }
             Microcode::FetchIZX1 => {
                 self.temp = self.get_next_pc_value(memory);
@@ -189,13 +179,13 @@ impl CPU {
                 self.address += self.regs.y;
 
                 if self.address.has_carry() || self.is_write_instruction() {
-                    self.next_state(Microcode::FetchIZY4);
+                    self.next_state(Microcode::SetCrossPage);
                 } else {
                     self.absolute_address = self.address.to_usize();
                     self.next_state(Microcode::Execute);
                 }
             }
-            Microcode::FetchIZY4 => {
+            Microcode::SetCrossPage => {
                 self.address.add_hi_from_carry();
                 self.absolute_address = self.address.to_usize();
                 self.next_state(Microcode::Execute);
