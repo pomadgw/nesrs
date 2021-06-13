@@ -1,4 +1,3 @@
-mod addressing_mode;
 mod clock;
 mod opcodes;
 pub mod types;
@@ -22,8 +21,6 @@ pub struct CPU {
     address_mode: AddressMode,
     opcode_type: Opcode,
     is_read: bool,
-    lo: u8,
-    hi: u8,
     address: Int16,
     temp: u8,
     state: Microcode,
@@ -44,8 +41,6 @@ impl CPU {
             address_mode: AddressMode::Imp,
             opcode_type: Opcode::Brk,
             is_read: true,
-            lo: 0,
-            hi: 0,
             temp: 0,
             state: Microcode::FetchOpcode,
             absolute_address: 0,
@@ -68,6 +63,10 @@ impl CPU {
             Microcode::FetchOpcode => true,
             _ => false,
         }
+    }
+
+    pub fn is_read(&self) -> bool {
+        self.is_read
     }
 
     // BEGIN PRIVATE
@@ -106,10 +105,6 @@ impl CPU {
         self.regs.pc = self.regs.pc.wrapping_add(1);
 
         pc
-    }
-
-    fn get_curr_word(&self) -> u16 {
-        (self.hi as u16) << 8 | (self.lo as u16)
     }
 
     fn next_state(&mut self, state: Microcode) {
