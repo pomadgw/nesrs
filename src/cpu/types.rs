@@ -207,9 +207,17 @@ pub enum Microcode {
     PhaReadA,
     PhaPushStack,
 
-    // PGA
+    // PLA
     PlaPull,
     PlaPull1,
+
+    // PHP
+    PhpReadP,
+    PhpPushStack,
+
+    // PLP
+    PlpPull,
+    PlpPull1,
 }
 
 #[derive(Debug, Clone, Copy)]

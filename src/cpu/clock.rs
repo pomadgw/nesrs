@@ -302,6 +302,20 @@ impl CPU {
                 self.set_nz(self.fetched_data);
                 self.fetch_opcode();
             }
+            // PHP
+            Microcode::PhpReadP => {
+                self.push_stack(memory, self.regs.p.bits() | 0b00110000);
+                self.fetch_opcode();
+            }
+            // PLP
+            Microcode::PlpPull => {
+                self.fetched_data = self.pull_stack(memory);
+                self.next_state(Microcode::PlpPull1);
+            }
+            Microcode::PlpPull1 => {
+                self.regs.p.set_from_byte(self.fetched_data);
+                self.fetch_opcode();
+            }
             _ => {
                 self.fetch_opcode();
             }

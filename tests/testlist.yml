@@ -1023,3 +1023,43 @@ PLA:
       expected:
         read_from: sp
         value: 0xfe
+PHP:
+  cases:
+    - description: IMP
+      code:
+        - 0x08
+      cpu:
+        p: 0x12
+        sp: 0xfe
+      expected:
+        read_from: address
+        target_address: 0x01fe
+        value: 0x32
+        cycles: 3
+    - description: IMP
+      code:
+        - 0x08
+      cpu:
+        p: 0x12
+        sp: 0xfe
+      expected:
+        read_from: address
+        target_address: 0x01fe
+        value: 0x32
+        cycles: 3
+PLP:
+  cases:
+    - description: IMP
+      code:
+        - 0x28
+      cpu:
+        p: 0x12
+        sp: 0xfd
+      init_memories:
+        - start: 0x01fe
+          values:
+            - 0xaa
+      expected:
+        read_from: p
+        value: 0xaa
+        cycles: 4

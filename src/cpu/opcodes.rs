@@ -99,6 +99,12 @@ impl CPU {
             Opcode::Pla => {
                 self.next_state(Microcode::PlaPull);
             }
+            Opcode::Php => {
+                self.next_state(Microcode::PhpReadP);
+            }
+            Opcode::Plp => {
+                self.next_state(Microcode::PlpPull);
+            }
             _ => {
                 self.fetch_opcode();
             }
