@@ -365,6 +365,22 @@ impl CPU {
                 self.regs.pc = self.absolute_address as u16;
                 self.fetch_opcode();
             }
+            // RTS
+            Microcode::RtsGetPcLo => {
+                self.tmp_address.lo = self.pull_stack(memory);
+                self.next_state(Microcode::RtsGetPcHi);
+            }
+            Microcode::RtsGetPcHi => {
+                self.tmp_address.hi = self.pull_stack(memory);
+                self.next_state(Microcode::RtsWasteOneCycle);
+            }
+            Microcode::RtsWasteOneCycle => {
+                self.next_state(Microcode::RtsJump);
+            }
+            Microcode::RtsJump => {
+                self.regs.pc = self.tmp_address.to_u16() + 1;
+                self.fetch_opcode();
+            }
             _ => {
                 self.fetch_opcode();
             }

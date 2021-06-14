@@ -1170,3 +1170,19 @@ JSR:
         target_address: 0x01fc
         value: 0x03
         cycles: 6
+RTS:
+  cases:
+    - description: IMP
+      code:
+        - 0x60
+      cpu:
+        sp: 0xfb
+      init_memories:
+        - start: 0x01fc
+          values:
+            - 0xaa
+            - 0xbb
+      expected:
+        read_from: pc
+        value: 0xbbab
+        cycles: 6

@@ -113,6 +113,9 @@ impl CPU {
                 self.regs.pc = self.absolute_address as u16;
                 self.fetch_opcode();
             }
+            Opcode::Rts => {
+                self.next_state(Microcode::RtsGetPcLo);
+            }
             _ => {
                 self.fetch_opcode();
             }

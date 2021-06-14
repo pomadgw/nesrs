@@ -227,6 +227,12 @@ pub enum Microcode {
     JsrSaveHiPrevPc,
     JsrSaveLoPrevPc,
     JsrJump,
+
+    // RTS
+    RtsGetPcLo,
+    RtsGetPcHi,
+    RtsJump,
+    RtsWasteOneCycle,
 }
 
 #[derive(Debug, Clone, Copy)]
