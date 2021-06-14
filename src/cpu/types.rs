@@ -186,6 +186,12 @@ pub enum Microcode {
     // ABX, ABY, IZY
     SetCrossPage,
 
+    // JMP IND
+    IndReadLo,
+    IndReadHi,
+    IndReadActualLo,
+    IndReadActualHiAndJump,
+
     DelayedExecute,
     Execute,
 
@@ -216,6 +222,17 @@ pub enum Microcode {
     // PLP
     PlpPull,
     PlpPull1,
+
+    // JSR
+    JsrSaveHiPrevPc,
+    JsrSaveLoPrevPc,
+    JsrJump,
+
+    // RTS
+    RtsGetPcLo,
+    RtsGetPcHi,
+    RtsJump,
+    RtsWasteOneCycle,
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -1093,3 +1093,96 @@ PLP:
         read_from: p
         value: 0xaa
         cycles: 4
+JMP:
+  cases:
+    - description: ABS
+      code:
+        - 0x4c
+        - 0xff
+        - 0x81
+      expected:
+        read_from: pc
+        value: 0x81ff
+        cycles: 3
+    - description: IND
+      code:
+        - 0x6c
+        - 0x00
+        - 0x81
+      init_memories:
+        - start: 0x8100
+          values:
+            - 0xaa
+            - 0xaa
+      expected:
+        read_from: pc
+        value: 0xaaaa
+        cycles: 5
+    - description: IND (check bug)
+      code:
+        - 0x6c
+        - 0xff
+        - 0x81
+      init_memories:
+        - start: 0x81ff
+          values:
+            - 0xaa
+            - 0xbb
+        - start: 0x8100
+          values:
+            - 0xaa
+      expected:
+        read_from: pc
+        value: 0xaaaa
+        cycles: 5
+JSR:
+  cases:
+    - description: ABS
+      code:
+        - 0x20
+        - 0xff
+        - 0x81
+      expected:
+        read_from: pc
+        value: 0x81ff
+        cycles: 6
+    - description: Save prev address (hi)
+      code:
+        - 0x20 # $8001
+        - 0xff # $8002
+        - 0x81 # $8003
+      cpu:
+        sp: 0xfd
+      expected:
+        read_from: address
+        target_address: 0x01fd
+        value: 0x80
+        cycles: 6
+    - description: Save prev address (lo)
+      code:
+        - 0x20 # $8001
+        - 0xff # $8002
+        - 0x81 # $8003
+      cpu:
+        sp: 0xfd
+      expected:
+        read_from: address
+        target_address: 0x01fc
+        value: 0x03
+        cycles: 6
+RTS:
+  cases:
+    - description: IMP
+      code:
+        - 0x60
+      cpu:
+        sp: 0xfb
+      init_memories:
+        - start: 0x01fc
+          values:
+            - 0xaa
+            - 0xbb
+      expected:
+        read_from: pc
+        value: 0xbbab
+        cycles: 6
