@@ -130,6 +130,8 @@ impl CPU {
                     // JMP ABS use 3 cycles -_-
                     self.regs.pc = self.absolute_address as u16;
                     self.fetch_opcode();
+                } else if let Opcode::Jsr = self.opcode_type {
+                    self.next_state(Microcode::JsrSaveHiPrevPc);
                 } else {
                     self.next_state(Microcode::Execute);
                 }
@@ -200,23 +202,23 @@ impl CPU {
                 self.next_state(Microcode::Execute);
             }
             Microcode::IndReadLo => {
-                self.ind_address.lo = self.get_next_pc_value(memory);
+                self.tmp_address.lo = self.get_next_pc_value(memory);
                 self.next_state(Microcode::IndReadHi);
             }
             Microcode::IndReadHi => {
-                self.ind_address.hi = self.get_next_pc_value(memory);
+                self.tmp_address.hi = self.get_next_pc_value(memory);
                 self.next_state(Microcode::IndReadActualLo);
             }
             Microcode::IndReadActualLo => {
-                self.address.lo = self.read(memory, self.ind_address.to_usize());
+                self.address.lo = self.read(memory, self.tmp_address.to_usize());
                 self.next_state(Microcode::IndReadActualHiAndJump);
             }
             Microcode::IndReadActualHiAndJump => {
                 // JMP indirect has a bug:
                 // if address is $xxff, the actual jump fetched
                 // is in $xxff and $xx00 (instead of $xxff + 1)
-                self.ind_address += 1;
-                self.address.hi = self.read(memory, self.ind_address.to_usize());
+                self.tmp_address += 1;
+                self.address.hi = self.read(memory, self.tmp_address.to_usize());
 
                 // Jump immediately
                 self.regs.pc = self.address.to_u16();
@@ -347,6 +349,20 @@ impl CPU {
             }
             Microcode::PlpPull1 => {
                 self.regs.p.set_from_byte(self.fetched_data);
+                self.fetch_opcode();
+            }
+            // JSR
+            Microcode::JsrSaveHiPrevPc => {
+                self.tmp_address.set_u16(self.regs.pc - 1);
+                self.push_stack(memory, self.tmp_address.hi);
+                self.next_state(Microcode::JsrSaveLoPrevPc);
+            }
+            Microcode::JsrSaveLoPrevPc => {
+                self.push_stack(memory, self.tmp_address.lo);
+                self.next_state(Microcode::JsrJump);
+            }
+            Microcode::JsrJump => {
+                self.regs.pc = self.absolute_address as u16;
                 self.fetch_opcode();
             }
             _ => {

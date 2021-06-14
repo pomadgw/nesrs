@@ -222,6 +222,11 @@ pub enum Microcode {
     // PLP
     PlpPull,
     PlpPull1,
+
+    // JSR
+    JsrSaveHiPrevPc,
+    JsrSaveLoPrevPc,
+    JsrJump,
 }
 
 #[derive(Debug, Clone, Copy)]

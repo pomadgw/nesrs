@@ -22,7 +22,7 @@ pub struct CPU {
     opcode_type: Opcode,
     is_read: bool,
     address: Int16,
-    ind_address: Int16,
+    tmp_address: Int16,
     temp: u8,
     state: Microcode,
     absolute_address: usize,
@@ -47,7 +47,7 @@ impl CPU {
             absolute_address: 0,
             fetched_data: 0,
             address: Int16::new_from_16(0),
-            ind_address: Int16::new_from_16(0),
+            tmp_address: Int16::new_from_16(0),
             register_access: RegisterAccess::None,
         }
     }
