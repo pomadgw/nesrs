@@ -329,7 +329,7 @@ impl CPU {
             }
             // PLA
             Microcode::PlaPull => {
-                self.fetched_data = self.pull_stack(memory);
+                self.fetched_data = self.pop_stack(memory);
                 self.next_state(Microcode::PlaPull1);
             }
             Microcode::PlaPull1 => {
@@ -344,7 +344,7 @@ impl CPU {
             }
             // PLP
             Microcode::PlpPull => {
-                self.fetched_data = self.pull_stack(memory);
+                self.fetched_data = self.pop_stack(memory);
                 self.next_state(Microcode::PlpPull1);
             }
             Microcode::PlpPull1 => {
@@ -367,11 +367,11 @@ impl CPU {
             }
             // RTS
             Microcode::RtsGetPcLo => {
-                self.tmp_address.lo = self.pull_stack(memory);
+                self.tmp_address.lo = self.pop_stack(memory);
                 self.next_state(Microcode::RtsGetPcHi);
             }
             Microcode::RtsGetPcHi => {
-                self.tmp_address.hi = self.pull_stack(memory);
+                self.tmp_address.hi = self.pop_stack(memory);
                 self.next_state(Microcode::RtsWasteOneCycle);
             }
             Microcode::RtsWasteOneCycle => {
