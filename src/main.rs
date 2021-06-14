@@ -29,10 +29,9 @@ fn main() -> std::io::Result<()> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
-    let mut memory = RAM {
-        a: buffer,
-    };
+    let mut memory = RAM { a: buffer };
 
+    cpu.debug = true;
     cpu.reset();
     loop_cpu!(cpu, memory);
     println!(
@@ -41,11 +40,25 @@ fn main() -> std::io::Result<()> {
     );
 
     loop_cpu!(cpu, memory);
-    println!("{}", cpu.see_prev_instruction());
+    cpu.print_debug();
     loop_cpu!(cpu, memory);
-    println!("{}", cpu.see_prev_instruction());
+    cpu.print_debug();
     loop_cpu!(cpu, memory);
-    println!("{}", cpu.see_prev_instruction());
+    cpu.print_debug();
+    loop_cpu!(cpu, memory);
+    cpu.print_debug();
+    loop_cpu!(cpu, memory);
+    cpu.print_debug();
+    loop_cpu!(cpu, memory);
+    cpu.print_debug();
+    loop_cpu!(cpu, memory);
+    cpu.print_debug();
+    loop_cpu!(cpu, memory);
+    cpu.print_debug();
+    loop_cpu!(cpu, memory);
+    cpu.print_debug();
+    loop_cpu!(cpu, memory);
+    cpu.print_debug();
 
     println!(
         "${:04X}: A: ${:02X} X: ${:02X} Y: ${:02X}",

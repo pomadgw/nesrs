@@ -1,5 +1,6 @@
 use crate::cpu::types::*;
 use crate::cpu::*;
+use std::fmt::Write;
 
 // macro_rules! word {
 //     ($lo:expr, $hi:expr) => {
@@ -24,13 +25,18 @@ impl CPU {
         match self.state {
             Microcode::FetchOpcode => {
                 self.instruction_debug.clear();
+                self.prev_pc = self.regs.pc;
                 self.opcode = self.get_next_pc_value(memory);
                 self.set_instruction();
                 self.address.lo = 0;
                 self.address.hi = 0;
                 self.address.clear_carry();
-                self.instruction_debug.push(self.opcode);
-                // self.next_state(Microcode::FetchParameters);
+
+                if self.debug {
+                    self.instruction_debug.push(self.opcode);
+                    self.formatted_params.clear();
+                    self.prev_cycles = self.total_cycles;
+                }
 
                 match self.address_mode {
                     AddressMode::Acc => {
@@ -86,13 +92,19 @@ impl CPU {
             }
             Microcode::FetchImm => {
                 self.absolute_address = self.get_pc();
-                self.instruction_debug.push(memory.read(self.absolute_address, true));
+                if self.debug {
+                    self.instruction_debug
+                        .push(memory.read(self.absolute_address, true));
+                    write!(self.formatted_params, "#${:02X}", self.instruction_debug[1]).unwrap();
+                }
                 self.next_state(Microcode::Execute);
                 self.run_next_state(memory);
             }
             Microcode::FetchLo => {
                 self.address.lo = self.get_next_pc_value(memory);
-                self.instruction_debug.push(self.address.lo);
+                if self.debug {
+                    self.instruction_debug.push(self.address.lo);
+                }
                 match self.register_access {
                     RegisterAccess::X => {
                         self.next_state(Microcode::FetchHiX);
@@ -107,17 +119,28 @@ impl CPU {
             }
             Microcode::FetchLoZP => {
                 self.address.lo = self.get_next_pc_value(memory);
-                self.instruction_debug.push(self.address.lo);
+                if self.debug {
+                    self.instruction_debug.push(self.address.lo);
+                }
                 match self.register_access {
                     RegisterAccess::X => {
+                        if self.debug {
+                            write!(self.formatted_params, "${:02X},X", self.address.lo).unwrap();
+                        }
                         self.address.lo += self.regs.x;
                         self.next_state(Microcode::FetchLoZP1);
                     }
                     RegisterAccess::Y => {
+                        if self.debug {
+                            write!(self.formatted_params, "${:02X},Y", self.address.lo).unwrap();
+                        }
                         self.address.lo += self.regs.y;
                         self.next_state(Microcode::FetchLoZP1);
                     }
                     _ => {
+                        if self.debug {
+                            write!(self.formatted_params, "${:02X},Y", self.address.lo).unwrap();
+                        }
                         self.absolute_address = self.address.to_usize();
                         self.next_state(Microcode::Execute);
                     }
@@ -129,8 +152,12 @@ impl CPU {
             }
             Microcode::FetchHi => {
                 self.address.hi = self.get_next_pc_value(memory);
-                self.instruction_debug.push(self.address.hi);
                 self.absolute_address = self.address.to_usize();
+
+                if self.debug {
+                    self.instruction_debug.push(self.address.hi);
+                    write!(self.formatted_params, "${:04X}", self.absolute_address).unwrap();
+                }
 
                 if let Opcode::Jmp = self.opcode_type {
                     // JMP ABS use 3 cycles -_-
@@ -144,6 +171,12 @@ impl CPU {
             }
             Microcode::FetchHiX => {
                 self.address.hi = self.get_next_pc_value(memory);
+
+                if self.debug {
+                    self.instruction_debug.push(self.address.hi);
+                    write!(self.formatted_params, "${:04X},X", self.absolute_address).unwrap();
+                }
+
                 self.address += self.regs.x;
 
                 if self.address.has_carry() || self.is_write_instruction() {
@@ -155,6 +188,10 @@ impl CPU {
             }
             Microcode::FetchHiY => {
                 self.address.hi = self.get_next_pc_value(memory);
+                if self.debug {
+                    self.instruction_debug.push(self.address.hi);
+                    write!(self.formatted_params, "${:04X},Y", self.absolute_address).unwrap();
+                }
                 self.address += self.regs.y;
 
                 if self.address.has_carry() || self.is_write_instruction() {
@@ -166,7 +203,10 @@ impl CPU {
             }
             Microcode::FetchIZX1 => {
                 self.temp = self.get_next_pc_value(memory);
-                self.instruction_debug.push(self.temp);
+                if self.debug {
+                    self.instruction_debug.push(self.temp);
+                    write!(self.formatted_params, "(${:02X},X)", self.temp).unwrap();
+                }
                 self.next_state(Microcode::FetchIZX2);
             }
             Microcode::FetchIZX2 => {
@@ -186,7 +226,10 @@ impl CPU {
             }
             Microcode::FetchIZY1 => {
                 self.temp = self.get_next_pc_value(memory);
-                self.instruction_debug.push(self.temp);
+                if self.debug {
+                    write!(self.formatted_params, "(${:02X}),Y", self.temp).unwrap();
+                    self.instruction_debug.push(self.temp);
+                }
                 self.next_state(Microcode::FetchIZY2);
             }
             Microcode::FetchIZY2 => {
@@ -211,10 +254,22 @@ impl CPU {
             }
             Microcode::IndReadLo => {
                 self.tmp_address.lo = self.get_next_pc_value(memory);
+                if self.debug {
+                    self.instruction_debug.push(self.tmp_address.lo);
+                }
                 self.next_state(Microcode::IndReadHi);
             }
             Microcode::IndReadHi => {
                 self.tmp_address.hi = self.get_next_pc_value(memory);
+                if self.debug {
+                    self.instruction_debug.push(self.tmp_address.hi);
+                    write!(
+                        self.formatted_params,
+                        "(${:04X})",
+                        self.tmp_address.to_u16()
+                    )
+                    .unwrap();
+                }
                 self.next_state(Microcode::IndReadActualLo);
             }
             Microcode::IndReadActualLo => {
