@@ -24,7 +24,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: build-ubuntu
-        path: target/release/famicom_emulator
+        path: target/release/nesrs
 
   build_windows:
     runs-on: windows-2016
@@ -38,4 +38,4 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: build-windows
-        path: target/release/famicom_emulator.exe
+        path: target/release/nesrs.exe
