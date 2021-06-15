@@ -116,6 +116,34 @@ impl CPU {
             Opcode::Rts => {
                 self.next_state(Microcode::RtsGetPcLo);
             }
+            Opcode::Sei => {
+                self.regs.p |= StatusFlag::I;
+                self.fetch_opcode();
+            }
+            Opcode::Cli => {
+                self.regs.p &= !StatusFlag::I;
+                self.fetch_opcode();
+            }
+            Opcode::Sec => {
+                self.regs.p |= StatusFlag::C;
+                self.fetch_opcode();
+            }
+            Opcode::Clc => {
+                self.regs.p &= !StatusFlag::C;
+                self.fetch_opcode();
+            }
+            Opcode::Sed => {
+                self.regs.p |= StatusFlag::D;
+                self.fetch_opcode();
+            }
+            Opcode::Cld => {
+                self.regs.p &= !StatusFlag::D;
+                self.fetch_opcode();
+            }
+            Opcode::Clv => {
+                self.regs.p &= !StatusFlag::V;
+                self.fetch_opcode();
+            }
             _ => {
                 self.fetch_opcode();
             }
