@@ -29,6 +29,10 @@ pub struct CPU {
     fetched_data: u8,
     register_access: RegisterAccess,
 
+    pub irq_pin: Pin,
+    pub nmi_pin: Pin,
+    stop_irq_pin: Pin,
+
     // for debug
     instruction_debug: Vec<u8>,
     prev_pc: u16,
@@ -56,6 +60,9 @@ impl CPU {
             address: Int16::new_from_16(0),
             tmp_address: Int16::new_from_16(0),
             register_access: RegisterAccess::None,
+            irq_pin: Pin::default(),
+            nmi_pin: Pin::default(),
+            stop_irq_pin: Pin::default(),
 
             instruction_debug: Vec::new(),
             prev_pc: 0,
@@ -69,6 +76,16 @@ impl CPU {
     pub fn reset(&mut self) {
         self.interrupt_type |= Interrupt::RESET; // Set interrupt type to reset
         self.next_state(Microcode::FetchOpcode);
+    }
+
+    pub fn irq(&mut self) {
+        if !self.regs.p.contains(StatusFlag::I) || !self.stop_irq_pin.is_pulled() {
+            self.interrupt_type |= Interrupt::IRQ;
+        }
+    }
+
+    pub fn nmi(&mut self) {
+        self.interrupt_type |= Interrupt::NMI;
     }
 
     pub fn done(&self) -> bool {

@@ -69,6 +69,45 @@ impl Interrupt {
     }
 }
 
+pub struct Pin {
+    pub delay: u32,
+    pub state: bool,
+}
+
+impl Pin {
+    pub fn default() -> Pin {
+        Pin {
+            delay: 0,
+            state: false,
+        }
+    }
+
+    pub fn pull(&mut self) {
+        self.delay = 0;
+        self.state = true;
+    }
+
+    pub fn clear(&mut self) {
+        self.delay = 0;
+        self.state = false;
+    }
+
+    pub fn pull_with_delay(&mut self, delay: u32) {
+        self.delay = delay;
+        self.state = true;
+    }
+
+    pub fn is_pulled(&self) -> bool {
+        self.delay == 0 && self.state
+    }
+
+    pub fn decrease_delay(&mut self) {
+        if self.delay > 0 {
+            self.delay -= 1;
+        }
+    }
+}
+
 pub struct Int16 {
     pub lo: u8,
     pub hi: u8,

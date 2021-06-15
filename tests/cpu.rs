@@ -53,7 +53,7 @@ mod cpu_tests {
         let prev_cycle = cpu.total_cycles;
 
         cpu.regs.p |= StatusFlag::I;
-        cpu.interrupt_type |= Interrupt::IRQ;
+        cpu.irq();
 
         loop_cpu!(cpu, memory);
         cpu.print_debug();
@@ -63,6 +63,7 @@ mod cpu_tests {
 
         let prev_cycle = cpu.total_cycles;
         cpu.regs.p &= !StatusFlag::I;
+        cpu.irq();
 
         let pc = cpu.regs.pc;
         loop_cpu!(cpu, memory);
@@ -104,7 +105,7 @@ mod cpu_tests {
         let prev_cycle = cpu.total_cycles;
 
         cpu.regs.p |= StatusFlag::I;
-        cpu.interrupt_type |= Interrupt::NMI;
+        cpu.nmi();
 
         let pc = cpu.regs.pc;
         loop_cpu!(cpu, memory);
