@@ -1,6 +1,10 @@
 use nesrs;
 use nesrs::cpu::*;
 use nesrs::memory::*;
+use std::time::Instant;
+
+use std::fs::File;
+use std::io::prelude::*;
 
 #[macro_use]
 mod macros;
@@ -19,24 +23,37 @@ impl Memory for RAM {
     }
 }
 
-fn main() {
-    let mut cpu = nesrs::cpu::CPU::new();
+fn main() -> std::io::Result<()> {
+    let mut cpu = CPU::new();
 
-    let mut memory = RAM {
-        a: vec![0; 0x10000],
-    };
+    let mut file = File::open("./test.rom")?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)?;
 
-    set_reset!(memory, 0x8000);
+    let mut memory = RAM { a: buffer };
+
+    cpu.debug = true;
     cpu.reset();
     loop_cpu!(cpu, memory);
+    println!(
+        "${:04X}: A: ${:02X} X: ${:02X} Y: ${:02X}",
+        cpu.regs.pc, cpu.regs.a, cpu.regs.x, cpu.regs.y
+    );
 
-    set_ram!(memory, 0x8000, [0xa9, 0x10, 0xaa, 0xa8]);
-    loop_cpu!(cpu, memory);
-    loop_cpu!(cpu, memory);
-    loop_cpu!(cpu, memory);
+    let now = Instant::now();
+
+    for _i in 0..10 {
+        let prev = now.elapsed().as_nanos();
+        loop_cpu!(cpu, memory);
+        cpu.print_debug();
+        let current = now.elapsed().as_nanos();
+        println!("time: {} ns", current - prev);
+    }
 
     println!(
         "${:04X}: A: ${:02X} X: ${:02X} Y: ${:02X}",
         cpu.regs.pc, cpu.regs.a, cpu.regs.x, cpu.regs.y
     );
+
+    Ok(())
 }

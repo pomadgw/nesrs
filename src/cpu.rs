@@ -28,6 +28,13 @@ pub struct CPU {
     absolute_address: usize,
     fetched_data: u8,
     register_access: RegisterAccess,
+
+    // for debug
+    instruction_debug: Vec<u8>,
+    prev_pc: u16,
+    prev_cycles: u32,
+    formatted_params: String,
+    pub debug: bool,
 }
 
 impl CPU {
@@ -49,6 +56,12 @@ impl CPU {
             address: Int16::new_from_16(0),
             tmp_address: Int16::new_from_16(0),
             register_access: RegisterAccess::None,
+
+            instruction_debug: Vec::new(),
+            prev_pc: 0,
+            prev_cycles: 0,
+            formatted_params: String::new(),
+            debug: false,
         }
     }
 
@@ -69,6 +82,53 @@ impl CPU {
 
     pub fn is_read(&self) -> bool {
         self.is_read
+    }
+
+    fn see_prev_pc(&self) -> String {
+        format!("{:04X}", self.prev_pc)
+    }
+
+    fn get_registry_status(&self) -> String {
+        format!(
+            "A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+            self.regs.a, self.regs.x, self.regs.y, self.regs.p, self.regs.sp
+        )
+    }
+
+    fn see_prev_instruction_bytes(&self) -> String {
+        match self.instruction_debug.len() {
+            1 => format!("{:02X}", self.instruction_debug[0]),
+            2 => format!(
+                "{:02X} {:02X}",
+                self.instruction_debug[0], self.instruction_debug[1]
+            ),
+            3 => format!(
+                "{:02X} {:02X} {:02X}",
+                self.instruction_debug[0], self.instruction_debug[1], self.instruction_debug[2]
+            ),
+            _ => format!(""),
+        }
+    }
+
+    fn see_prev_instruction(&self) -> String {
+        format!(
+            "{} {}",
+            self.opcode_type.to_string().to_uppercase(),
+            self.formatted_params
+        )
+    }
+
+    pub fn print_debug(&self) {
+        if self.debug {
+            println!(
+                "{}  {:9} {:31} {} CYC:{:<5}",
+                self.see_prev_pc(),
+                self.see_prev_instruction_bytes(),
+                self.see_prev_instruction(),
+                self.get_registry_status(),
+                self.prev_cycles
+            );
+        }
     }
 
     // BEGIN PRIVATE
