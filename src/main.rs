@@ -32,7 +32,7 @@ fn main() -> std::io::Result<()> {
 
     let mut memory = RAM { a: buffer };
 
-    cpu.debug = false;
+    cpu.debug = true;
     cpu.reset();
     loop_cpu!(cpu, memory);
     println!(
@@ -41,14 +41,13 @@ fn main() -> std::io::Result<()> {
     );
 
     let now = Instant::now();
-    let mut prev = 0;
 
     for _i in 0..10 {
+        let prev = now.elapsed().as_nanos();
         loop_cpu!(cpu, memory);
         cpu.print_debug();
         let current = now.elapsed().as_nanos();
         println!("time: {} ns", current - prev);
-        prev = current;
     }
 
     println!(
