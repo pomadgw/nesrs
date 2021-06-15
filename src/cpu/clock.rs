@@ -382,6 +382,9 @@ impl CPU {
                 self.next_state(Microcode::BrkSetPC);
             }
             Microcode::BrkSetPC => {
+                if self.interrupt_type.contains(Interrupt::RESET) {
+                    self.interrupt_type &= !Interrupt::RESET;
+                }
                 self.regs.pc = self.address.to_u16();
                 self.fetch_opcode();
             }
