@@ -1,6 +1,7 @@
 use nesrs;
 use nesrs::cpu::*;
 use nesrs::memory::*;
+use std::time::Instant;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -31,7 +32,7 @@ fn main() -> std::io::Result<()> {
 
     let mut memory = RAM { a: buffer };
 
-    cpu.debug = true;
+    cpu.debug = false;
     cpu.reset();
     loop_cpu!(cpu, memory);
     println!(
@@ -39,26 +40,16 @@ fn main() -> std::io::Result<()> {
         cpu.regs.pc, cpu.regs.a, cpu.regs.x, cpu.regs.y
     );
 
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
-    loop_cpu!(cpu, memory);
-    cpu.print_debug();
+    let now = Instant::now();
+    let mut prev = 0;
+
+    for _i in 0..10 {
+        loop_cpu!(cpu, memory);
+        cpu.print_debug();
+        let current = now.elapsed().as_nanos();
+        println!("time: {} ns", current - prev);
+        prev = current;
+    }
 
     println!(
         "${:04X}: A: ${:02X} X: ${:02X} Y: ${:02X}",
