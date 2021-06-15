@@ -139,7 +139,7 @@ impl CPU {
                     }
                     _ => {
                         if self.debug {
-                            write!(self.formatted_params, "${:02X},Y", self.address.lo).unwrap();
+                            write!(self.formatted_params, "${:02X}", self.address.lo).unwrap();
                         }
                         self.absolute_address = self.address.to_usize();
                         self.next_state(Microcode::Execute);
