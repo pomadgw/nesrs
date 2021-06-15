@@ -8,6 +8,9 @@ impl CPU {
                 self.next_state(Microcode::BrkPushPCHi);
                 self.run_next_state(memory);
             }
+            Opcode::Rti => {
+                self.next_state(Microcode::RtiPopStatus);
+            }
             Opcode::Lda => {
                 self.regs.a = self.read(memory, self.absolute_address);
                 self.set_nz(self.regs.a);

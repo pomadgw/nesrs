@@ -7,7 +7,7 @@ pub struct RAM {
 impl RAM {
     pub fn new() -> RAM {
         RAM {
-            ram: vec![0; 0x10000],
+            ram: vec![0xea; 0x10000],
         }
     }
 }
