@@ -8,7 +8,7 @@ mod test_utils;
 mod macros;
 
 #[cfg(test)]
-mod cpu_lda_tests {
+mod cpu_tests {
     use crate::test_utils::*;
     use nesrs::cpu::types::*;
     use nesrs::cpu::*;
