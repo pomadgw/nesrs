@@ -17,7 +17,7 @@ pub struct CPU {
     pub total_cycles: u32,
     cycles: u32,
     opcode: u8,
-    interrupt_type: Interrupt,
+    pub interrupt_type: Interrupt,
     address_mode: AddressMode,
     opcode_type: Opcode,
     is_read: bool,
@@ -67,10 +67,8 @@ impl CPU {
 
     /// Reset the CPU
     pub fn reset(&mut self) {
-        self.opcode = 0; // change opcode to BRK
         self.interrupt_type |= Interrupt::RESET; // Set interrupt type to reset
         self.next_state(Microcode::FetchOpcode);
-        self.set_instruction();
     }
 
     pub fn done(&self) -> bool {

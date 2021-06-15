@@ -26,7 +26,21 @@ impl CPU {
             Microcode::FetchOpcode => {
                 self.instruction_debug.clear();
                 self.prev_pc = self.regs.pc;
-                self.opcode = self.get_next_pc_value(memory);
+
+                println!("{:08b}", self.interrupt_type.bits());
+
+                if self.interrupt_type.contains(Interrupt::NMI)
+                    || self.interrupt_type.contains(Interrupt::RESET)
+                {
+                    self.opcode = 0;
+                } else if self.interrupt_type.contains(Interrupt::IRQ)
+                    && !self.regs.p.contains(StatusFlag::I)
+                {
+                    self.opcode = 0;
+                } else {
+                    self.opcode = self.get_next_pc_value(memory);
+                }
+
                 self.set_instruction();
                 self.address.lo = 0;
                 self.address.hi = 0;
@@ -382,9 +396,7 @@ impl CPU {
                 self.next_state(Microcode::BrkSetPC);
             }
             Microcode::BrkSetPC => {
-                if self.interrupt_type.contains(Interrupt::RESET) {
-                    self.interrupt_type &= !Interrupt::RESET;
-                }
+                self.interrupt_type.clear();
                 self.regs.pc = self.address.to_u16();
                 self.fetch_opcode();
             }
@@ -445,6 +457,28 @@ impl CPU {
             }
             Microcode::RtsJump => {
                 self.regs.pc = self.tmp_address.to_u16() + 1;
+                self.fetch_opcode();
+            }
+            // RTI
+            Microcode::RtiPopStatus => {
+                let status = self.pop_stack(memory);
+                self.regs.p.set_from_byte(status);
+                self.next_state(Microcode::RtiPopLoPC);
+            }
+            Microcode::RtiPopLoPC => {
+                let lo = self.pop_stack(memory);
+                self.address.lo = lo;
+                self.next_state(Microcode::RtiPopHiPC);
+            }
+            Microcode::RtiPopHiPC => {
+                let hi = self.pop_stack(memory);
+                self.address.hi = hi;
+                self.next_state(Microcode::RtiSetPC);
+            }
+            Microcode::RtiSetPC => {
+                self.regs.pc = self.address.to_u16();
+                self.regs.p |= StatusFlag::U;
+                self.regs.p &= !StatusFlag::B;
                 self.fetch_opcode();
             }
             _ => {

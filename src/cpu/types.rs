@@ -63,6 +63,12 @@ bitflags! {
     }
 }
 
+impl Interrupt {
+    pub fn clear(&mut self) {
+        self.bits = 0;
+    }
+}
+
 pub struct Int16 {
     pub lo: u8,
     pub hi: u8,
@@ -233,6 +239,12 @@ pub enum Microcode {
     RtsGetPcHi,
     RtsJump,
     RtsWasteOneCycle,
+
+    // RTI
+    RtiPopStatus,
+    RtiPopLoPC,
+    RtiPopHiPC,
+    RtiSetPC,
 }
 
 #[derive(Debug, Clone, Copy)]
