@@ -1,0 +1,23 @@
+name: Rust
+
+on:
+  push:
+    branches:
+      - test/*
+
+jobs:
+  build_ubuntu:
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install_dependencies
+      run: |
+        sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe restricted multiverse"
+        sudo apt-get update -y -qq
+        # sudo apt-get install libsdl2-dev libsdl2-ttf-dev
+    - name: Build
+      run: cargo build --verbose --release
+    - name: Run tests
+      run: cargo test --verbose
