@@ -174,10 +174,10 @@ impl CPU {
     fn set_instruction(&mut self) {
         let opcode_num = self.opcode as usize;
         match &OPCODE_TABLE[opcode_num] {
-            (address_mode, opcode, _cycle) => {
+            (address_mode, opcode, cycle) => {
                 self.address_mode = *address_mode;
                 self.opcode_type = *opcode;
-                // self.cycles = *cycle;
+                self.cycles = *cycle;
             }
         }
     }

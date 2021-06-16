@@ -147,8 +147,17 @@ impl CPU {
                 self.regs.p &= !StatusFlag::V;
                 self.fetch_opcode();
             }
-            _ => {
+            Opcode::And => {
+                self.regs.a &= self.read(memory, self.absolute_address);
+                self.set_nz(self.regs.a);
                 self.fetch_opcode();
+            }
+            _ => {
+                if self.cycles > 0 {
+                    self.cycles -= 1;
+                } else {
+                    self.fetch_opcode();
+                }
             }
         }
     }
