@@ -4,7 +4,7 @@ NES and 6502 emulator in Rust.
 ## Implemented Opcodes
 
 - [ ] ADC
-- [ ] AND
+- [x] AND
 - [x] ASL
 - [ ] BCC
 - [ ] BCS
@@ -37,7 +37,7 @@ NES and 6502 emulator in Rust.
 - [x] LDY
 - [ ] LSR
 - [ ] NOP
-- [ ] ORA
+- [x] ORA
 - [x] PHA
 - [x] PHP
 - [x] PLA
