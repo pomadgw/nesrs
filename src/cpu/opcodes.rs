@@ -152,6 +152,11 @@ impl CPU {
                 self.set_nz(self.regs.a);
                 self.fetch_opcode();
             }
+            Opcode::Ora => {
+                self.regs.a |= self.read(memory, self.absolute_address);
+                self.set_nz(self.regs.a);
+                self.fetch_opcode();
+            }
             _ => {
                 if self.cycles > 0 {
                     self.cycles -= 1;

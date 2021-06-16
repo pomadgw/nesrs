@@ -1494,3 +1494,234 @@ AND:
         target_address: 0xc100
         value: 0x06
         cycles: 6
+ORA:
+  cases:
+    - description: IMM
+      code:
+        - 0x09
+        - 0x55
+      cpu:
+        a: 0x01
+      expected:
+        read_from: a
+        value: 0x55
+        cycles: 2
+    - description: IMM
+      code:
+        - 0x09
+        - 0x00
+      cpu:
+        a: 0x00
+      expected:
+        read_from: a
+        value: 0x00
+        cycles: 2
+        check_flag:
+          z: true
+    - description: IMM
+      code:
+        - 0x09
+        - 0x00
+      cpu:
+        a: 0x80
+      expected:
+        read_from: a
+        value: 0x80
+        cycles: 2
+        check_flag:
+          n: true
+    - description: ABS
+      code:
+        - 0x0d
+        - 0x55
+        - 0x54
+      init_memories:
+        - start: 0x5455
+          values:
+            - 0x16
+      cpu:
+        a: 0x07
+      expected:
+        read_from: a
+        target_address: 0x5455
+        value: 0x17
+        cycles: 4
+    - description: ABX
+      code:
+        - 0x1d
+        - 0x55
+        - 0x54
+      cpu:
+        a: 0x07
+        x: 0x10
+      init_memories:
+        - start: 0x5465
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0x5465
+        value: 0x17
+        cycles: 4
+    - description: ABX (cross page)
+      code:
+        - 0x1d
+        - 0xf5
+        - 0x54
+      cpu:
+        a: 0x07
+        x: 0x10
+      init_memories:
+        - start: 0x5505
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0x5505
+        value: 0x17
+        cycles: 5
+    - description: ABY
+      code:
+        - 0x19
+        - 0x55
+        - 0x54
+      cpu:
+        a: 0x07
+        y: 0x10
+      init_memories:
+        - start: 0x5465
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0x5465
+        value: 0x17
+        cycles: 4
+    - description: ABY (cross page)
+      code:
+        - 0x19
+        - 0xf5
+        - 0x54
+      cpu:
+        a: 0x07
+        y: 0x10
+      init_memories:
+        - start: 0x5505
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0x5505
+        value: 0x17
+        cycles: 5
+    - description: ZP0
+      code:
+        - 0x05
+        - 0x55
+      init_memories:
+        - start: 0x55
+          values:
+            - 0x16
+      cpu:
+        a: 0x07
+      expected:
+        read_from: a
+        target_address: 0x55
+        value: 0x17
+        cycles: 3
+    - description: ZPX
+      code:
+        - 0x15
+        - 0x55
+      cpu:
+        a: 0x07
+        x: 0x10
+      init_memories:
+        - start: 0x65
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0x65
+        value: 0x17
+        cycles: 4
+    - description: IZX
+      code:
+        - 0x01
+        - 0x55
+      cpu:
+        a: 0x07
+        x: 0x10
+      init_memories:
+        - start: 0x65
+          values:
+            - 0x50
+            - 0xc0
+        - start: 0xc050
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0xc050
+        value: 0x17
+        cycles: 6
+    - description: IZX (wrap up)
+      code:
+        - 0x01
+        - 0x55
+      cpu:
+        a: 0x07
+        x: 0xff
+      init_memories:
+        - start: 0x54
+          values:
+            - 0x50
+            - 0xc0
+        - start: 0xc050
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0xc050
+        value: 0x17
+        cycles: 6
+    - description: IZY
+      code:
+        - 0x11
+        - 0x55
+      cpu:
+        a: 0x07
+        y: 0x10
+      init_memories:
+        - start: 0x55
+          values:
+            - 0x50
+            - 0xc0
+        - start: 0xc060
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0xc060
+        value: 0x17
+        cycles: 5
+    - description: IZY (cross page)
+      code:
+        - 0x11
+        - 0x55
+      cpu:
+        a: 0x07
+        y: 0xff
+      init_memories:
+        - start: 0x55
+          values:
+            - 0x01
+            - 0xc0
+        - start: 0xc100
+          values:
+            - 0x16
+      expected:
+        read_from: a
+        target_address: 0xc100
+        value: 0x17
+        cycles: 6
