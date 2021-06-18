@@ -9,7 +9,7 @@ NES and 6502 emulator in Rust.
 - [ ] BCC
 - [ ] BCS
 - [ ] BEQ
-- [ ] BIT
+- [x] BIT
 - [ ] BMI
 - [ ] BNE
 - [ ] BPL
