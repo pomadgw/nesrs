@@ -162,6 +162,22 @@ impl CPU {
                 self.set_nz(self.regs.a);
                 self.fetch_opcode();
             }
+            Opcode::Bit => {
+                self.fetched_data = self.read(memory, self.absolute_address);
+                if (self.fetched_data & self.regs.a) == 0 {
+                    self.regs.p |= StatusFlag::Z;
+                } else {
+                    self.regs.p &= !StatusFlag::Z;
+                }
+                if (self.fetched_data & 0b1000_0000) == 0 {
+                    self.regs.p |= StatusFlag::Z;
+                } else {
+                    self.regs.p &= !StatusFlag::Z;
+                }
+                let bit = (self.regs.p.bits() & 0b0011_1111) | (self.fetched_data & 0b1100_0000);
+                self.regs.p.set_from_byte(bit);
+                self.fetch_opcode();
+            }
             _ => {
                 if self.cycles > 0 {
                     self.cycles -= 1;
