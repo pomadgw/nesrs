@@ -482,7 +482,11 @@ impl CPU {
                 self.fetch_opcode();
             }
             _ => {
-                self.fetch_opcode();
+                if self.cycles > 0 {
+                    self.cycles -= 1;
+                } else {
+                    self.fetch_opcode();
+                }
             }
         }
     }
