@@ -26,7 +26,7 @@ NES and 6502 emulator in Rust.
 - [ ] DEC
 - [x] DEX
 - [x] DEY
-- [ ] EOR
+- [x] EOR
 - [ ] INC
 - [x] INX
 - [x] INY
