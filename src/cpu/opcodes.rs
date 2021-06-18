@@ -169,11 +169,7 @@ impl CPU {
                 } else {
                     self.regs.p &= !StatusFlag::Z;
                 }
-                if (self.fetched_data & 0b1000_0000) == 0 {
-                    self.regs.p |= StatusFlag::Z;
-                } else {
-                    self.regs.p &= !StatusFlag::Z;
-                }
+
                 let bit = (self.regs.p.bits() & 0b0011_1111) | (self.fetched_data & 0b1100_0000);
                 self.regs.p.set_from_byte(bit);
                 self.fetch_opcode();
