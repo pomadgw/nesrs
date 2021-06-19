@@ -117,27 +117,58 @@ mod cpu_tests {
 
                 match &case.expected.read_from[..] {
                     "a" => {
-                        assert_eq!(cpu.regs.a, case.expected.value as u8);
+                        assert_eq!(
+                            cpu.regs.a, case.expected.value as u8,
+                            "Register A EXPECTED: {:02X} RESULT: {:02X}",
+                            case.expected.value, cpu.regs.a
+                        );
                     }
                     "x" => {
-                        assert_eq!(cpu.regs.x, case.expected.value as u8);
+                        assert_eq!(
+                            cpu.regs.x, case.expected.value as u8,
+                            "Register X EXPECTED: {:02X} RESULT: {:02X}",
+                            case.expected.value, cpu.regs.x
+                        );
                     }
                     "y" => {
-                        assert_eq!(cpu.regs.y, case.expected.value as u8);
+                        assert_eq!(
+                            cpu.regs.y, case.expected.value as u8,
+                            "Register Y EXPECTED: {:02X} RESULT: {:02X}",
+                            case.expected.value, cpu.regs.y
+                        );
                     }
                     "sp" => {
-                        assert_eq!(cpu.regs.sp, case.expected.value as u8);
+                        assert_eq!(
+                            cpu.regs.sp, case.expected.value as u8,
+                            "Stack position EXPECTED: {:02X} RESULT: {:02X}",
+                            case.expected.value, cpu.regs.a
+                        );
                     }
                     "p" => {
-                        assert_eq!(cpu.regs.p.bits(), case.expected.value as u8);
+                        assert_eq!(
+                            cpu.regs.p.bits(),
+                            case.expected.value as u8,
+                            "Status regiister EXPECTED: {:02X} RESULT: {:02X}",
+                            case.expected.value,
+                            cpu.regs.a
+                        );
                     }
                     "pc" => {
-                        assert_eq!(cpu.regs.pc, case.expected.value);
+                        assert_eq!(
+                            cpu.regs.pc, case.expected.value,
+                            "PC EXPECTED: {:02X} RESULT: {:02X}",
+                            case.expected.value, cpu.regs.a
+                        );
                     }
                     "address" => {
+                        let result = memory.read(case.expected.target_address.unwrap_or(0), false);
                         assert_eq!(
-                            memory.read(case.expected.target_address.unwrap_or(0), false),
-                            case.expected.value as u8
+                            result,
+                            case.expected.value as u8,
+                            "Memory content {:04X} EXPECTED: {:02X} RESULT: {:02X}",
+                            case.expected.target_address.unwrap_or(0),
+                            case.expected.value,
+                            result
                         );
                     }
                     _ => {}
@@ -150,27 +181,57 @@ mod cpu_tests {
                 if let Some(flag_check) = &case.expected.check_flag {
                     if let Some(expected_value) = flag_check.n {
                         println!("[TEST]      > Test N flag");
-                        assert_eq!(cpu.regs.p.contains(StatusFlag::N), expected_value);
+                        assert_eq!(
+                            cpu.regs.p.contains(StatusFlag::N),
+                            expected_value,
+                            "N flags EXPECTED: {} RESULT: {}",
+                            expected_value,
+                            cpu.regs.p.contains(StatusFlag::N)
+                        );
                     }
 
                     if let Some(expected_value) = flag_check.z {
                         println!("[TEST]      > Test Z flag");
-                        assert_eq!(cpu.regs.p.contains(StatusFlag::Z), expected_value);
+                        assert_eq!(
+                            cpu.regs.p.contains(StatusFlag::Z),
+                            expected_value,
+                            "Z flags EXPECTED: {} RESULT: {}",
+                            expected_value,
+                            cpu.regs.p.contains(StatusFlag::Z)
+                        );
                     }
 
                     if let Some(expected_value) = flag_check.c {
                         println!("[TEST]      > Test C flag");
-                        assert_eq!(cpu.regs.p.contains(StatusFlag::C), expected_value);
+                        assert_eq!(
+                            cpu.regs.p.contains(StatusFlag::C),
+                            expected_value,
+                            "C flags EXPECTED: {} RESULT: {}",
+                            expected_value,
+                            cpu.regs.p.contains(StatusFlag::C)
+                        );
                     }
 
                     if let Some(expected_value) = flag_check.i {
-                        println!("[TEST]      > Test C flag");
-                        assert_eq!(cpu.regs.p.contains(StatusFlag::I), expected_value);
+                        println!("[TEST]      > Test I flag");
+                        assert_eq!(
+                            cpu.regs.p.contains(StatusFlag::I),
+                            expected_value,
+                            "I flags EXPECTED: {} RESULT: {}",
+                            expected_value,
+                            cpu.regs.p.contains(StatusFlag::I)
+                        );
                     }
 
                     if let Some(expected_value) = flag_check.v {
-                        println!("[TEST]      > Test C flag");
-                        assert_eq!(cpu.regs.p.contains(StatusFlag::V), expected_value);
+                        println!("[TEST]      > Test V flag");
+                        assert_eq!(
+                            cpu.regs.p.contains(StatusFlag::V),
+                            expected_value,
+                            "V flags EXPECTED: {} RESULT: {}",
+                            expected_value,
+                            cpu.regs.p.contains(StatusFlag::V)
+                        );
                     }
                 }
             }
