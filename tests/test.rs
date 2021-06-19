@@ -36,9 +36,9 @@ mod cpu_tests {
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct Expected {
-        read_from: String,
+        read_from: Option<String>,
         target_address: Option<usize>,
-        value: u16,
+        value: Option<u16>,
         cycles: Option<u32>,
         check_flag: Option<CheckFlag>,
     }
@@ -115,63 +115,68 @@ mod cpu_tests {
 
                 loop_cpu!(cpu, memory);
 
-                match &case.expected.read_from[..] {
-                    "a" => {
-                        assert_eq!(
-                            cpu.regs.a, case.expected.value as u8,
-                            "Register A EXPECTED: {:02X} RESULT: {:02X}",
-                            case.expected.value, cpu.regs.a
-                        );
+                if let Some(read_from) = &case.expected.read_from {
+                    let expected_value = case.expected.value.unwrap();
+
+                    match &read_from[..] {
+                        "a" => {
+                            assert_eq!(
+                                cpu.regs.a, expected_value as u8,
+                                "Register A EXPECTED: {:02X} RESULT: {:02X}",
+                                expected_value, cpu.regs.a
+                            );
+                        }
+                        "x" => {
+                            assert_eq!(
+                                cpu.regs.x, expected_value as u8,
+                                "Register X EXPECTED: {:02X} RESULT: {:02X}",
+                                expected_value, cpu.regs.x
+                            );
+                        }
+                        "y" => {
+                            assert_eq!(
+                                cpu.regs.y, expected_value as u8,
+                                "Register Y EXPECTED: {:02X} RESULT: {:02X}",
+                                expected_value, cpu.regs.y
+                            );
+                        }
+                        "sp" => {
+                            assert_eq!(
+                                cpu.regs.sp, expected_value as u8,
+                                "Stack position EXPECTED: {:02X} RESULT: {:02X}",
+                                expected_value, cpu.regs.a
+                            );
+                        }
+                        "p" => {
+                            assert_eq!(
+                                cpu.regs.p.bits(),
+                                expected_value as u8,
+                                "Status regiister EXPECTED: {:02X} RESULT: {:02X}",
+                                expected_value,
+                                cpu.regs.a
+                            );
+                        }
+                        "pc" => {
+                            assert_eq!(
+                                cpu.regs.pc, expected_value,
+                                "PC EXPECTED: {:02X} RESULT: {:02X}",
+                                expected_value, cpu.regs.a
+                            );
+                        }
+                        "address" => {
+                            let result =
+                                memory.read(case.expected.target_address.unwrap_or(0), false);
+                            assert_eq!(
+                                result,
+                                expected_value as u8,
+                                "Memory content {:04X} EXPECTED: {:02X} RESULT: {:02X}",
+                                case.expected.target_address.unwrap_or(0),
+                                expected_value,
+                                result
+                            );
+                        }
+                        _ => {}
                     }
-                    "x" => {
-                        assert_eq!(
-                            cpu.regs.x, case.expected.value as u8,
-                            "Register X EXPECTED: {:02X} RESULT: {:02X}",
-                            case.expected.value, cpu.regs.x
-                        );
-                    }
-                    "y" => {
-                        assert_eq!(
-                            cpu.regs.y, case.expected.value as u8,
-                            "Register Y EXPECTED: {:02X} RESULT: {:02X}",
-                            case.expected.value, cpu.regs.y
-                        );
-                    }
-                    "sp" => {
-                        assert_eq!(
-                            cpu.regs.sp, case.expected.value as u8,
-                            "Stack position EXPECTED: {:02X} RESULT: {:02X}",
-                            case.expected.value, cpu.regs.a
-                        );
-                    }
-                    "p" => {
-                        assert_eq!(
-                            cpu.regs.p.bits(),
-                            case.expected.value as u8,
-                            "Status regiister EXPECTED: {:02X} RESULT: {:02X}",
-                            case.expected.value,
-                            cpu.regs.a
-                        );
-                    }
-                    "pc" => {
-                        assert_eq!(
-                            cpu.regs.pc, case.expected.value,
-                            "PC EXPECTED: {:02X} RESULT: {:02X}",
-                            case.expected.value, cpu.regs.a
-                        );
-                    }
-                    "address" => {
-                        let result = memory.read(case.expected.target_address.unwrap_or(0), false);
-                        assert_eq!(
-                            result,
-                            case.expected.value as u8,
-                            "Memory content {:04X} EXPECTED: {:02X} RESULT: {:02X}",
-                            case.expected.target_address.unwrap_or(0),
-                            case.expected.value,
-                            result
-                        );
-                    }
-                    _ => {}
                 }
 
                 if let Some(expected_cycle) = case.expected.cycles {
