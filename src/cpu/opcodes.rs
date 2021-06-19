@@ -174,6 +174,15 @@ impl CPU {
                 self.regs.p.set_from_byte(bit);
                 self.fetch_opcode();
             }
+            Opcode::Adc => {
+                let fetched_data = self.read(memory, self.absolute_address) as u16;
+                let result = self.regs.a as u16 + fetched_data;
+                self.regs.p.set(StatusFlag::C, result > 0xff);
+
+                self.regs.a = (result & 0xff) as u8;
+                self.set_nz(self.regs.a);
+                self.fetch_opcode();
+            }
             _ => {
                 if self.cycles > 0 {
                     self.cycles -= 1;
