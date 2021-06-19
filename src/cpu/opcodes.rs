@@ -189,6 +189,23 @@ impl CPU {
                 self.set_nz(self.regs.a);
                 self.fetch_opcode();
             }
+            Opcode::Sbc => {
+                let fetched_data = self.read(memory, self.absolute_address);
+                let temp = (fetched_data ^ 0xff) as u16;
+                let carry = (self.regs.p.bits() & 0x01) as u16;
+                let a = self.regs.a as u16;
+
+                let result = a + temp + carry;
+                self.regs.a = (result & 0xff) as u8;
+
+                self.regs.p.set(StatusFlag::C, result > 0xff);
+                self.regs.p.set(
+                    StatusFlag::V,
+                    (!(a ^ temp) & (a ^ (result & 0xff)) & 0x0080) > 0,
+                );
+                self.set_nz(self.regs.a);
+                self.fetch_opcode();
+            }
             _ => {
                 if self.cycles > 0 {
                     self.cycles -= 1;
