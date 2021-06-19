@@ -2073,6 +2073,54 @@ ADC:
         read_from: a
         value: 0x04
         cycles: 2
+    - description: should set V flag (pos + pos)
+      code:
+        - 0x69
+        - 0x70
+      cpu:
+        a: 0x10
+      expected:
+        read_from: a
+        value: 0x80
+        cycles: 2
+        check_flag:
+          v: true
+    - description: should set V flag (neg + neg)
+      code:
+        - 0x69
+        - 0xd0
+      cpu:
+        a: 0x90
+      expected:
+        read_from: a
+        value: 0x60
+        cycles: 2
+        check_flag:
+          v: true
+    - description: should not set V flag (pos + pos)
+      code:
+        - 0x69
+        - 0x10
+      cpu:
+        a: 0x10
+      expected:
+        read_from: a
+        value: 0x20
+        cycles: 2
+        check_flag:
+          v: false
+    - description: should not set V flag (neg + neg)
+      code:
+        - 0x69
+        - 0xd0
+      cpu:
+        a: 0xd0
+      expected:
+        read_from: a
+        value: 0xa0
+        cycles: 2
+        check_flag:
+          v: false
     - description: ZP0
       code:
         - 0x65
