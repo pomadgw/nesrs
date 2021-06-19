@@ -176,7 +176,8 @@ impl CPU {
             }
             Opcode::Adc => {
                 let fetched_data = self.read(memory, self.absolute_address) as u16;
-                let result = self.regs.a as u16 + fetched_data;
+                let carry = (self.regs.p.bits() & 0x01) as u16;
+                let result = self.regs.a as u16 + fetched_data + carry;
                 self.regs.p.set(StatusFlag::C, result > 0xff);
 
                 self.regs.a = (result & 0xff) as u8;
