@@ -179,14 +179,14 @@ impl CPU {
                         if self.debug {
                             write!(self.formatted_params, "${:02X},X", self.address.lo).unwrap();
                         }
-                        self.address.lo += self.regs.x;
+                        self.address.lo = self.address.lo.wrapping_add(self.regs.x);
                         self.next_state(Microcode::FetchLoZP1);
                     }
                     RegisterAccess::Y => {
                         if self.debug {
                             write!(self.formatted_params, "${:02X},Y", self.address.lo).unwrap();
                         }
-                        self.address.lo += self.regs.y;
+                        self.address.lo = self.address.lo.wrapping_add(self.regs.y);
                         self.next_state(Microcode::FetchLoZP1);
                     }
                     _ => {

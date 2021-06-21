@@ -145,7 +145,7 @@ impl Int16 {
 
     pub fn add_hi_from_carry(&mut self) {
         if self.is_carry {
-            self.hi += 1;
+            self.hi = self.hi.wrapping_add(1);
             self.clear_carry();
         }
     }
