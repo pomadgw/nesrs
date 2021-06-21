@@ -6017,7 +6017,7 @@ break2:                 ;BRK pass 2
         include "report.i65"
     .endif
 
-        lda #0          ; init error code
+        lda #80          ; success
         sta $8000
 
 ;copy of data to initialize BSS segment
