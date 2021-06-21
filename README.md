@@ -6,23 +6,23 @@ NES and 6502 emulator in Rust.
 - [ ] ADC
 - [x] AND
 - [x] ASL
-- [ ] BCC
-- [ ] BCS
-- [ ] BEQ
+- [x] BCC
+- [x] BCS
+- [x] BEQ
 - [x] BIT
-- [ ] BMI
-- [ ] BNE
-- [ ] BPL
+- [x] BMI
+- [x] BNE
+- [x] BPL
 - [x] BRK
-- [ ] BVC
-- [ ] BVS
+- [x] BVC
+- [x] BVS
 - [x] CLC
 - [x] CLD
 - [x] CLI
 - [x] CLV
-- [ ] CMP
-- [ ] CPX
-- [ ] CPY
+- [x] CMP
+- [x] CPX
+- [x] CPY
 - [ ] DEC
 - [x] DEX
 - [x] DEY
