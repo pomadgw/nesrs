@@ -158,6 +158,8 @@ disable_decimal = 0
 ; may lead to branch range problems for some tests.
     .if report = 0
         .macro  trap
+        lda #$01
+        sta $8000
         jmp *           ;failed anyway
         .endmacro
         .macro  trap_eq
@@ -748,6 +750,8 @@ data_bss_end:
 start:  cld
         ldx #$ff
         txs
+        lda #0          ; init error code
+        sta $8000
         lda #0          ;*** test 0 = initialize
         sta test_case
 test_num .set 0
@@ -6012,6 +6016,9 @@ break2:                 ;BRK pass 2
     .if report = 1
         include "report.i65"
     .endif
+
+        lda #0          ; init error code
+        sta $8000
 
 ;copy of data to initialize BSS segment
     .if load_data_direct <> 1

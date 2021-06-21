@@ -42,14 +42,34 @@ fn main() -> std::io::Result<()> {
         cpu.regs.pc, cpu.regs.a, cpu.regs.x, cpu.regs.y
     );
 
+    for _i in 0..5 {
+        loop_cpu!(cpu, memory);
+        cpu.print_debug();
+    }
+
     // let now = Instant::now();
 
-    for _i in 0..10 {
+    loop {
         // let prev = now.elapsed().as_nanos();
         loop_cpu!(cpu, memory);
         cpu.print_debug();
         // let current = now.elapsed().as_nanos();
         // println!("time: {} ns", current - prev);
+
+        let status = memory.read(0x8000, true);
+
+        if status != 0 {
+            // success
+            if status == 0x80 {
+                println!("DONE");
+                break;
+            }
+            // not success
+            if status != 0x80 {
+                println!("ERROR: {:02X}", status);
+                break;
+            }
+        }
     }
 
     println!(
