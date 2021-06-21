@@ -206,6 +206,30 @@ impl CPU {
                 self.set_nz(self.regs.a);
                 self.fetch_opcode();
             }
+            Opcode::Cmp => {
+                let fetched_data = self.read(memory, self.absolute_address) as i16;
+                let result = (self.regs.a as i16) - fetched_data;
+                self.regs.p.set(StatusFlag::C, result >= 0x00);
+                self.regs.p.set(StatusFlag::Z, result == 0x00);
+                self.regs.p.set(StatusFlag::N, result < 0x00);
+                self.fetch_opcode();
+            }
+            Opcode::Cpx => {
+                let fetched_data = self.read(memory, self.absolute_address) as i16;
+                let result = (self.regs.x as i16) - fetched_data;
+                self.regs.p.set(StatusFlag::C, result >= 0x00);
+                self.regs.p.set(StatusFlag::Z, result == 0x00);
+                self.regs.p.set(StatusFlag::N, result < 0x00);
+                self.fetch_opcode();
+            }
+            Opcode::Cpy => {
+                let fetched_data = self.read(memory, self.absolute_address) as i16;
+                let result = (self.regs.y as i16) - fetched_data;
+                self.regs.p.set(StatusFlag::C, result >= 0x00);
+                self.regs.p.set(StatusFlag::Z, result == 0x00);
+                self.regs.p.set(StatusFlag::N, result < 0x00);
+                self.fetch_opcode();
+            }
             _ => {
                 if self.cycles > 0 {
                     self.cycles -= 1;
