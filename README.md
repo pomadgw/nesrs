@@ -36,7 +36,7 @@ NES and 6502 emulator in Rust.
 - [x] LDX
 - [x] LDY
 - [ ] LSR
-- [ ] NOP
+- [x] NOP
 - [x] ORA
 - [x] PHA
 - [x] PHP
