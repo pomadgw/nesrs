@@ -211,11 +211,17 @@ impl CPU {
 
                     match self.opcode_type {
                         Opcode::Jmp | Opcode::Jsr => {
-                            write!(self.formatted_params, "${:04X}", self.absolute_address).unwrap();
+                            write!(self.formatted_params, "${:04X}", self.absolute_address)
+                                .unwrap();
                         }
                         _ => {
                             let value = memory.read(self.absolute_address, true);
-                            write!(self.formatted_params, "${:04X} = {:02X}", self.absolute_address, value).unwrap();
+                            write!(
+                                self.formatted_params,
+                                "${:04X} = {:02X}",
+                                self.absolute_address, value
+                            )
+                            .unwrap();
                         }
                     }
                 }
@@ -532,11 +538,15 @@ impl CPU {
                 let next_pc = self.get_next_pc_value(memory);
                 self.relative_address = next_pc as i8;
                 if self.debug {
-                    self.instruction_debug
-                        .push(next_pc);
+                    self.instruction_debug.push(next_pc);
 
                     let next_pc = (self.regs.pc as i32) + (self.relative_address as i32);
-                    write!(self.formatted_params, "{:02X} = ${:04X}", self.relative_address, next_pc).unwrap();
+                    write!(
+                        self.formatted_params,
+                        "{:02X} = ${:04X}",
+                        self.relative_address, next_pc
+                    )
+                    .unwrap();
                 }
 
                 if self.regs.p.contains(self.branch_status_to_test) == self.branch_when {
