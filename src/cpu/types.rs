@@ -284,6 +284,10 @@ pub enum Microcode {
     RtiPopLoPC,
     RtiPopHiPC,
     RtiSetPC,
+
+    // Branch
+    BranchReadOffsetAndCheck,
+    BranchJumpIfTrue,
 }
 
 #[derive(Debug, Clone, Copy)]

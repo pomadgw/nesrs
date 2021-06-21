@@ -26,8 +26,11 @@ pub struct CPU {
     temp: u8,
     state: Microcode,
     absolute_address: usize,
+    relative_address: i8,
     fetched_data: u8,
     register_access: RegisterAccess,
+    branch_status_to_test: StatusFlag,
+    branch_when: bool,
 
     pub irq_pin: Pin,
     pub nmi_pin: Pin,
@@ -56,6 +59,7 @@ impl CPU {
             temp: 0,
             state: Microcode::FetchOpcode,
             absolute_address: 0,
+            relative_address: 0,
             fetched_data: 0,
             address: Int16::new_from_16(0),
             tmp_address: Int16::new_from_16(0),
@@ -63,6 +67,8 @@ impl CPU {
             irq_pin: Pin::default(),
             nmi_pin: Pin::default(),
             stop_irq_pin: Pin::default(),
+            branch_status_to_test: StatusFlag::empty(),
+            branch_when: false,
 
             instruction_debug: Vec::new(),
             prev_pc: 0,
@@ -221,13 +227,8 @@ impl CPU {
     }
 
     fn set_nz(&mut self, value: u8) {
-        if value == 0 {
-            self.regs.p |= StatusFlag::Z;
-        }
-
-        if (value & 0x80) > 0 {
-            self.regs.p |= StatusFlag::N;
-        }
+        self.regs.p.set(StatusFlag::Z, value == 0);
+        self.regs.p.set(StatusFlag::N, (value & 0x80) > 0);
     }
     // END PRIVATE
 }

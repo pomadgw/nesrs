@@ -99,8 +99,46 @@ impl CPU {
                     AddressMode::Ind => {
                         self.next_state(Microcode::IndReadLo);
                     }
-                    _ => {
-                        self.next_state(Microcode::FetchOpcode);
+                    AddressMode::Rel => {
+                        match self.opcode_type {
+                            Opcode::Bpl => {
+                                self.branch_status_to_test = StatusFlag::N;
+                                self.branch_when = false;
+                            }
+                            Opcode::Bmi => {
+                                self.branch_status_to_test = StatusFlag::N;
+                                self.branch_when = true;
+                            }
+                            Opcode::Bvc => {
+                                self.branch_status_to_test = StatusFlag::V;
+                                self.branch_when = false;
+                            }
+                            Opcode::Bvs => {
+                                self.branch_status_to_test = StatusFlag::V;
+                                self.branch_when = true;
+                            }
+                            Opcode::Bcc => {
+                                self.branch_status_to_test = StatusFlag::C;
+                                self.branch_when = false;
+                            }
+                            Opcode::Bcs => {
+                                self.branch_status_to_test = StatusFlag::C;
+                                self.branch_when = true;
+                            }
+                            Opcode::Bne => {
+                                self.branch_status_to_test = StatusFlag::Z;
+                                self.branch_when = false;
+                            }
+                            Opcode::Beq => {
+                                self.branch_status_to_test = StatusFlag::Z;
+                                self.branch_when = true;
+                            }
+                            _ => {
+                                // impossible
+                            }
+                        }
+
+                        self.next_state(Microcode::BranchReadOffsetAndCheck);
                     }
                 }
             }
@@ -479,6 +517,20 @@ impl CPU {
                 self.regs.pc = self.address.to_u16();
                 self.regs.p |= StatusFlag::U;
                 self.regs.p &= !StatusFlag::B;
+                self.fetch_opcode();
+            }
+            Microcode::BranchReadOffsetAndCheck => {
+                self.relative_address = self.get_next_pc_value(memory) as i8;
+
+                if self.regs.p.contains(self.branch_status_to_test) == self.branch_when {
+                    self.next_state(Microcode::BranchJumpIfTrue);
+                } else {
+                    self.fetch_opcode();
+                }
+            }
+            Microcode::BranchJumpIfTrue => {
+                let next_pc = (self.regs.pc as i32) + (self.relative_address as i32);
+                self.regs.pc = next_pc as u16;
                 self.fetch_opcode();
             }
             _ => {
