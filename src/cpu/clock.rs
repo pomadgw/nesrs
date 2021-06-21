@@ -197,6 +197,8 @@ impl CPU {
                         self.next_state(Microcode::Execute);
                     }
                 }
+                let value = memory.read(self.address.lo as usize, true);
+                self.formatted_params.push_str(&format!(" = {:02X}", value));
             }
             Microcode::FetchLoZP1 => {
                 self.absolute_address = self.address.to_usize();
@@ -541,12 +543,7 @@ impl CPU {
                     self.instruction_debug.push(next_pc);
 
                     let next_pc = (self.regs.pc as i32) + (self.relative_address as i32);
-                    write!(
-                        self.formatted_params,
-                        "{:02X} = ${:04X}",
-                        self.relative_address, next_pc
-                    )
-                    .unwrap();
+                    write!(self.formatted_params, "${:04X}", next_pc).unwrap();
                 }
 
                 if self.regs.p.contains(self.branch_status_to_test) == self.branch_when {

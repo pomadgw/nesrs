@@ -14,17 +14,23 @@ mod macros;
 struct RAM {
     prg_banks: u8,
     prg_rom: Vec<u8>,
+    ram: Vec<u8>,
 }
 
 impl Memory for RAM {
     fn read(&self, address: usize, _is_read_only: bool) -> u8 {
-        let new_address = address & if self.prg_banks > 1 { 0x7FFF } else { 0x3FFF };
-        self.prg_rom[new_address]
+        if address < 0x8000 {
+            self.ram[address]
+        } else {
+            let new_address = address & if self.prg_banks > 1 { 0x7FFF } else { 0x3FFF };
+            self.prg_rom[new_address]
+        }
     }
 
     fn write(&mut self, address: usize, value: u8) {
-        let new_address = address & if self.prg_banks > 1 { 0x7FFF } else { 0x3FFF };
-        self.prg_rom[new_address] = value;
+        if address < 0x8000 {
+            self.ram[address] = value;
+        }
     }
 }
 
@@ -68,7 +74,7 @@ fn main() -> std::io::Result<()> {
     let n_prg_banks = header.prg_rom_chunks;
     let n_chr_banks = header.chr_rom_chunks;
 
-    println!("n_prg_banks: {}, n_chr_banks: {}", n_prg_banks, n_chr_banks);
+    // println!("n_prg_banks: {}, n_chr_banks: {}", n_prg_banks, n_chr_banks);
 
     prg_memory.resize((n_prg_banks as usize) * 16384, 0);
     file.read(&mut prg_memory).unwrap();
@@ -83,6 +89,7 @@ fn main() -> std::io::Result<()> {
     let mut memory = RAM {
         prg_rom: prg_memory,
         prg_banks: n_prg_banks,
+        ram: vec![0; 0x8000],
     };
 
     cpu.debug = true;
