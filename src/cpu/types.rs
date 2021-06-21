@@ -288,6 +288,7 @@ pub enum Microcode {
     // Branch
     BranchReadOffsetAndCheck,
     BranchJumpIfTrue,
+    BranchJumpIfTrueAndCrossPage,
 }
 
 #[derive(Debug, Clone, Copy)]
