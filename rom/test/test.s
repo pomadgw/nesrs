@@ -1,23 +1,31 @@
 .segment "DATA"
 data:
-  .byte $1, $2
+  .asciiz "Hello, world"
 
 .segment "VECTORS"
 .word nmi
 .word reset
 .word irq
 
+screen := $0200
+
 .segment "CODE"
 reset:
 	sei
 	lda data
-  jsr test
+  ldx #0
+  ldy #$0a
 loop:
+  sta screen,x
+  inx
+  lda data,x
+  beq done
   jmp loop
 
-test:
-  ldx #10
-  rts
+done:
+  sta $01,x
+  sta ($01),y
+  jmp done
 
 .segment "CODE"
 nmi:
