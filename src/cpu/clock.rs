@@ -27,7 +27,7 @@ impl CPU {
                 self.instruction_debug.clear();
                 self.prev_pc = self.regs.pc;
 
-                println!("{:08b}", self.interrupt_type.bits());
+                // println!("{:08b}", self.interrupt_type.bits());
 
                 if self.interrupt_type.contains(Interrupt::NMI)
                     || self.interrupt_type.contains(Interrupt::RESET)
