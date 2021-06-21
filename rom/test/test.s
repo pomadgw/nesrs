@@ -7,16 +7,16 @@ data:
 .word reset
 .word irq
 
-screen := $0200
+SCREEN = $2200
 
 .segment "CODE"
 reset:
 	sei
-	lda data
   ldx #0
+	lda data,x
   ldy #$0a
 loop:
-  sta screen,x
+  sta SCREEN,x
   inx
   lda data,x
   beq done

@@ -258,7 +258,7 @@ impl CPU {
                     write!(
                         self.formatted_params,
                         "${:04X},X @ {:04X} = {:02X}",
-                        self.absolute_address, end_address, value
+                        self.address.to_usize(), end_address, value
                     )
                     .unwrap();
                 }
@@ -283,7 +283,7 @@ impl CPU {
                     write!(
                         self.formatted_params,
                         "${:04X},Y @ {:04X} = {:02X}",
-                        self.absolute_address, end_address, value
+                        self.address.to_usize(), end_address, value
                     )
                     .unwrap();
                 }
