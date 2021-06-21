@@ -289,6 +289,13 @@ pub enum Microcode {
     BranchReadOffsetAndCheck,
     BranchJumpIfTrue,
     BranchJumpIfTrueAndCrossPage,
+
+    // DEC
+    DecReadData,
+    IncReadData,
+
+    IncDecWriteOld,
+    IncDecWriteNew,
 }
 
 #[derive(Debug, Clone, Copy)]

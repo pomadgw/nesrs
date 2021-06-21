@@ -230,6 +230,14 @@ impl CPU {
                 self.regs.p.set(StatusFlag::N, result < 0x00);
                 self.fetch_opcode();
             }
+            Opcode::Dec => {
+                self.next_state(Microcode::DecReadData);
+                self.run_next_state(memory);
+            }
+            Opcode::Inc => {
+                self.next_state(Microcode::IncReadData);
+                self.run_next_state(memory);
+            }
             _ => {
                 if self.cycles > 0 {
                     self.cycles -= 1;

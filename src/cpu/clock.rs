@@ -566,6 +566,27 @@ impl CPU {
                 self.regs.pc = next_pc as u16;
                 self.fetch_opcode();
             }
+            // INC
+            Microcode::IncReadData => {
+                self.fetched_data = self.read(memory, self.absolute_address);
+                self.temp = self.fetched_data.wrapping_add(1);
+                self.next_state(Microcode::IncDecWriteOld);
+            }
+            // DEC
+            Microcode::DecReadData => {
+                self.fetched_data = self.read(memory, self.absolute_address);
+                self.temp = self.fetched_data.wrapping_sub(1);
+                self.next_state(Microcode::IncDecWriteOld);
+            }
+            // DEC & INC
+            Microcode::IncDecWriteOld => {
+                self.write(memory, self.absolute_address, self.fetched_data);
+                self.next_state(Microcode::IncDecWriteNew);
+            }
+            Microcode::IncDecWriteNew => {
+                self.write(memory, self.absolute_address, self.temp);
+                self.fetch_opcode();
+            }
             _ => {
                 if self.cycles > 0 {
                     self.cycles -= 1;

@@ -23,11 +23,11 @@ NES and 6502 emulator in Rust.
 - [x] CMP
 - [x] CPX
 - [x] CPY
-- [ ] DEC
+- [x] DEC
 - [x] DEX
 - [x] DEY
 - [x] EOR
-- [ ] INC
+- [x] INC
 - [x] INX
 - [x] INY
 - [x] JMP
