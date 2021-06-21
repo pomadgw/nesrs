@@ -72,10 +72,5 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    println!(
-        "${:04X}: A: ${:02X} X: ${:02X} Y: ${:02X}",
-        cpu.regs.pc, cpu.regs.a, cpu.regs.x, cpu.regs.y
-    );
-
     Ok(())
 }
