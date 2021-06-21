@@ -197,8 +197,17 @@ impl CPU {
                         self.next_state(Microcode::Execute);
                     }
                 }
-                let value = memory.read(self.address.lo as usize, true);
-                self.formatted_params.push_str(&format!(" = {:02X}", value));
+
+                if self.debug {
+                    match self.register_access {
+                        RegisterAccess::X | RegisterAccess::Y => {
+                            let value = memory.read(self.address.lo as usize, true);
+                            self.formatted_params
+                                .push_str(&format!(" @ {:02X} = {:02X}", self.address.lo, value));
+                        }
+                        _ => {}
+                    }
+                }
             }
             Microcode::FetchLoZP1 => {
                 self.absolute_address = self.address.to_usize();
@@ -243,7 +252,15 @@ impl CPU {
 
                 if self.debug {
                     self.instruction_debug.push(self.address.hi);
-                    write!(self.formatted_params, "${:04X},X", self.absolute_address).unwrap();
+                    let end_address =
+                        self.address.to_usize().wrapping_add(self.regs.x as usize) as usize;
+                    let value = memory.read(end_address, true);
+                    write!(
+                        self.formatted_params,
+                        "${:04X},X @ {:04X} = {:02X}",
+                        self.absolute_address, end_address, value
+                    )
+                    .unwrap();
                 }
 
                 self.address += self.regs.x;
@@ -257,9 +274,18 @@ impl CPU {
             }
             Microcode::FetchHiY => {
                 self.address.hi = self.get_next_pc_value(memory);
+
                 if self.debug {
                     self.instruction_debug.push(self.address.hi);
-                    write!(self.formatted_params, "${:04X},Y", self.absolute_address).unwrap();
+                    let end_address =
+                        self.address.to_usize().wrapping_add(self.regs.x as usize) as usize;
+                    let value = memory.read(end_address, true);
+                    write!(
+                        self.formatted_params,
+                        "${:04X},Y @ {:04X} = {:02X}",
+                        self.absolute_address, end_address, value
+                    )
+                    .unwrap();
                 }
                 self.address += self.regs.y;
 
@@ -291,6 +317,17 @@ impl CPU {
                 self.temp = self.temp.wrapping_add(1);
                 self.address.hi = self.read(memory, self.temp as usize);
                 self.absolute_address = self.address.to_usize();
+
+                if self.debug {
+                    let value = memory.read(self.absolute_address as usize, true);
+                    write!(
+                        self.formatted_params,
+                        " @ {:02X} = {:04X} = {:02X}",
+                        self.temp, self.absolute_address, value
+                    )
+                    .unwrap();
+                }
+
                 self.next_state(Microcode::Execute);
             }
             Microcode::FetchIZY1 => {
@@ -307,6 +344,21 @@ impl CPU {
             }
             Microcode::FetchIZY3 => {
                 self.address.hi = self.read(memory, self.temp.wrapping_add(1) as usize);
+
+                if self.debug {
+                    let mut new_address = self.address.to_usize();
+                    write!(self.formatted_params, " = {:04X}", new_address).unwrap();
+                    new_address += self.regs.y as usize;
+                    new_address &= 0xffff;
+                    let value = memory.read(self.absolute_address as usize, true);
+                    write!(
+                        self.formatted_params,
+                        " @ {:04X} = {:02X}",
+                        new_address, value
+                    )
+                    .unwrap();
+                }
+
                 self.address += self.regs.y;
 
                 if self.address.has_carry() || self.is_write_instruction() {
