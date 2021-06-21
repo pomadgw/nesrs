@@ -1,7 +1,9 @@
-all: test.rom
+CONFIG := romconfig.cfg
 
-test.o: test.s
-	ca65 test.s -g -o test.o
+all: 6502_test.rom
 
-test.rom: test.o test.cfg
-	ld65 -o test.rom -C test.cfg test.o
+6502_test.o: 6502_test.s
+	$(CA65_BIN) 6502_test.s -g -o 6502_test.o
+
+6502_test.rom: 6502_test.o $(CONFIG)
+	$(LD65_BIN) -o 6502_test.rom -C $(CONFIG) 6502_test.o
