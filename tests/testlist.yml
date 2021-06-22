@@ -1064,7 +1064,7 @@ PHP:
       expected:
         read_from: address
         target_address: 0x01fe
-        value: 0x32
+        value: 0x12
         cycles: 3
     - description: IMP
       code:
@@ -1075,7 +1075,7 @@ PHP:
       expected:
         read_from: address
         target_address: 0x01fe
-        value: 0x32
+        value: 0x12
         cycles: 3
 PLP:
   cases:
