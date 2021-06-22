@@ -199,13 +199,15 @@ impl CPU {
                 }
 
                 if self.debug {
+                    let value = memory.read(self.address.lo as usize, true);
                     match self.register_access {
                         RegisterAccess::X | RegisterAccess::Y => {
-                            let value = memory.read(self.address.lo as usize, true);
                             self.formatted_params
                                 .push_str(&format!(" @ {:02X} = {:02X}", self.address.lo, value));
                         }
-                        _ => {}
+                        _ => {
+                            self.formatted_params.push_str(&format!(" = {:02X}", value));
+                        }
                     }
                 }
             }
@@ -258,7 +260,9 @@ impl CPU {
                     write!(
                         self.formatted_params,
                         "${:04X},X @ {:04X} = {:02X}",
-                        self.address.to_usize(), end_address, value
+                        self.address.to_usize(),
+                        end_address,
+                        value
                     )
                     .unwrap();
                 }
@@ -278,12 +282,14 @@ impl CPU {
                 if self.debug {
                     self.instruction_debug.push(self.address.hi);
                     let end_address =
-                        self.address.to_usize().wrapping_add(self.regs.x as usize) as usize;
+                        self.address.to_usize().wrapping_add(self.regs.y as usize) as usize;
                     let value = memory.read(end_address, true);
                     write!(
                         self.formatted_params,
                         "${:04X},Y @ {:04X} = {:02X}",
-                        self.address.to_usize(), end_address, value
+                        self.address.to_usize(),
+                        end_address,
+                        value
                     )
                     .unwrap();
                 }
@@ -403,6 +409,7 @@ impl CPU {
                 // is in $xxff and $xx00 (instead of $xxff + 1)
                 self.tmp_address += 1;
                 self.address.hi = self.read(memory, self.tmp_address.to_usize());
+                write!(self.formatted_params, " = {:04X}", self.address.to_u16()).unwrap();
 
                 // Jump immediately
                 self.regs.pc = self.address.to_u16();
