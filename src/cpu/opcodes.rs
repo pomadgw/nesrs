@@ -1,20 +1,24 @@
 use crate::cpu::types::*;
 use crate::cpu::*;
 
-fn asl(value: u16, _other: u16) -> u16 {
-    value << 1
+fn asl(value: u16, _other: u16) -> (u16, bool) {
+    let result = value << 1;
+    (result, result > 0xff)
 }
 
-fn lsr(value: u16, _other: u16) -> u16 {
-    value >> 1
+fn lsr(value: u16, _other: u16) -> (u16, bool) {
+    let result = value >> 1;
+    (result, (value & 0x01) > 0)
 }
 
-fn rol(value: u16, carry: u16) -> u16 {
-    value << 1 | carry
+fn rol(value: u16, carry: u16) -> (u16, bool) {
+    let result = value << 1 | carry;
+    (result, (value & 0x80) > 0)
 }
 
-fn ror(value: u16, carry: u16) -> u16 {
-    value >> 1 | (carry << 7)
+fn ror(value: u16, carry: u16) -> (u16, bool) {
+    let result = value >> 1 | (carry << 7);
+    (result, (value & 0x01) > 0)
 }
 
 impl CPU {
@@ -54,8 +58,14 @@ impl CPU {
                 self.write(memory, self.absolute_address, self.regs.y);
                 self.fetch_opcode();
             }
-            Opcode::Asl => {
-                self.shift_op = Some(asl);
+            Opcode::Asl | Opcode::Lsr | Opcode::Rol | Opcode::Ror => {
+                self.shift_op = match self.opcode_type {
+                    Opcode::Asl => Some(asl),
+                    Opcode::Lsr => Some(lsr),
+                    Opcode::Rol => Some(rol),
+                    Opcode::Ror => Some(ror),
+                    _ => None,
+                };
 
                 match self.register_access {
                     RegisterAccess::A => {
