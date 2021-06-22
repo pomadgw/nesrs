@@ -35,15 +35,15 @@ NES and 6502 emulator in Rust.
 - [x] LDA
 - [x] LDX
 - [x] LDY
-- [ ] LSR
+- [x] LSR
 - [x] NOP
 - [x] ORA
 - [x] PHA
 - [x] PHP
 - [x] PLA
 - [x] PLP
-- [ ] ROL
-- [ ] ROR
+- [x] ROL
+- [x] ROR
 - [x] RTI
 - [x] RTS
 - [x] SBC
