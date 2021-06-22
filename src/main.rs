@@ -4,6 +4,7 @@ use nesrs::memory::*;
 
 use std::fs::File;
 use std::io::prelude::*;
+use std::io::Cursor;
 use std::io::SeekFrom;
 use std::mem;
 use std::slice;
@@ -53,6 +54,11 @@ fn main() -> std::io::Result<()> {
     let mut cpu = CPU::new();
 
     let mut file = File::open("./rom/nestest.nes")?;
+    let mut buffer = Vec::new();
+
+    file.read_to_end(&mut buffer)?;
+
+    let mut cursor = Cursor::new(buffer);
 
     // read nesrom.nes
     let mut header: NESHeader = unsafe { mem::zeroed() };
@@ -62,11 +68,11 @@ fn main() -> std::io::Result<()> {
     unsafe {
         let header_slice = slice::from_raw_parts_mut(&mut header as *mut _ as *mut u8, header_size);
 
-        file.read_exact(header_slice).unwrap();
+        cursor.read_exact(header_slice).unwrap();
     }
 
     if (header.mapper1 & 0x04) > 0 {
-        file.seek(SeekFrom::Current(512)).unwrap();
+        cursor.seek(SeekFrom::Current(512)).unwrap();
     }
 
     let mut prg_memory: Vec<u8> = Vec::new();
@@ -78,13 +84,13 @@ fn main() -> std::io::Result<()> {
     // println!("n_prg_banks: {}, n_chr_banks: {}", n_prg_banks, n_chr_banks);
 
     prg_memory.resize((n_prg_banks as usize) * 16384, 0);
-    file.read(&mut prg_memory).unwrap();
+    cursor.read(&mut prg_memory).unwrap();
 
     if n_chr_banks == 0 {
         chr_memory.resize(8192, 0);
     } else {
         chr_memory.resize((n_chr_banks as usize) * 8192, 0);
-        file.read(&mut chr_memory).unwrap();
+        cursor.read(&mut chr_memory).unwrap();
     }
 
     let mut memory = RAM {
