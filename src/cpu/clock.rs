@@ -2,12 +2,6 @@ use crate::cpu::types::*;
 use crate::cpu::*;
 use std::fmt::Write;
 
-// macro_rules! word {
-//     ($lo:expr, $hi:expr) => {
-//         (($hi as u16) << 8) | ($lo as u16)
-//     };
-// }
-
 impl CPU {
     pub fn get_next_pc_value(&mut self, memory: &mut dyn Memory) -> u8 {
         let curr_pc = self.get_pc();
@@ -424,9 +418,10 @@ impl CPU {
             }
 
             // ASL
-            Microcode::AslA => {
+            Microcode::ShiftA => {
+                let func = self.shift_op.unwrap();
                 let mut fetched = self.regs.a as u16;
-                fetched = fetched << 1;
+                fetched = func(fetched, (self.regs.p.bits() & 0x01) as u16);
                 let result = (fetched & 0xff) as u8;
                 self.regs.a = result;
                 self.regs.p.set(StatusFlag::C, fetched > 0xff);
@@ -435,17 +430,18 @@ impl CPU {
                 self.next_state(Microcode::FetchOpcode);
             }
 
-            Microcode::AslFetch => {
+            Microcode::ShiftFetch => {
                 self.fetched_data = self.read(memory, self.absolute_address);
-                self.next_state(Microcode::AslWrite);
+                self.next_state(Microcode::ShiftWrite);
             }
-            Microcode::AslWrite => {
+            Microcode::ShiftWrite => {
                 self.write(memory, self.absolute_address, self.fetched_data);
-                self.next_state(Microcode::AslAddAndWrite);
+                self.next_state(Microcode::ShiftAddAndWrite);
             }
-            Microcode::AslAddAndWrite => {
+            Microcode::ShiftAddAndWrite => {
+                let func = self.shift_op.unwrap();
                 let mut fetched = self.fetched_data as u16;
-                fetched = fetched << 1;
+                fetched = func(fetched, (self.regs.p.bits() & 0x01) as u16);
                 let result = (fetched & 0xff) as u8;
                 self.regs.p.set(StatusFlag::C, fetched > 0xff);
 

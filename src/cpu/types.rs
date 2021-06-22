@@ -192,6 +192,8 @@ pub enum RegisterAccess {
     None,
 }
 
+pub type ShiftBinaryOperation = fn(u16, u16) -> u16;
+
 pub enum Microcode {
     FetchOpcode,
     FetchParameters,
@@ -240,11 +242,11 @@ pub enum Microcode {
     DelayedExecute,
     Execute,
 
-    // ASL
-    AslA,
-    AslFetch,
-    AslWrite,
-    AslAddAndWrite,
+    // ASL & other shift operations
+    ShiftA,
+    ShiftFetch,
+    ShiftWrite,
+    ShiftAddAndWrite,
 
     // BRK
     BrkPushPCHi,
