@@ -56,6 +56,9 @@ impl CPU {
                 match self.address_mode {
                     AddressMode::Acc => {
                         self.register_access = RegisterAccess::A;
+                        if self.debug {
+                            write!(self.formatted_params, "A").unwrap();
+                        }
                         self.next_state(Microcode::Execute);
                         self.run_next_state(memory);
                     }
