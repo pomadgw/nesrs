@@ -429,11 +429,8 @@ impl CPU {
                 fetched = fetched << 1;
                 let result = (fetched & 0xff) as u8;
                 self.regs.a = result;
-                if fetched > 0xff {
-                    self.regs.p |= StatusFlag::C;
-                } else {
-                    self.regs.p &= !StatusFlag::C;
-                }
+                self.regs.p.set(StatusFlag::C, fetched > 0xff);
+
                 self.set_nz(self.regs.a);
                 self.next_state(Microcode::FetchOpcode);
             }
@@ -450,11 +447,8 @@ impl CPU {
                 let mut fetched = self.fetched_data as u16;
                 fetched = fetched << 1;
                 let result = (fetched & 0xff) as u8;
-                if fetched > 0xff {
-                    self.regs.p |= StatusFlag::C;
-                } else {
-                    self.regs.p &= !StatusFlag::C;
-                }
+                self.regs.p.set(StatusFlag::C, fetched > 0xff);
+
                 self.write(memory, self.absolute_address, result);
                 self.set_nz(result);
                 self.next_state(Microcode::FetchOpcode);
