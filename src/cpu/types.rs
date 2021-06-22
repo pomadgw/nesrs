@@ -192,7 +192,7 @@ pub enum RegisterAccess {
     None,
 }
 
-pub type ShiftBinaryOperation = fn(u16, u16) -> u16;
+pub type ShiftBinaryOperation = fn(u16, u16) -> (u16, bool);
 
 pub enum Microcode {
     FetchOpcode,

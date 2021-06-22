@@ -215,9 +215,15 @@ impl CPU {
 
     fn is_write_instruction(&self) -> bool {
         match self.opcode_type {
-            Opcode::Asl | Opcode::Dec | Opcode::Inc | Opcode::Sta | Opcode::Stx | Opcode::Sty => {
-                true
-            }
+            Opcode::Asl
+            | Opcode::Lsr
+            | Opcode::Rol
+            | Opcode::Ror
+            | Opcode::Dec
+            | Opcode::Inc
+            | Opcode::Sta
+            | Opcode::Stx
+            | Opcode::Sty => true,
             _ => false,
         }
     }

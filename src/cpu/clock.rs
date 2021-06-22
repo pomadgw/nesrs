@@ -421,10 +421,13 @@ impl CPU {
             Microcode::ShiftA => {
                 let func = self.shift_op.unwrap();
                 let mut fetched = self.regs.a as u16;
-                fetched = func(fetched, (self.regs.p.bits() & 0x01) as u16);
+                let result = func(fetched, (self.regs.p.bits() & 0x01) as u16);
+                fetched = result.0;
+                let set_carry = result.1;
+
                 let result = (fetched & 0xff) as u8;
                 self.regs.a = result;
-                self.regs.p.set(StatusFlag::C, fetched > 0xff);
+                self.regs.p.set(StatusFlag::C, set_carry);
 
                 self.set_nz(self.regs.a);
                 self.next_state(Microcode::FetchOpcode);
@@ -441,9 +444,12 @@ impl CPU {
             Microcode::ShiftAddAndWrite => {
                 let func = self.shift_op.unwrap();
                 let mut fetched = self.fetched_data as u16;
-                fetched = func(fetched, (self.regs.p.bits() & 0x01) as u16);
+                let result = func(fetched, (self.regs.p.bits() & 0x01) as u16);
+                fetched = result.0;
+                let set_carry = result.1;
+
                 let result = (fetched & 0xff) as u8;
-                self.regs.p.set(StatusFlag::C, fetched > 0xff);
+                self.regs.p.set(StatusFlag::C, set_carry);
 
                 self.write(memory, self.absolute_address, result);
                 self.set_nz(result);
