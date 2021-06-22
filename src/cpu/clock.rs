@@ -646,6 +646,7 @@ impl CPU {
             }
             Microcode::IncDecWriteNew => {
                 self.write(memory, self.absolute_address, self.temp);
+                self.set_nz(self.temp);
                 self.fetch_opcode();
             }
             _ => {
