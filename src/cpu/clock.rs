@@ -47,6 +47,7 @@ impl CPU {
                 self.address.clear_carry();
 
                 if self.debug {
+                    self.format_registry_status();
                     self.instruction_debug.push(self.opcode);
                     self.formatted_params.clear();
                     self.prev_cycles = self.total_cycles;
@@ -531,7 +532,7 @@ impl CPU {
             }
             // PHP
             Microcode::PhpPushStack => {
-                self.push_stack(memory, self.regs.p.bits() | 0b00110000);
+                self.push_stack(memory, self.regs.p.bits());
                 self.fetch_opcode();
             }
             // PLP
@@ -541,6 +542,8 @@ impl CPU {
             }
             Microcode::PlpPull1 => {
                 self.regs.p.set_from_byte(self.fetched_data);
+                self.regs.p.set(StatusFlag::B, false);
+                self.regs.p.set(StatusFlag::U, true);
                 self.fetch_opcode();
             }
             // JSR

@@ -41,6 +41,7 @@ pub struct CPU {
     prev_pc: u16,
     prev_cycles: u32,
     formatted_params: String,
+    formatted_register: String,
     pub debug: bool,
 }
 
@@ -74,6 +75,7 @@ impl CPU {
             prev_pc: 0,
             prev_cycles: 0,
             formatted_params: String::new(),
+            formatted_register: String::new(),
             debug: false,
         }
     }
@@ -109,11 +111,11 @@ impl CPU {
         format!("{:04X}", self.prev_pc)
     }
 
-    fn get_registry_status(&self) -> String {
-        format!(
+    fn format_registry_status(&mut self) {
+        self.formatted_register = format!(
             "A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
             self.regs.a, self.regs.x, self.regs.y, self.regs.p, self.regs.sp
-        )
+        );
     }
 
     fn see_prev_instruction_bytes(&self) -> String {
@@ -146,7 +148,7 @@ impl CPU {
                 self.see_prev_pc(),
                 self.see_prev_instruction_bytes(),
                 self.see_prev_instruction(),
-                self.get_registry_status(),
+                self.formatted_register,
                 self.prev_cycles
             );
         }
