@@ -31,6 +31,7 @@ pub struct CPU {
     register_access: RegisterAccess,
     branch_status_to_test: StatusFlag,
     branch_when: bool,
+    shift_op: Option<ShiftBinaryOperation>,
 
     pub irq_pin: Pin,
     pub nmi_pin: Pin,
@@ -70,6 +71,7 @@ impl CPU {
             stop_irq_pin: Pin::default(),
             branch_status_to_test: StatusFlag::empty(),
             branch_when: false,
+            shift_op: None,
 
             instruction_debug: Vec::new(),
             prev_pc: 0,

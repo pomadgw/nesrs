@@ -1,6 +1,22 @@
 use crate::cpu::types::*;
 use crate::cpu::*;
 
+fn asl(value: u16, _other: u16) -> u16 {
+    value << 1
+}
+
+fn lsr(value: u16, _other: u16) -> u16 {
+    value >> 1
+}
+
+fn rol(value: u16, carry: u16) -> u16 {
+    value << 1 | carry
+}
+
+fn ror(value: u16, carry: u16) -> u16 {
+    value >> 1 | (carry << 7)
+}
+
 impl CPU {
     pub fn do_instruction(&mut self, memory: &mut dyn Memory) {
         match self.opcode_type {
@@ -38,15 +54,19 @@ impl CPU {
                 self.write(memory, self.absolute_address, self.regs.y);
                 self.fetch_opcode();
             }
-            Opcode::Asl => match self.register_access {
-                RegisterAccess::A => {
-                    self.next_state(Microcode::AslA);
+            Opcode::Asl => {
+                self.shift_op = Some(asl);
+
+                match self.register_access {
+                    RegisterAccess::A => {
+                        self.next_state(Microcode::ShiftA);
+                    }
+                    _ => {
+                        self.next_state(Microcode::ShiftFetch);
+                        self.run_next_state(memory);
+                    }
                 }
-                _ => {
-                    self.next_state(Microcode::AslFetch);
-                    self.run_next_state(memory);
-                }
-            },
+            }
             Opcode::Tax => {
                 self.regs.x = self.regs.a;
                 self.set_nz(self.regs.x);
