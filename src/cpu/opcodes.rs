@@ -94,6 +94,7 @@ impl CPU {
             }
             Opcode::Tsx => {
                 self.regs.x = self.regs.sp;
+                self.set_nz(self.regs.x);
                 self.fetch_opcode();
             }
             Opcode::Pha => {
@@ -207,25 +208,25 @@ impl CPU {
                 self.fetch_opcode();
             }
             Opcode::Cmp => {
-                let fetched_data = self.read(memory, self.absolute_address) as i16;
-                let result = (self.regs.a as i16) - fetched_data;
-                self.regs.p.set(StatusFlag::C, result >= 0x00);
+                let fetched_data = self.read(memory, self.absolute_address);
+                let result = ((self.regs.a as i16) - (fetched_data as i16)) as i8;
+                self.regs.p.set(StatusFlag::C, self.regs.a >= fetched_data);
                 self.regs.p.set(StatusFlag::Z, result == 0x00);
                 self.regs.p.set(StatusFlag::N, result < 0x00);
                 self.fetch_opcode();
             }
             Opcode::Cpx => {
-                let fetched_data = self.read(memory, self.absolute_address) as i16;
-                let result = (self.regs.x as i16) - fetched_data;
-                self.regs.p.set(StatusFlag::C, result >= 0x00);
+                let fetched_data = self.read(memory, self.absolute_address);
+                let result = ((self.regs.x as i16) - (fetched_data as i16)) as i8;
+                self.regs.p.set(StatusFlag::C, self.regs.x >= fetched_data);
                 self.regs.p.set(StatusFlag::Z, result == 0x00);
                 self.regs.p.set(StatusFlag::N, result < 0x00);
                 self.fetch_opcode();
             }
             Opcode::Cpy => {
-                let fetched_data = self.read(memory, self.absolute_address) as i16;
-                let result = (self.regs.y as i16) - fetched_data;
-                self.regs.p.set(StatusFlag::C, result >= 0x00);
+                let fetched_data = self.read(memory, self.absolute_address);
+                let result = ((self.regs.y as i16) - (fetched_data as i16)) as i8;
+                self.regs.p.set(StatusFlag::C, self.regs.y >= fetched_data);
                 self.regs.p.set(StatusFlag::Z, result == 0x00);
                 self.regs.p.set(StatusFlag::N, result < 0x00);
                 self.fetch_opcode();
