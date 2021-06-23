@@ -14,7 +14,7 @@ struct RAM {
 }
 
 impl Memory for RAM {
-    fn read(&self, address: usize, _is_read_only: bool) -> u8 {
+    fn read(&mut self, address: usize, _is_read_only: bool) -> u8 {
         self.a[address]
     }
 
