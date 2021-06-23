@@ -1,10 +1,10 @@
+use crate::memory::Memory;
 use modular_bitfield::prelude::*;
 use std::io::prelude::*;
 use std::io::Cursor;
 use std::io::SeekFrom;
 use std::mem;
 use std::slice;
-// use crate::memory::Memory;
 
 #[derive(Debug, Copy, Clone)]
 pub enum MirroringMode {
@@ -47,6 +47,8 @@ pub struct Cartridge {
     n_chr_banks: usize,
     hw_mirroring: MirroringMode,
     mapper_id: u8,
+    mapper: Box<dyn Mapper>,
+    use_cartridge_data: bool,
 }
 
 impl Cartridge {
@@ -92,6 +94,10 @@ impl Cartridge {
             cursor.read(&mut chr_rom).unwrap();
         }
 
+        let mapper = Box::new(NROM {
+            prg_banks: n_prg_banks,
+        });
+
         Cartridge {
             header,
             prg_rom,
@@ -101,6 +107,8 @@ impl Cartridge {
             chr_ram: vec![0; 8192],
             hw_mirroring,
             mapper_id,
+            mapper,
+            use_cartridge_data: false,
         }
     }
 
@@ -122,5 +130,65 @@ impl Cartridge {
 
     pub fn mirroring(&self) -> MirroringMode {
         self.hw_mirroring
+    }
+
+    pub fn use_cartridge_data(&self) -> bool {
+        self.use_cartridge_data
+    }
+}
+
+impl Memory for Cartridge {
+    fn read(&mut self, address: usize, _is_read_only: bool) -> u8 {
+        let mut mapped_address = 0;
+        let result = self
+            .mapper
+            .map_cpu_read_address(address, &mut mapped_address);
+
+        match result {
+            MapperStatus::Read => {
+                self.use_cartridge_data = true;
+                return self.prg_rom()[mapped_address];
+            }
+            _ => {
+                self.use_cartridge_data = false;
+                return 0;
+            }
+        }
+    }
+
+    fn write(&mut self, _address: usize, _value: u8) {
+        // do nothing for now
+    }
+}
+
+pub enum MapperStatus {
+    Read,
+    Write,
+    Unreadable,
+}
+
+pub trait Mapper {
+    fn map_cpu_read_address(&self, address: usize, mapped_address: &mut usize) -> MapperStatus;
+}
+
+pub struct NROM {
+    pub prg_banks: u8,
+}
+
+impl NROM {
+    pub fn new(prg_banks: u8) -> Self {
+        Self { prg_banks }
+    }
+}
+
+impl Mapper for NROM {
+    fn map_cpu_read_address(&self, address: usize, mapped_address: &mut usize) -> MapperStatus {
+        if address < 0x8000 {
+            return MapperStatus::Unreadable;
+        }
+
+        *mapped_address = address & if self.prg_banks > 1 { 0x7FFF } else { 0x3FFF };
+
+        return MapperStatus::Read;
     }
 }
