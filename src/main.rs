@@ -1,4 +1,5 @@
 use nesrs;
+use nesrs::cartridge::*;
 use nesrs::cpu::*;
 use nesrs::memory::*;
 
@@ -13,19 +14,18 @@ use std::time::Instant;
 #[macro_use]
 mod macros;
 
-struct RAM {
-    prg_banks: u8,
-    prg_rom: Vec<u8>,
+struct NesMapper {
     ram: Vec<u8>,
+    cartridge: Cartridge,
 }
 
-impl Memory for RAM {
-    fn read(&self, address: usize, _is_read_only: bool) -> u8 {
-        if address < 0x8000 {
-            self.ram[address]
+impl Memory for NesMapper {
+    fn read(&mut self, address: usize, is_read_only: bool) -> u8 {
+        let data = self.cartridge.read(address, is_read_only);
+        if self.cartridge.use_cartridge_data() {
+            return data;
         } else {
-            let new_address = address & if self.prg_banks > 1 { 0x7FFF } else { 0x3FFF };
-            self.prg_rom[new_address]
+            self.ram[address]
         }
     }
 
@@ -36,20 +36,6 @@ impl Memory for RAM {
     }
 }
 
-#[repr(C, packed)]
-#[derive(Debug, Copy, Clone)]
-struct NESHeader {
-    name: [u8; 4],
-    prg_rom_chunks: u8,
-    chr_rom_chunks: u8,
-    mapper1: u8,
-    mapper2: u8,
-    prg_ram_size: u8,
-    tv_system1: u8,
-    tv_system2: u8,
-    unused: [u8; 5],
-}
-
 fn main() -> std::io::Result<()> {
     let mut cpu = CPU::new();
 
@@ -58,50 +44,15 @@ fn main() -> std::io::Result<()> {
 
     file.read_to_end(&mut buffer)?;
 
-    let mut cursor = Cursor::new(buffer);
-
-    // read nesrom.nes
-    let mut header: NESHeader = unsafe { mem::zeroed() };
-
-    let header_size = mem::size_of::<NESHeader>();
-
-    unsafe {
-        let header_slice = slice::from_raw_parts_mut(&mut header as *mut _ as *mut u8, header_size);
-
-        cursor.read_exact(header_slice).unwrap();
-    }
-
-    if (header.mapper1 & 0x04) > 0 {
-        cursor.seek(SeekFrom::Current(512)).unwrap();
-    }
-
-    let mut prg_memory: Vec<u8> = Vec::new();
-    let mut chr_memory: Vec<u8> = Vec::new();
-
-    let n_prg_banks = header.prg_rom_chunks;
-    let n_chr_banks = header.chr_rom_chunks;
-
-    // println!("n_prg_banks: {}, n_chr_banks: {}", n_prg_banks, n_chr_banks);
-
-    prg_memory.resize((n_prg_banks as usize) * 16384, 0);
-    cursor.read(&mut prg_memory).unwrap();
-
-    if n_chr_banks == 0 {
-        chr_memory.resize(8192, 0);
-    } else {
-        chr_memory.resize((n_chr_banks as usize) * 8192, 0);
-        cursor.read(&mut chr_memory).unwrap();
-    }
-
-    let mut memory = RAM {
-        prg_rom: prg_memory,
-        prg_banks: n_prg_banks,
-        ram: vec![0; 0x8000],
+    let mut memory = NesMapper {
+        ram: vec![0; 0x2000],
+        cartridge: Cartridge::parse(&buffer),
     };
 
-    cpu.debug = false;
+    cpu.debug = true;
     cpu.reset();
     loop_cpu!(cpu, memory);
+
     cpu.regs.pc = 0xc000;
 
     let now = Instant::now();
