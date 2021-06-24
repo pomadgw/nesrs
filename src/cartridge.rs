@@ -6,6 +6,9 @@ use std::io::SeekFrom;
 use std::mem;
 use std::slice;
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 #[derive(Debug, Copy, Clone)]
 pub enum MirroringMode {
     Hardware,
@@ -50,6 +53,8 @@ pub struct Cartridge {
     mapper: Box<dyn Mapper>,
     use_cartridge_data: bool,
 }
+
+pub type CartridgeRef = Rc<RefCell<Cartridge>>;
 
 impl Cartridge {
     pub fn parse(buffer: &Vec<u8>) -> Cartridge {
