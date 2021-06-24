@@ -1,25 +1,33 @@
 use crate::cartridge::*;
 use crate::cpu::*;
 use crate::memory::*;
+use crate::ppu::*;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-pub struct NesMemoryMapper<'a> {
+pub struct NesMemoryMapper {
     ram: Vec<u8>,
-    cartridge: &'a mut Cartridge,
+    cartridge: CartridgeRef,
+    ppu: PPU,
 }
 
-impl<'a> NesMemoryMapper<'a> {
-    pub fn new(cartridge: &'a mut Cartridge) -> NesMemoryMapper {
+impl NesMemoryMapper {
+    pub fn new(cartridge: Cartridge) -> NesMemoryMapper {
+        let cart_ref = Rc::new(RefCell::new(cartridge));
         NesMemoryMapper {
-            cartridge,
+            cartridge: cart_ref.clone(),
             ram: vec![0; 0x0800],
+            ppu: PPU {
+                cartridge: cart_ref.clone(),
+            },
         }
     }
 }
 
-impl Memory for NesMemoryMapper<'_> {
+impl Memory for NesMemoryMapper {
     fn read(&mut self, address: usize, is_read_only: bool) -> u8 {
-        let data = self.cartridge.read(address, is_read_only);
-        if self.cartridge.use_cartridge_data() {
+        let data = self.cartridge.borrow_mut().read(address, is_read_only);
+        if self.cartridge.borrow().use_cartridge_data() {
             return data;
         } else {
             self.ram[address & 0x07FF]
@@ -33,14 +41,14 @@ impl Memory for NesMemoryMapper<'_> {
     }
 }
 
-pub struct Bus<'a> {
-    memory_mapper: NesMemoryMapper<'a>,
+pub struct Bus {
+    memory_mapper: NesMemoryMapper,
     pub cpu: CPU,
     pub cycle: u32,
 }
 
-impl<'a> Bus<'a> {
-    pub fn new(cartridge: &'a mut Cartridge) -> Self {
+impl Bus {
+    pub fn new(cartridge: Cartridge) -> Self {
         Bus {
             memory_mapper: NesMemoryMapper::new(cartridge),
             cpu: CPU::new(),

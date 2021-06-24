@@ -14,9 +14,9 @@ fn main() -> std::io::Result<()> {
     let mut buffer = Vec::new();
 
     file.read_to_end(&mut buffer)?;
-    let mut cartridge = Cartridge::parse(&buffer);
+    let cartridge = Cartridge::parse(&buffer);
 
-    let mut bus = Bus::new(&mut cartridge);
+    let mut bus = Bus::new(cartridge);
 
     bus.cpu.debug = false;
     bus.reset();
