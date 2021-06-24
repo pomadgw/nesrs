@@ -1,40 +1,14 @@
 use nesrs;
+use nesrs::bus::*;
 use nesrs::cartridge::*;
 use nesrs::cpu::*;
-use nesrs::memory::*;
 
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::Cursor;
-use std::io::SeekFrom;
-use std::mem;
-use std::slice;
 use std::time::Instant;
 
 #[macro_use]
 mod macros;
-
-struct NesMapper {
-    ram: Vec<u8>,
-    cartridge: Cartridge,
-}
-
-impl Memory for NesMapper {
-    fn read(&mut self, address: usize, is_read_only: bool) -> u8 {
-        let data = self.cartridge.read(address, is_read_only);
-        if self.cartridge.use_cartridge_data() {
-            return data;
-        } else {
-            self.ram[address]
-        }
-    }
-
-    fn write(&mut self, address: usize, value: u8) {
-        if address < 0x8000 {
-            self.ram[address] = value;
-        }
-    }
-}
 
 fn main() -> std::io::Result<()> {
     let mut cpu = CPU::new();
@@ -44,10 +18,7 @@ fn main() -> std::io::Result<()> {
 
     file.read_to_end(&mut buffer)?;
 
-    let mut memory = NesMapper {
-        ram: vec![0; 0x2000],
-        cartridge: Cartridge::parse(&buffer),
-    };
+    let mut memory = NesMemoryMapper::new(Cartridge::parse(&buffer));
 
     cpu.debug = true;
     cpu.reset();
