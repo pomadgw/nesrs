@@ -58,11 +58,21 @@ impl PPU {
         }
     }
 
-    pub fn ppu_read(&mut self, _address: usize) -> u8 {
+    pub fn ppu_read(&mut self, address: usize, is_read_only: bool) -> u8 {
+        let data = self.cartridge.borrow_mut().ppu_read(address, is_read_only);
+
+        if self.cartridge.borrow().use_cartridge_data() {
+            return data;
+        }
+
         0
     }
 
-    pub fn ppu_write(&mut self, _address: usize, _value: u8) {
-        // ??
+    pub fn ppu_write(&mut self, address: usize, value: u8) {
+        self.cartridge.borrow_mut().ppu_write(address, value);
+
+        if self.cartridge.borrow().use_cartridge_data() {
+            // ??
+        }
     }
 }

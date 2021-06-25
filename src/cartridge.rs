@@ -141,6 +141,41 @@ impl Cartridge {
     pub fn use_cartridge_data(&self) -> bool {
         self.use_cartridge_data
     }
+
+    pub fn ppu_read(&mut self, address: usize, _is_read_only: bool) -> u8 {
+        let mut mapped_address = 0;
+        let result = self
+            .mapper
+            .map_ppu_read_address(address, &mut mapped_address);
+
+        match result {
+            MapperStatus::Read => {
+                self.use_cartridge_data = true;
+                return self.chr_rom()[mapped_address];
+            }
+            _ => {
+                self.use_cartridge_data = false;
+                return 0;
+            }
+        }
+    }
+
+    pub fn ppu_write(&mut self, address: usize, value: u8) {
+        let mut mapped_address = 0;
+        let result = self
+            .mapper
+            .map_ppu_read_address(address, &mut mapped_address);
+
+        match result {
+            MapperStatus::Read => {
+                self.use_cartridge_data = true;
+                self.chr_ram[mapped_address] = value;
+            }
+            _ => {
+                self.use_cartridge_data = false;
+            }
+        }
+    }
 }
 
 impl Memory for Cartridge {
