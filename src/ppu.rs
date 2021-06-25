@@ -11,12 +11,31 @@ const PPUADDR: usize = 0x06;
 const PPUDATA: usize = 0x07;
 const OAMDMA: usize = 0x4014;
 
+pub const NES_WIDTH_SIZE: usize = 256;
+pub const NES_HEIGHT_SIZE: usize = 240;
+const NES_SCREEN_BUFFER_SIZE: usize = NES_WIDTH_SIZE * NES_HEIGHT_SIZE * 4;
+
+pub static mut NES_SCREEN_BUFFER: [u8; NES_SCREEN_BUFFER_SIZE] = [0; NES_SCREEN_BUFFER_SIZE];
+
+pub fn get_screen_buffer_pointer() -> *const u8 {
+    let pointer: *const u8;
+    unsafe {
+        pointer = NES_SCREEN_BUFFER.as_ptr();
+    }
+
+    return pointer;
+}
+
+
 pub struct PPU {
     pub cartridge: CartridgeRef,
     pattern_table: [[u8; 0x1000]; 2],
     nametable: [[u8; 0x0400]; 2],
     palette_table: [u8; 32],
+
+    screen: [u8; NES_SCREEN_BUFFER_SIZE],
 }
+
 
 impl Memory for PPU {
     fn read(&mut self, address: usize, _is_read_only: bool) -> u8 {
@@ -55,6 +74,7 @@ impl PPU {
             palette_table: [0; 32],
             nametable: [[0; 0x0400]; 2],
             pattern_table: [[0; 0x1000]; 2],
+            screen: [0; NES_SCREEN_BUFFER_SIZE],
         }
     }
 
@@ -73,6 +93,12 @@ impl PPU {
 
         if self.cartridge.borrow().use_cartridge_data() {
             // ??
+        }
+    }
+
+    pub fn set_buffer(address: usize, value: u8) {
+        unsafe {
+            NES_SCREEN_BUFFER[address] = value;
         }
     }
 }
