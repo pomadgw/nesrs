@@ -14,7 +14,7 @@ const OAMDMA: usize = 0x4014;
 pub struct PPU {
     pub cartridge: CartridgeRef,
     pattern_table: [[u8; 0x1000]; 2],
-    nametable: [u8; 0x1000],
+    nametable: [[u8; 0x0400]; 2],
     palette_table: [u8; 32],
 }
 
@@ -53,7 +53,7 @@ impl PPU {
         Self {
             cartridge,
             palette_table: [0; 32],
-            nametable: [0; 0x1000],
+            nametable: [[0; 0x0400]; 2],
             pattern_table: [[0; 0x1000]; 2],
         }
     }
