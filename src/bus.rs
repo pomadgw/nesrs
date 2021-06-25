@@ -56,6 +56,14 @@ impl Bus {
         }
     }
 
+    pub fn new_from_array(array: &Vec<u8>) -> Self {
+        Bus {
+            memory_mapper: NesMemoryMapper::new(Cartridge::parse(array)),
+            cpu: CPU::new(),
+            cycle: 0,
+        }
+    }
+
     pub fn clock(&mut self) {
         match self.cycle {
             0 | 3 => {
@@ -72,5 +80,9 @@ impl Bus {
 
     pub fn reset(&mut self) {
         self.cpu.reset();
+    }
+
+    pub fn memory(&mut self) -> &mut NesMemoryMapper {
+        &mut self.memory_mapper
     }
 }
