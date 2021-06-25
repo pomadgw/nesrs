@@ -161,8 +161,21 @@ impl Memory for Cartridge {
         }
     }
 
-    fn write(&mut self, _address: usize, _value: u8) {
-        // do nothing for now
+    fn write(&mut self, address: usize, value: u8) {
+        let mut mapped_address = 0;
+        let result = self
+            .mapper
+            .map_cpu_write_address(address, &mut mapped_address, value);
+
+        match result {
+            MapperStatus::Read => {
+                self.use_cartridge_data = true;
+                self.prg_rom[mapped_address] = value;
+            }
+            _ => {
+                self.use_cartridge_data = false;
+            }
+        }
     }
 }
 
@@ -174,6 +187,12 @@ pub enum MapperStatus {
 
 pub trait Mapper {
     fn map_cpu_read_address(&self, address: usize, mapped_address: &mut usize) -> MapperStatus;
+    fn map_cpu_write_address(
+        &mut self,
+        address: usize,
+        mapped_address: &mut usize,
+        value: u8,
+    ) -> MapperStatus;
 }
 
 pub struct NROM {
@@ -195,5 +214,14 @@ impl Mapper for NROM {
         *mapped_address = address & if self.prg_banks > 1 { 0x7FFF } else { 0x3FFF };
 
         return MapperStatus::Read;
+    }
+
+    fn map_cpu_write_address(
+        &mut self,
+        _address: usize,
+        _mapped_address: &mut usize,
+        _value: u8,
+    ) -> MapperStatus {
+        MapperStatus::Unreadable
     }
 }
