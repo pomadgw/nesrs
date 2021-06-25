@@ -29,14 +29,42 @@ impl Memory for NesMemoryMapper {
         let data = self.cartridge.borrow_mut().read(address, is_read_only);
         if self.cartridge.borrow().use_cartridge_data() {
             return data;
+        } else if address < 0x2000 {
+            self.ram[address & 0x07FF]
+        } else if address < 0x4000 {
+            // TODO: PPU here
+            self.ppu.read(address & 0x07, is_read_only)
+        } else if address == 0x4014 {
+            // TODO: OAMDMA
+            0
+        } else if address <= 0x4013 || (address == 0x4015) || (address == 0x4017) {
+            // TODO: APU here
+            0
+        } else if address == 0x4016 || address == 0x4017 {
+            // TODO: controller
+            0
         } else {
             self.ram[address & 0x07FF]
         }
     }
 
     fn write(&mut self, address: usize, value: u8) {
-        if address < 0x8000 {
-            self.ram[address] = value;
+        self.cartridge.borrow_mut().write(address, value);
+
+        if self.cartridge.borrow().use_cartridge_data() {
+        } else if address < 0x2000 {
+            self.ram[address & 0x07FF] = value;
+        } else if address < 0x4000 {
+            // TODO: PPU here
+            self.ppu.write(address & 0x07, value)
+        } else if address == 0x4014 {
+            // TODO: OAMDMA
+        } else if address <= 0x4013 || (address == 0x4015) || (address == 0x4017) {
+            // TODO: APU here
+        } else if address == 0x4016 || address == 0x4017 {
+            // TODO: controller
+        } else {
+            self.ram[address & 0x07FF] = value;
         }
     }
 }
