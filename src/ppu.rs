@@ -13,6 +13,9 @@ const OAMDMA: usize = 0x4014;
 
 pub struct PPU {
     pub cartridge: CartridgeRef,
+    pattern_table: [[u8; 0x1000]; 2],
+    nametable: [u8; 0x1000],
+    palette_table: [u8; 32],
 }
 
 impl Memory for PPU {
@@ -26,7 +29,7 @@ impl Memory for PPU {
             PPUSCROLL => 0,
             PPUADDR => 0,
             PPUDATA => 0,
-            _ => 0
+            _ => 0,
         }
     }
 
@@ -46,6 +49,15 @@ impl Memory for PPU {
 }
 
 impl PPU {
+    pub fn new(cartridge: CartridgeRef) -> Self {
+        Self {
+            cartridge,
+            palette_table: [0; 32],
+            nametable: [0; 0x1000],
+            pattern_table: [[0; 0x1000]; 2],
+        }
+    }
+
     pub fn ppu_read(&mut self, _address: usize) -> u8 {
         0
     }
