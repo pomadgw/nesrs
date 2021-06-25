@@ -12,6 +12,14 @@ pub trait Mapper {
         mapped_address: &mut usize,
         value: u8,
     ) -> MapperStatus;
+
+    fn map_ppu_read_address(&self, address: usize, mapped_address: &mut usize) -> MapperStatus;
+    fn map_ppu_write_address(
+        &mut self,
+        address: usize,
+        mapped_address: &mut usize,
+        value: u8,
+    ) -> MapperStatus;
 }
 
 pub struct NROM {
@@ -36,6 +44,25 @@ impl Mapper for NROM {
     }
 
     fn map_cpu_write_address(
+        &mut self,
+        _address: usize,
+        _mapped_address: &mut usize,
+        _value: u8,
+    ) -> MapperStatus {
+        MapperStatus::Unreadable
+    }
+
+    fn map_ppu_read_address(&self, address: usize, mapped_address: &mut usize) -> MapperStatus {
+        if address >= 0x2000 {
+            return MapperStatus::Unreadable;
+        }
+
+        *mapped_address = address;
+
+        return MapperStatus::Read;
+    }
+
+    fn map_ppu_write_address(
         &mut self,
         _address: usize,
         _mapped_address: &mut usize,

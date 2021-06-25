@@ -14,3 +14,13 @@ impl Memory for PPU {
         // ?
     }
 }
+
+impl PPU {
+    pub fn ppu_read(&mut self, _address: usize) -> u8 {
+        0
+    }
+
+    pub fn ppu_write(&mut self, _address: usize, _value: u8) {
+        // ??
+    }
+}
