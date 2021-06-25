@@ -143,16 +143,20 @@ impl CPU {
         )
     }
 
+    pub fn debug(&self) -> String {
+        format!(
+            "{}  {:9} {:31} {} CYC:{:<5}",
+            self.see_prev_pc(),
+            self.see_prev_instruction_bytes(),
+            self.see_prev_instruction(),
+            self.formatted_register,
+            self.prev_cycles
+        )
+    }
+
     pub fn print_debug(&self) {
         if self.debug {
-            println!(
-                "{}  {:9} {:31} {} CYC:{:<5}",
-                self.see_prev_pc(),
-                self.see_prev_instruction_bytes(),
-                self.see_prev_instruction(),
-                self.formatted_register,
-                self.prev_cycles
-            );
+            println!("{}", self.debug());
         }
     }
 
