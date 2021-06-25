@@ -17,9 +17,7 @@ impl NesMemoryMapper {
         NesMemoryMapper {
             cartridge: cart_ref.clone(),
             ram: vec![0; 0x0800],
-            ppu: PPU {
-                cartridge: cart_ref.clone(),
-            },
+            ppu: PPU::new(cart_ref.clone()),
         }
     }
 }
