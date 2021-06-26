@@ -1,4 +1,4 @@
-extern crate sdl2;
+// extern crate sdl2;
 
 use nesrs;
 use nesrs::bus::*;
@@ -100,7 +100,7 @@ fn main() -> std::io::Result<()> {
         texture
             .update(
                 None,
-                nesrs::ppu::get_screen_buffer(),
+                bus.ppu.borrow().screen(),
                 nesrs::ppu::NES_WIDTH_SIZE * 3,
             )
             .unwrap();
