@@ -8,16 +8,15 @@ use std::rc::Rc;
 pub struct NesMemoryMapper {
     ram: Vec<u8>,
     cartridge: CartridgeRef,
-    ppu: PPU,
+    ppu: PPURef,
 }
 
 impl NesMemoryMapper {
-    pub fn new(cartridge: Cartridge) -> NesMemoryMapper {
-        let cart_ref = Rc::new(RefCell::new(cartridge));
+    pub fn new(ppu: PPURef, cartridge: CartridgeRef) -> NesMemoryMapper {
         NesMemoryMapper {
-            cartridge: cart_ref.clone(),
+            cartridge: cartridge.clone(),
             ram: vec![0; 0x0800],
-            ppu: PPU::new(cart_ref.clone()),
+            ppu: ppu.clone(),
         }
     }
 }
@@ -31,7 +30,7 @@ impl Memory for NesMemoryMapper {
             self.ram[address & 0x07FF]
         } else if address < 0x4000 {
             // TODO: PPU here
-            self.ppu.read(address & 0x07, is_read_only)
+            self.ppu.borrow_mut().read(address & 0x07, is_read_only)
         } else if address == 0x4014 {
             // TODO: OAMDMA
             0
@@ -54,7 +53,7 @@ impl Memory for NesMemoryMapper {
             self.ram[address & 0x07FF] = value;
         } else if address < 0x4000 {
             // TODO: PPU here
-            self.ppu.write(address & 0x07, value)
+            self.ppu.borrow_mut().write(address & 0x07, value)
         } else if address == 0x4014 {
             // TODO: OAMDMA
         } else if address <= 0x4013 || (address == 0x4015) || (address == 0x4017) {
@@ -71,23 +70,24 @@ pub struct Bus {
     memory_mapper: NesMemoryMapper,
     pub cpu: CPU,
     pub cycle: u32,
+    pub ppu: PPURef,
 }
 
 impl Bus {
     pub fn new(cartridge: Cartridge) -> Self {
+        let cartref = Rc::new(RefCell::new(cartridge));
+        let ppu = Rc::new(RefCell::new(PPU::new(cartref.clone())));
+
         Bus {
-            memory_mapper: NesMemoryMapper::new(cartridge),
+            memory_mapper: NesMemoryMapper::new(ppu.clone(), cartref),
             cpu: CPU::new(),
             cycle: 0,
+            ppu,
         }
     }
 
     pub fn new_from_array(array: &Vec<u8>) -> Self {
-        Bus {
-            memory_mapper: NesMemoryMapper::new(Cartridge::parse(array)),
-            cpu: CPU::new(),
-            cycle: 0,
-        }
+        Self::new(Cartridge::parse(array))
     }
 
     pub fn clock(&mut self) {

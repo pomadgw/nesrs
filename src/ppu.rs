@@ -1,6 +1,9 @@
 use crate::cartridge::CartridgeRef;
 use crate::memory::Memory;
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 const PPUCTRL: usize = 0x00;
 const PPUMASK: usize = 0x01;
 const PPUSTATUS: usize = 0x02;
@@ -26,6 +29,7 @@ pub fn get_screen_buffer_pointer() -> *const u8 {
     return pointer;
 }
 
+pub type PPURef = Rc<RefCell<PPU>>;
 
 pub struct PPU {
     pub cartridge: CartridgeRef,
@@ -35,7 +39,6 @@ pub struct PPU {
 
     screen: [u8; NES_SCREEN_BUFFER_SIZE],
 }
-
 
 impl Memory for PPU {
     fn read(&mut self, address: usize, _is_read_only: bool) -> u8 {
