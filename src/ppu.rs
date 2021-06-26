@@ -19,8 +19,6 @@ pub const NES_WIDTH_SIZE: usize = 256;
 pub const NES_HEIGHT_SIZE: usize = 240;
 const NES_SCREEN_BUFFER_SIZE: usize = NES_WIDTH_SIZE * NES_HEIGHT_SIZE * 4;
 
-pub static mut NES_SCREEN_BUFFER: [u8; NES_SCREEN_BUFFER_SIZE] = [0; NES_SCREEN_BUFFER_SIZE];
-
 type PPUColor = (u8, u8, u8);
 
 pub static PPU_COLORS: [PPUColor; 0x40] = [
@@ -90,19 +88,6 @@ pub static PPU_COLORS: [PPUColor; 0x40] = [
     (0, 0, 0),
 ];
 
-pub fn get_screen_buffer_pointer() -> *const u8 {
-    let pointer: *const u8;
-    unsafe {
-        pointer = NES_SCREEN_BUFFER.as_ptr();
-    }
-
-    return pointer;
-}
-
-pub fn get_screen_buffer<'a>() -> &'a [u8] {
-    unsafe { &NES_SCREEN_BUFFER }
-}
-
 pub type PPURef = Rc<RefCell<PPU>>;
 
 pub struct PPU {
@@ -111,7 +96,7 @@ pub struct PPU {
     nametable: [[u8; 0x0400]; 2],     // 0x2000 - 0x2fff
     palette_table: [u8; 32],          // 0x3f00 - 0x3fff
 
-    screen: [u8; NES_SCREEN_BUFFER_SIZE],
+    screen: Vec<u8>,
     cycle: i32,
     scanline: i32,
     pub done_drawing: bool,
@@ -151,13 +136,15 @@ impl Memory for PPU {
 }
 
 impl PPU {
-    pub fn new(cartridge: CartridgeRef) -> Self {
-        Self {
+    pub fn new(cartridge: CartridgeRef) -> PPU {
+        println!("PPU: creating ppu");
+
+        PPU {
             cartridge,
             palette_table: [0; 32],
             nametable: [[0; 0x0400]; 2],
             pattern_table: [[0; 0x1000]; 2],
-            screen: [0; NES_SCREEN_BUFFER_SIZE],
+            screen: vec![0; NES_SCREEN_BUFFER_SIZE],
             cycle: 0,
             scanline: 0,
             done_drawing: false,
@@ -178,10 +165,10 @@ impl PPU {
                 PPU_COLORS[0x30]
             };
 
-            Self::set_buffer(pos + 0, color.0);
-            Self::set_buffer(pos + 1, color.1);
-            Self::set_buffer(pos + 2, color.2);
-            Self::set_buffer(pos + 3, 255);
+            self.set_buffer(pos + 0, color.0);
+            self.set_buffer(pos + 1, color.1);
+            self.set_buffer(pos + 2, color.2);
+            self.set_buffer(pos + 3, 255);
         }
 
         self.cycle += 1;
@@ -312,9 +299,18 @@ impl PPU {
         }
     }
 
-    pub fn set_buffer(address: usize, value: u8) {
-        unsafe {
-            NES_SCREEN_BUFFER[address] = value;
-        }
+    pub fn screen(&self) -> &Vec<u8> {
+        &self.screen
+    }
+
+    pub fn set_buffer(&mut self, address: usize, value: u8) {
+        self.screen[address] = value;
+    }
+
+    pub fn get_screen_buffer_pointer(&self) -> *const u8 {
+        let pointer: *const u8;
+        pointer = self.screen.as_ptr();
+
+        return pointer;
     }
 }
