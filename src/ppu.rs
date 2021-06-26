@@ -1,4 +1,4 @@
-use crate::cartridge::CartridgeRef;
+use crate::cartridge::*;
 use crate::memory::Memory;
 use crate::utils::XORShiftRand;
 
@@ -204,14 +204,111 @@ impl PPU {
             return data;
         }
 
-        0
+        match address {
+            0..=0x0fff => self.pattern_table[0][address & 0x0fff],
+            0x1000..=0x1fff => self.pattern_table[1][address & 0x0fff],
+            0x2000..=0x3eff => {
+                let nametable_address = address & 0x0fff;
+                match self.cartridge.borrow().mirroring() {
+                    MirroringMode::Horizontal => match nametable_address {
+                        0x0000..=0x07ff => self.nametable[0][nametable_address & 0x03ff],
+                        0x0800..=0x0fff => self.nametable[1][nametable_address & 0x03ff],
+                        _ => 0,
+                    },
+                    MirroringMode::Vertical => match nametable_address {
+                        0x0000..=0x03ff | 0x0800..=0x0bff => {
+                            self.nametable[0][nametable_address & 0x03ff]
+                        }
+                        0x0400..=0x07ff | 0x0c00..=0x0fff => {
+                            self.nametable[1][nametable_address & 0x03ff]
+                        }
+                        _ => 0,
+                    },
+                    MirroringMode::SingleScreen => self.nametable[0][nametable_address & 0x03ff],
+                    MirroringMode::Hardware => {
+                        // should not be set as hardware
+                        0
+                    }
+                }
+            }
+            0x3f00..=0x3fff => {
+                let mut palette_index = address & 0x001f;
+
+                if palette_index == 0x10 {
+                    palette_index = 0x00;
+                } else if palette_index == 0x14 {
+                    palette_index = 0x04;
+                } else if palette_index == 0x18 {
+                    palette_index = 0x08;
+                } else if palette_index == 0x1c {
+                    palette_index = 0x0c;
+                }
+
+                self.palette_table[palette_index]
+            }
+            _ => 0,
+        }
     }
 
     pub fn ppu_write(&mut self, address: usize, value: u8) {
         self.cartridge.borrow_mut().ppu_write(address, value);
 
         if self.cartridge.borrow().use_cartridge_data() {
-            // ??
+            return;
+        }
+
+        match address {
+            0..=0x0fff => {
+                self.pattern_table[0][address & 0x0fff] = value;
+            }
+            0x1000..=0x1fff => {
+                self.pattern_table[1][address & 0x0fff] = value;
+            }
+            0x2000..=0x3eff => {
+                let nametable_address = address & 0x0fff;
+                match self.cartridge.borrow().mirroring() {
+                    MirroringMode::Horizontal => match nametable_address {
+                        0x0000..=0x07ff => {
+                            self.nametable[0][nametable_address & 0x03ff] = value;
+                        }
+                        0x0800..=0x0fff => {
+                            self.nametable[1][nametable_address & 0x03ff] = value;
+                        }
+                        _ => {}
+                    },
+                    MirroringMode::Vertical => match nametable_address {
+                        0x0000..=0x03ff | 0x0800..=0x0bff => {
+                            self.nametable[0][nametable_address & 0x03ff] = value;
+                        }
+                        0x0400..=0x07ff | 0x0c00..=0x0fff => {
+                            self.nametable[1][nametable_address & 0x03ff] = value;
+                        }
+                        _ => {}
+                    },
+                    MirroringMode::SingleScreen => {
+                        self.nametable[0][nametable_address & 0x03ff] = value;
+                    }
+                    MirroringMode::Hardware => {
+                        // should not be set as hardware
+                    }
+                }
+            }
+            0x3f00..=0x3fff => {
+                let mut palette_index = address & 0x001f;
+
+                if palette_index == 0x10 {
+                    palette_index = 0x00;
+                } else if palette_index == 0x14 {
+                    palette_index = 0x04;
+                } else if palette_index == 0x18 {
+                    palette_index = 0x08;
+                } else if palette_index == 0x1c {
+                    palette_index = 0x0c;
+                }
+
+                self.palette_table[palette_index] = value;
+            }
+            _ => {}
         }
     }
 
