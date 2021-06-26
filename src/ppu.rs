@@ -99,6 +99,10 @@ pub fn get_screen_buffer_pointer() -> *const u8 {
     return pointer;
 }
 
+pub fn get_screen_buffer<'a>() -> &'a [u8] {
+    unsafe { &NES_SCREEN_BUFFER }
+}
+
 pub type PPURef = Rc<RefCell<PPU>>;
 
 pub struct PPU {
