@@ -1,5 +1,6 @@
 use crate::cartridge::CartridgeRef;
 use crate::memory::Memory;
+use crate::utils::XORShiftRand;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -20,6 +21,75 @@ const NES_SCREEN_BUFFER_SIZE: usize = NES_WIDTH_SIZE * NES_HEIGHT_SIZE * 4;
 
 pub static mut NES_SCREEN_BUFFER: [u8; NES_SCREEN_BUFFER_SIZE] = [0; NES_SCREEN_BUFFER_SIZE];
 
+type PPUColor = (u8, u8, u8);
+
+pub static PPU_COLORS: [PPUColor; 0x40] = [
+    (84, 84, 84),
+    (0, 30, 116),
+    (8, 16, 144),
+    (48, 0, 136),
+    (68, 0, 100),
+    (92, 0, 48),
+    (84, 4, 0),
+    (60, 24, 0),
+    (32, 42, 0),
+    (8, 58, 0),
+    (0, 64, 0),
+    (0, 60, 0),
+    (0, 50, 60),
+    (0, 0, 0),
+    (0, 0, 0),
+    (0, 0, 0),
+    (152, 150, 152),
+    (8, 76, 196),
+    (48, 50, 236),
+    (92, 30, 228),
+    (136, 20, 176),
+    (160, 20, 100),
+    (152, 34, 32),
+    (120, 60, 0),
+    (84, 90, 0),
+    (40, 114, 0),
+    (8, 124, 0),
+    (0, 118, 40),
+    (0, 102, 120),
+    (0, 0, 0),
+    (0, 0, 0),
+    (0, 0, 0),
+    (236, 238, 236),
+    (76, 154, 236),
+    (120, 124, 236),
+    (176, 98, 236),
+    (228, 84, 236),
+    (236, 88, 180),
+    (236, 106, 100),
+    (212, 136, 32),
+    (160, 170, 0),
+    (116, 196, 0),
+    (76, 208, 32),
+    (56, 204, 108),
+    (56, 180, 204),
+    (60, 60, 60),
+    (0, 0, 0),
+    (0, 0, 0),
+    (236, 238, 236),
+    (168, 204, 236),
+    (188, 188, 236),
+    (212, 178, 236),
+    (236, 174, 236),
+    (236, 174, 212),
+    (236, 180, 176),
+    (228, 196, 144),
+    (204, 210, 120),
+    (180, 222, 120),
+    (168, 226, 144),
+    (152, 226, 180),
+    (160, 214, 228),
+    (160, 162, 160),
+    (0, 0, 0),
+    (0, 0, 0),
+];
+
 pub fn get_screen_buffer_pointer() -> *const u8 {
     let pointer: *const u8;
     unsafe {
@@ -33,11 +103,17 @@ pub type PPURef = Rc<RefCell<PPU>>;
 
 pub struct PPU {
     pub cartridge: CartridgeRef,
-    pattern_table: [[u8; 0x1000]; 2],
-    nametable: [[u8; 0x0400]; 2],
-    palette_table: [u8; 32],
+    pattern_table: [[u8; 0x1000]; 2], // 0x0000 - 0x1fff
+    nametable: [[u8; 0x0400]; 2],     // 0x2000 - 0x2fff
+    palette_table: [u8; 32],          // 0x3f00 - 0x3fff
 
     screen: [u8; NES_SCREEN_BUFFER_SIZE],
+    cycle: i32,
+    scanline: i32,
+    pub done_drawing: bool,
+
+    // for debug
+    rand: XORShiftRand,
 }
 
 impl Memory for PPU {
@@ -78,11 +154,43 @@ impl PPU {
             nametable: [[0; 0x0400]; 2],
             pattern_table: [[0; 0x1000]; 2],
             screen: [0; NES_SCREEN_BUFFER_SIZE],
+            cycle: 0,
+            scanline: 0,
+            done_drawing: false,
+            rand: XORShiftRand::new(0xad334da55),
         }
     }
 
     pub fn clock(&mut self) {
         // TODO: implement clock
+
+        if self.cycle < 256 && (0 <= self.scanline && self.scanline < 240) {
+            let pos = NES_WIDTH_SIZE * (self.scanline as usize) + (self.cycle as usize);
+            let pos = pos * 4;
+
+            let color = if self.rand.rand() & 0x01 == 0 {
+                PPU_COLORS[0x3f]
+            } else {
+                PPU_COLORS[0x30]
+            };
+
+            Self::set_buffer(pos + 0, color.0);
+            Self::set_buffer(pos + 1, color.1);
+            Self::set_buffer(pos + 2, color.2);
+            Self::set_buffer(pos + 3, 255);
+        }
+
+        self.cycle += 1;
+
+        if self.cycle >= 341 {
+            self.cycle = 0;
+            self.scanline += 1;
+
+            if self.scanline >= 261 {
+                self.scanline = -1;
+                self.done_drawing = true;
+            }
+        }
     }
 
     pub fn ppu_read(&mut self, address: usize, is_read_only: bool) -> u8 {

@@ -105,6 +105,14 @@ impl Bus {
         self.cycle -= 1;
     }
 
+    pub fn clock_until_frame_done(&mut self) {
+        while !self.ppu.borrow().done_drawing {
+            self.clock();
+        }
+
+        self.ppu.borrow_mut().done_drawing = false;
+    }
+
     pub fn reset(&mut self) {
         self.cpu.reset();
     }
