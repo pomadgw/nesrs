@@ -13,5 +13,6 @@ pub mod cpu;
 pub mod mappers;
 pub mod memory;
 pub mod ppu;
+pub mod utils;
 
 pub use cartridge::CartridgeRef;
