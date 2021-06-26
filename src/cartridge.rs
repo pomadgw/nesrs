@@ -15,6 +15,7 @@ pub enum MirroringMode {
     Hardware,
     Horizontal,
     Vertical,
+    SingleScreen,
 }
 
 #[allow(dead_code)]
