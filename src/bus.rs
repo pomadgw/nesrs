@@ -14,9 +14,9 @@ pub struct NesMemoryMapper {
 impl NesMemoryMapper {
     pub fn new(ppu: PPURef, cartridge: CartridgeRef) -> NesMemoryMapper {
         NesMemoryMapper {
-            cartridge: cartridge.clone(),
+            cartridge: cartridge,
             ram: vec![0; 0x0800],
-            ppu: ppu.clone(),
+            ppu: ppu,
         }
     }
 }
