@@ -81,6 +81,10 @@ impl PPU {
         }
     }
 
+    pub fn clock(&mut self) {
+        // TODO: implement clock
+    }
+
     pub fn ppu_read(&mut self, address: usize, is_read_only: bool) -> u8 {
         let data = self.cartridge.borrow_mut().ppu_read(address, is_read_only);
 
