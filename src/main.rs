@@ -7,6 +7,7 @@ use nesrs::cartridge::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::Instant;
+use colored::*;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -25,7 +26,7 @@ fn main() -> std::io::Result<()> {
 
     let mut bus = Bus::new(cartridge);
 
-    bus.cpu.debug = true;
+    bus.cpu.debug = false;
     bus.reset();
     // bus.cpu.regs.pc = 0xc000;
 
@@ -37,23 +38,23 @@ fn main() -> std::io::Result<()> {
 
     let mut debug_print_tick = 0;
 
-    for _i in 0..(30000 * 3) {
+    for _i in 0..(100000 * 3) {
         bus.clock();
 
-        if bus.cpu.done() {
-            if debug_print_tick == 0 {
-                println!(
-                    "{}",
-                    bus.cpu
-                        .debug_with_other_info(&format!("PPU:{:3},{:3}", ppuscanline, ppucycle))
-                );
-                ppucycle = bus.ppu.borrow().cycle();
-                ppuscanline = bus.ppu.borrow().scanline();
-                debug_print_tick = 3;
-            }
+        // if bus.cpu.done() {
+        //     if debug_print_tick == 0 {
+        //         println!(
+        //             "{}",
+        //             bus.cpu
+        //                 .debug_with_other_info(&format!("PPU:{:3},{:3}", ppuscanline, ppucycle))
+        //         );
+        //         ppucycle = bus.ppu.borrow().cycle();
+        //         ppuscanline = bus.ppu.borrow().scanline();
+        //         debug_print_tick = 3;
+        //     }
 
-            debug_print_tick -= 1;
-        }
+        //     debug_print_tick -= 1;
+        // }
     }
 
     let end = now.elapsed().as_micros();
@@ -70,6 +71,27 @@ fn main() -> std::io::Result<()> {
     } else {
         eprintln!("freq: {} MHz", freq / 1_000_000.0);
     }
+
+    for j in 0..8 {
+        for i in 0..16 {
+            let pattern_test = bus.ppu.borrow_mut().debug_pattern(0, i, j);
+            for y in 0..8 {
+                for x in 0..8 {
+                    let d = pattern_test[y * 8 + (7 - x)];
+                    let str = format!("🬹").truecolor(d.0, d.1, d.2);
+                    print!("{}", str);
+                }
+                println!("");
+            }
+            println!("\n-----------------\n");
+        }
+    }
+
+    // for palette in 0..8 {
+    //     for index in 0..4 {
+    //         println!("{:?}", bus.ppu.borrow_mut().get_color(palette, index));
+    //     }
+    // }
     /*
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
