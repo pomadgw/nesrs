@@ -25,18 +25,34 @@ fn main() -> std::io::Result<()> {
 
     let mut bus = Bus::new(cartridge);
 
-    bus.cpu.debug = false;
+    bus.cpu.debug = true;
     bus.reset();
-    bus.cpu.regs.pc = 0xc000;
+    // bus.cpu.regs.pc = 0xc000;
 
     let now = Instant::now();
     let start = now.elapsed().as_micros();
 
-    for _i in 0..(8991 * 3) {
+    let mut ppucycle = 0;
+    let mut ppuscanline = 0;
+
+    let mut debug_print_tick = 0;
+
+    for _i in 0..(30000 * 3) {
         bus.clock();
 
         if bus.cpu.done() {
-            bus.cpu.print_debug();
+            if debug_print_tick == 0 {
+                println!(
+                    "{}",
+                    bus.cpu
+                        .debug_with_other_info(&format!("PPU:{:3},{:3}", ppuscanline, ppucycle))
+                );
+                ppucycle = bus.ppu.borrow().cycle();
+                ppuscanline = bus.ppu.borrow().scanline();
+                debug_print_tick = 3;
+            }
+
+            debug_print_tick -= 1;
         }
     }
 
@@ -54,7 +70,7 @@ fn main() -> std::io::Result<()> {
     } else {
         eprintln!("freq: {} MHz", freq / 1_000_000.0);
     }
-
+    /*
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
@@ -119,6 +135,6 @@ fn main() -> std::io::Result<()> {
 
         canvas.present();
     }
-
+    */
     Ok(())
 }
