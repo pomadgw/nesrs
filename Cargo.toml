@@ -12,6 +12,10 @@ bitflags = "1.2.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 modular-bitfield = "0.11.2"
+bitvec = "0.20"
+
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+colored = "2"
 
 [target.'cfg(target_arch = "x86_64")'.dependencies.sdl2]
 version = "0.33"

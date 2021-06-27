@@ -439,4 +439,56 @@ impl PPU {
         };
         self.vaddress += factor;
     }
+
+    pub fn debug_pattern(&mut self, base: usize, x: usize, y: usize) -> Vec<PPUColor> {
+        let mut pattern = Vec::new();
+
+        /*
+
+            Pattern is here:
+
+            Bit Planes            Pixel Pattern
+            $0yyx + 0=$41  01000001
+            $0yyx + 1=$C2  11000010
+            $0yyx + 2=$44  01000100
+            $0yyx + 3=$48  01001000
+            $0yyx + 4=$10  00010000
+            $0yyx + 5=$20  00100000         .1.....3
+            $0yyx + 6=$40  01000000         11....3.
+            $0yyx + 7=$80  10000000  =====  .1...3..
+                                            .1..3...
+            $0yyx + 8=$01  00000001  =====  ...3.22.
+            $0yyx + 9=$02  00000010         ..3....2
+            $0yyx + A=$04  00000100         .3....2.
+            $0yyx + B=$08  00001000         3....222
+            $0yyx + C=$16  00010110
+            $0yyx + D=$21  00100001
+            $0yyx + E=$42  01000010
+            $0yyx + F=$87  10000111
+
+        */
+
+        let offset = 256 * y + 16 * x;
+
+        for row in 0..8 {
+            let real_base = (0x1000 * base) + offset + row;
+            let mut lsb = self.ppu_read(real_base, true);
+            let mut msb = self.ppu_read(real_base + 8, true);
+
+            for _shift in 0..8 {
+                let pixel_id = ((msb & 1) << 1) | (lsb & 0x01);
+                pattern.push(self.get_color(2, pixel_id as usize));
+                lsb >>= 1;
+                msb >>= 1;
+            }
+        }
+
+        pattern
+    }
+
+    pub fn get_color(&mut self, palette: usize, index: usize) -> PPUColor {
+        let address = 0x3f00 + (palette << 2) + index;
+        let index = self.ppu_read(address, true) as usize;
+        PPU_COLORS[index & 0x1f]
+    }
 }
