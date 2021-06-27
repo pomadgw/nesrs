@@ -78,7 +78,7 @@ fn main() -> std::io::Result<()> {
             for y in 0..8 {
                 for x in 0..8 {
                     let d = pattern_test[y * 8 + (7 - x)];
-                    let str = format!("🬹").truecolor(d.0, d.1, d.2);
+                    let str = format!("█").truecolor(d.0, d.1, d.2);
                     print!("{}", str);
                 }
                 println!("");
