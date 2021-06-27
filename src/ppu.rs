@@ -177,14 +177,14 @@ impl Memory for PPU {
             OAMDATA => {}
             PPUSCROLL => {}
             PPUADDR => match self.address_latch {
-                AddressLatch::Lo => {
-                    self.address_latch = AddressLatch::Hi;
-                    self.temp_address = 0;
-                    self.temp_address |= value as usize;
-                }
                 AddressLatch::Hi => {
                     self.address_latch = AddressLatch::Lo;
-                    self.temp_address |= (value as usize) << 8;
+                    self.temp_address |=
+                        ((value & 0x3f) as usize) << 8 | (self.temp_address & 0x00ff);
+                }
+                AddressLatch::Lo => {
+                    self.temp_address |= (self.temp_address & 0xff00) | (value as usize);
+                    self.address_latch = AddressLatch::Hi;
                     self.vaddress = self.temp_address;
                 }
             },
@@ -213,7 +213,7 @@ impl PPU {
 
             status: PPUStatus::empty(),
             control: PPUControl::empty(),
-            address_latch: AddressLatch::Lo,
+            address_latch: AddressLatch::Hi,
             temp_address: 0,
             vaddress: 0,
 
