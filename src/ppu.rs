@@ -99,6 +99,19 @@ bitflags! {
 }
 
 bitflags! {
+    pub struct PPUMask: u8 {
+        const GREYSCALE = 1 << 0;
+        const SHOW_BG_LEFT = 1 << 1;
+        const SHOW_SPRITE_LEFT = 1 << 2;
+        const SHOW_BG = 1 << 3;
+        const SHOW_SPRITE = 1 << 4;
+        const EMPHASIS_RED = 1 << 5;
+        const EMPHASIS_GREEN = 1 << 6;
+        const EMPHASIS_BLUE = 1 << 7;
+    }
+}
+
+bitflags! {
     pub struct PPUControl: u8 {
         const ENABLE_NMI                   = 0b1000_0000;
         const MASTER_SLAVE                 = 0b0100_0000;
@@ -138,6 +151,7 @@ pub struct PPU {
 
     status: PPUStatus,
     control: PPUControl,
+    mask: PPUMask,
     address_latch: AddressLatch,
     data_buffer: u8,
 
@@ -183,7 +197,9 @@ impl Memory for PPU {
             PPUCTRL => {
                 self.control.bits = value;
             }
-            PPUMASK => {}
+            PPUMASK => {
+                self.mask.bits = value;
+            }
             PPUSTATUS => {}
             OAMADDR => {}
             OAMDATA => {}
@@ -225,6 +241,7 @@ impl PPU {
 
             status: PPUStatus::empty(),
             control: PPUControl::empty(),
+            mask: PPUMask::empty(),
             address_latch: AddressLatch::Hi,
             temp_address: 0,
             vaddress: 0,
