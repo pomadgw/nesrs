@@ -139,6 +139,7 @@ pub struct PPU {
     status: PPUStatus,
     control: PPUControl,
     address_latch: AddressLatch,
+    data_buffer: u8,
 
     temp_address: usize,
     vaddress: usize,
@@ -158,7 +159,18 @@ impl Memory for PPU {
             PPUSCROLL => 0,
             PPUADDR => 0,
             PPUDATA => {
-                let result = self.ppu_read(self.vaddress, is_read_only);
+                let read_result = self.ppu_read(self.vaddress, is_read_only);
+
+                // result the buffer data...
+                let mut result = self.data_buffer;
+
+                if self.vaddress >= 0x3f00 {
+                    // ...expect if we read palette
+                    result = read_result;
+                }
+
+                // set the buffer data
+                self.data_buffer = read_result;
                 self.increase_vaddress();
                 result
             }
@@ -216,6 +228,7 @@ impl PPU {
             address_latch: AddressLatch::Hi,
             temp_address: 0,
             vaddress: 0,
+            data_buffer: 0,
 
             rand: XORShiftRand::new(0xad334da55),
         }
