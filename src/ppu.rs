@@ -98,6 +98,33 @@ bitflags! {
     }
 }
 
+bitflags! {
+    pub struct PPUControl: u8 {
+        const ENABLE_NMI                   = 0b1000_0000;
+        const MASTER_SLAVE                 = 0b0100_0000;
+        const SPRITE_SIZE                  = 0b0010_0000;
+        const BG_PATTERN_TABLE_ADDRESS     = 0b0001_0000;
+        const SPRITE_PATTERN_TABLE_ADDRESS = 0b0000_1000;
+        const VRAM_ADDRESS_INCREMENT_MODE  = 0b0000_0100;
+    }
+}
+
+impl PPUControl {
+    pub fn base_nametable_address(&self) -> u8 {
+        self.bits & 0x03
+    }
+
+    pub fn set_base_nametable_address(&mut self, value: u8) {
+        self.bits &= !(0x03);
+        self.bits |= value & 0x03;
+    }
+}
+
+enum AddressLatch {
+    Lo,
+    Hi,
+}
+
 pub struct PPU {
     pub cartridge: CartridgeRef,
     pattern_table: [[u8; 0x1000]; 2], // 0x0000 - 0x1fff
@@ -110,13 +137,18 @@ pub struct PPU {
     pub done_drawing: bool,
 
     status: PPUStatus,
+    control: PPUControl,
+    address_latch: AddressLatch,
+
+    temp_address: usize,
+    vaddress: usize,
 
     // for debug
     rand: XORShiftRand,
 }
 
 impl Memory for PPU {
-    fn read(&mut self, address: usize, _is_read_only: bool) -> u8 {
+    fn read(&mut self, address: usize, is_read_only: bool) -> u8 {
         match address & 0x07 {
             PPUCTRL => 0,
             PPUMASK => 0,
@@ -125,21 +157,41 @@ impl Memory for PPU {
             OAMDATA => 0,
             PPUSCROLL => 0,
             PPUADDR => 0,
-            PPUDATA => 0,
+            PPUDATA => {
+                let result = self.ppu_read(self.vaddress, is_read_only);
+                self.increase_vaddress();
+                result
+            }
             _ => 0,
         }
     }
 
-    fn write(&mut self, address: usize, _value: u8) {
+    fn write(&mut self, address: usize, value: u8) {
         match address & 0x07 {
-            PPUCTRL => {}
+            PPUCTRL => {
+                self.control.bits = value;
+            }
             PPUMASK => {}
             PPUSTATUS => {}
             OAMADDR => {}
             OAMDATA => {}
             PPUSCROLL => {}
-            PPUADDR => {}
-            PPUDATA => {}
+            PPUADDR => match self.address_latch {
+                AddressLatch::Lo => {
+                    self.address_latch = AddressLatch::Hi;
+                    self.temp_address = 0;
+                    self.temp_address |= value as usize;
+                }
+                AddressLatch::Hi => {
+                    self.address_latch = AddressLatch::Lo;
+                    self.temp_address |= (value as usize) << 8;
+                    self.vaddress = self.temp_address;
+                }
+            },
+            PPUDATA => {
+                self.ppu_write(self.vaddress, value);
+                self.increase_vaddress();
+            }
             _ => {}
         }
     }
@@ -160,6 +212,10 @@ impl PPU {
             done_drawing: false,
 
             status: PPUStatus::empty(),
+            control: PPUControl::empty(),
+            address_latch: AddressLatch::Lo,
+            temp_address: 0,
+            vaddress: 0,
 
             rand: XORShiftRand::new(0xad334da55),
         }
@@ -340,5 +396,17 @@ impl PPU {
         pointer = self.screen.as_ptr();
 
         return pointer;
+    }
+
+    fn increase_vaddress(&mut self) {
+        let factor = if self
+            .control
+            .contains(PPUControl::VRAM_ADDRESS_INCREMENT_MODE)
+        {
+            32
+        } else {
+            1
+        };
+        self.vaddress += factor;
     }
 }
