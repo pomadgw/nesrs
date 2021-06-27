@@ -90,6 +90,14 @@ pub static PPU_COLORS: [PPUColor; 0x40] = [
 
 pub type PPURef = Rc<RefCell<PPU>>;
 
+bitflags! {
+    pub struct PPUStatus: u8 {
+        const VBLANK = 0b1000_0000;
+        const SPRITE0_HIT = 0b0100_0000;
+        const SPRITE_OVERFLOW = 0b0010_0000;
+    }
+}
+
 pub struct PPU {
     pub cartridge: CartridgeRef,
     pattern_table: [[u8; 0x1000]; 2], // 0x0000 - 0x1fff
@@ -101,6 +109,8 @@ pub struct PPU {
     scanline: i32,
     pub done_drawing: bool,
 
+    status: PPUStatus,
+
     // for debug
     rand: XORShiftRand,
 }
@@ -110,7 +120,7 @@ impl Memory for PPU {
         match address & 0x07 {
             PPUCTRL => 0,
             PPUMASK => 0,
-            PPUSTATUS => 0,
+            PPUSTATUS => self.status.bits(),
             OAMADDR => 0,
             OAMDATA => 0,
             PPUSCROLL => 0,
@@ -148,12 +158,22 @@ impl PPU {
             cycle: 0,
             scanline: 0,
             done_drawing: false,
+
+            status: PPUStatus::empty(),
+
             rand: XORShiftRand::new(0xad334da55),
         }
     }
 
     pub fn clock(&mut self) {
         // TODO: implement clock
+        if self.cycle == 1 && self.scanline == -1 {
+            self.status.set(PPUStatus::VBLANK, false);
+        }
+
+        if self.cycle == 1 && self.scanline == 241 {
+            self.status.set(PPUStatus::VBLANK, true);
+        }
 
         if self.cycle < 256 && (0 <= self.scanline && self.scanline < 240) {
             let pos = NES_WIDTH_SIZE * (self.scanline as usize) + (self.cycle as usize);
@@ -182,6 +202,14 @@ impl PPU {
                 self.done_drawing = true;
             }
         }
+    }
+
+    pub fn cycle(&self) -> i32 {
+        self.cycle
+    }
+
+    pub fn scanline(&self) -> i32 {
+        self.scanline
     }
 
     pub fn ppu_read(&mut self, address: usize, is_read_only: bool) -> u8 {
