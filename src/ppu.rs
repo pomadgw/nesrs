@@ -1,6 +1,6 @@
 use crate::cartridge::*;
 use crate::memory::Memory;
-use crate::utils::XORShiftRand;
+use crate::utils::*;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -18,8 +18,6 @@ const OAMDMA: usize = 0x4014;
 pub const NES_WIDTH_SIZE: usize = 256;
 pub const NES_HEIGHT_SIZE: usize = 240;
 const NES_SCREEN_BUFFER_SIZE: usize = NES_WIDTH_SIZE * NES_HEIGHT_SIZE * 4;
-
-type PPUColor = (u8, u8, u8);
 
 pub static PPU_COLORS: [PPUColor; 0x40] = [
     (84, 84, 84),
@@ -482,18 +480,24 @@ impl PPU {
 
         // let offset = 256 * y + 16 * x;
         let offset = (y << 8) | (x << 4);
+        let mut temp_row = Vec::new();
 
         for row in 0..8 {
             let real_base = (0x1000 * base) + offset + row;
             let mut lsb = self.ppu_read(real_base, true);
             let mut msb = self.ppu_read(real_base + 8, true);
 
+            temp_row.clear();
+
             for _shift in 0..8 {
                 let pixel_id = ((msb & 1) << 1) | (lsb & 0x01);
-                pattern.push(self.get_color(1, pixel_id as usize));
+                temp_row.push(self.get_color(1, pixel_id as usize));
                 lsb >>= 1;
                 msb >>= 1;
             }
+            temp_row.reverse();
+
+            pattern.append(&mut temp_row);
         }
 
         pattern
