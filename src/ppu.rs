@@ -440,6 +440,16 @@ impl PPU {
         self.vaddress += factor;
     }
 
+    pub fn get_color(&mut self, palette: usize, index: usize) -> PPUColor {
+        let address = 0x3f00 + (palette << 2) + index;
+        let index = self.ppu_read(address, true) as usize;
+        PPU_COLORS[index & 0x1f]
+    }
+
+    pub fn debug_nametable(&self, base: usize) -> &[u8] {
+        &self.nametable[base]
+    }
+
     pub fn debug_pattern(&mut self, base: usize, x: usize, y: usize) -> Vec<PPUColor> {
         let mut pattern = Vec::new();
 
@@ -477,18 +487,12 @@ impl PPU {
 
             for _shift in 0..8 {
                 let pixel_id = ((msb & 1) << 1) | (lsb & 0x01);
-                pattern.push(self.get_color(2, pixel_id as usize));
+                pattern.push(self.get_color(1, pixel_id as usize));
                 lsb >>= 1;
                 msb >>= 1;
             }
         }
 
         pattern
-    }
-
-    pub fn get_color(&mut self, palette: usize, index: usize) -> PPUColor {
-        let address = 0x3f00 + (palette << 2) + index;
-        let index = self.ppu_read(address, true) as usize;
-        PPU_COLORS[index & 0x1f]
     }
 }
