@@ -119,6 +119,8 @@ bitflags! {
         const BG_PATTERN_TABLE_ADDRESS     = 0b0001_0000;
         const SPRITE_PATTERN_TABLE_ADDRESS = 0b0000_1000;
         const VRAM_ADDRESS_INCREMENT_MODE  = 0b0000_0100;
+        const NAMETABLE_Y                  = 0b0000_0010;
+        const NAMETABLE_X                  = 0b0000_0001;
     }
 }
 
