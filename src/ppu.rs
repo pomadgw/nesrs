@@ -148,6 +148,7 @@ pub struct PPU {
     cycle: i32,
     scanline: i32,
     pub done_drawing: bool,
+    pub call_nmi: bool,
 
     status: PPUStatus,
     control: PPUControl,
@@ -160,6 +161,7 @@ pub struct PPU {
 
     // for debug
     rand: XORShiftRand,
+    pub screen_debug_pattern: [Screen; 2],
 }
 
 impl Memory for PPU {
@@ -167,7 +169,16 @@ impl Memory for PPU {
         match address & 0x07 {
             PPUCTRL => 0,
             PPUMASK => 0,
-            PPUSTATUS => self.status.bits(),
+            PPUSTATUS => {
+                let status = (self.status.bits() & 0xe0) | (self.data_buffer & 0x1f);
+
+                if !is_read_only {
+                    self.status.set(PPUStatus::VBLANK, false);
+                    self.address_latch = AddressLatch::Hi;
+                }
+
+                status
+            }
             OAMADDR => 0,
             OAMDATA => 0,
             PPUSCROLL => 0,
@@ -238,6 +249,7 @@ impl PPU {
             cycle: 0,
             scanline: 0,
             done_drawing: false,
+            call_nmi: false,
 
             status: PPUStatus::empty(),
             control: PPUControl::empty(),
@@ -248,6 +260,7 @@ impl PPU {
             data_buffer: 0,
 
             rand: XORShiftRand::new(0xad334da55),
+            screen_debug_pattern: [Screen::new(128, 128), Screen::new(128, 128)],
         }
     }
 
@@ -259,6 +272,10 @@ impl PPU {
 
         if self.cycle == 1 && self.scanline == 241 {
             self.status.set(PPUStatus::VBLANK, true);
+
+            if self.control.contains(PPUControl::ENABLE_NMI) {
+                self.call_nmi = true;
+            }
         }
 
         if self.cycle < 256 && (0 <= self.scanline && self.scanline < 240) {
@@ -491,7 +508,7 @@ impl PPU {
 
             for _shift in 0..8 {
                 let pixel_id = ((msb & 1) << 1) | (lsb & 0x01);
-                temp_row.push(self.get_color(1, pixel_id as usize));
+                temp_row.push(self.get_color(0, pixel_id as usize));
                 lsb >>= 1;
                 msb >>= 1;
             }
@@ -501,5 +518,32 @@ impl PPU {
         }
 
         pattern
+    }
+
+    pub fn set_debug_pattern_screen(&mut self, index: usize, palette: usize) {
+        for tile_y in 0..16 {
+            for tile_x in 0..16 {
+                let offset = (tile_y << 8) | (tile_x << 4);
+
+                for row in 0..8 {
+                    let real_base = (0x1000 * index) + offset + row;
+                    let mut lsb = self.ppu_read(real_base, true);
+                    let mut msb = self.ppu_read(real_base + 8, true);
+
+                    for col in 0..8 {
+                        let pixel_id = ((msb & 1) << 1) | (lsb & 0x01);
+                        // temp_row.push();
+                        lsb >>= 1;
+                        msb >>= 1;
+
+                        let x = tile_x * 8 + (7 - col);
+                        let y = tile_y * 8 + row;
+                        let color = self.get_color(palette, pixel_id as usize);
+
+                        self.screen_debug_pattern[index].set_pixel(x, y, color);
+                    }
+                }
+            }
+        }
     }
 }
