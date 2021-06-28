@@ -100,14 +100,14 @@ bitflags! {
 
 bitflags! {
     pub struct PPUMask: u8 {
-        const GREYSCALE = 1 << 0;
-        const SHOW_BG_LEFT = 1 << 1;
+        const GREYSCALE        = 1 << 0;
+        const SHOW_BG_LEFT     = 1 << 1;
         const SHOW_SPRITE_LEFT = 1 << 2;
-        const SHOW_BG = 1 << 3;
-        const SHOW_SPRITE = 1 << 4;
-        const EMPHASIS_RED = 1 << 5;
-        const EMPHASIS_GREEN = 1 << 6;
-        const EMPHASIS_BLUE = 1 << 7;
+        const SHOW_BG          = 1 << 3;
+        const SHOW_SPRITE      = 1 << 4;
+        const EMPHASIS_RED     = 1 << 5;
+        const EMPHASIS_GREEN   = 1 << 6;
+        const EMPHASIS_BLUE    = 1 << 7;
     }
 }
 
