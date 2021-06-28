@@ -478,7 +478,8 @@ impl PPU {
 
         */
 
-        let offset = 256 * y + 16 * x;
+        // let offset = 256 * y + 16 * x;
+        let offset = (y << 8) | (x << 4);
 
         for row in 0..8 {
             let real_base = (0x1000 * base) + offset + row;
