@@ -1,6 +1,7 @@
 use crate::cartridge::*;
 use crate::memory::Memory;
 use crate::utils::*;
+use std::fmt::Write;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -463,8 +464,24 @@ impl PPU {
         PPU_COLORS[index & 0x3f]
     }
 
-    pub fn debug_nametable(&self, base: usize) -> &[u8] {
-        &self.nametable[base]
+    pub fn debug_nametable(&mut self, base: usize) -> Vec<String> {
+        let mut result = Vec::new();
+        let base_address = 0x2000 + (base * 0x0400);
+
+        for row in 0..30 {
+            let mut string = String::new();
+            for col in 0..32 {
+                write!(
+                    string,
+                    "{:02X}",
+                    self.ppu_read(base_address + row * 32 + col, true)
+                );
+            }
+
+            result.push(string);
+        }
+
+        result
     }
 
     pub fn debug_pattern(&mut self, base: usize, x: usize, y: usize) -> Vec<PPUColor> {
