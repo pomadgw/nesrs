@@ -74,6 +74,10 @@ impl<'s, 't> TextRenderer<'s, 't> {
             )
             .unwrap();
     }
+
+    pub fn recommended_line_spacing(&self) -> i32 {
+        self.font.recommended_line_spacing()
+    }
 }
 
 fn main() -> std::io::Result<()> {
@@ -146,7 +150,7 @@ fn main() -> std::io::Result<()> {
     }
 
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
-    let font_size = 16i32;
+    let font_size = 6i32;
 
     let font = SystemSource::new()
         .select_best_match(&[FamilyName::Monospace], &Properties::new())
@@ -161,8 +165,6 @@ fn main() -> std::io::Result<()> {
 
     println!("PATH: {:?}", font_path);
     let font = ttf_context.load_font(font_path, font_size as u16).unwrap();
-
-    // let ppuref = bus.ppu.borrow();
 
     // let nametable = ppuref.debug_nametable(1);
 
@@ -313,13 +315,23 @@ fn main() -> std::io::Result<()> {
             )
             .unwrap();
 
-        text_renderer.render("TEST", Color::RGB(12, 33, 145), 0, 0);
+        // text_renderer.render("TEST", Color::RGB(12, 33, 145), 0, 0);
+
+        let mut ppuref = bus.ppu.borrow_mut();
+        let debug_nametable = ppuref.debug_nametable(0);
+
+        let mut row = 0;
+        let offset = text_renderer.recommended_line_spacing();
+        debug_nametable.iter().for_each(|item| {
+            text_renderer.render(&item, Color::RGB(12, 192, 255), 0, 0 + offset * row);
+            row += 1;
+        });
 
         let n_swatch_size: i32 = 6;
 
         for p in 0..8i32 {
             for s in 0..4i32 {
-                let color = bus.ppu.borrow_mut().get_color(p as usize, s as usize);
+                let color = ppuref.get_color(p as usize, s as usize);
                 let color = Color::RGB(color.0, color.1, color.2);
 
                 canvas.borrow_mut().set_draw_color(color);
