@@ -92,28 +92,28 @@ fn main() -> std::io::Result<()> {
     let now = Instant::now();
     let start = now.elapsed().as_micros();
 
-    let mut ppucycle = 0;
-    let mut ppuscanline = 0;
+    // let mut ppucycle = 0;
+    // let mut ppuscanline = 0;
 
-    let mut debug_print_tick = 0;
+    // let mut debug_print_tick = 0;
 
-    for _i in 0..(100000 * 3) {
+    for _i in 0..(400000 * 3) {
         bus.clock();
 
-        if bus.cpu.done() {
-            if debug_print_tick == 0 {
-                eprintln!(
-                    "{}",
-                    bus.cpu
-                        .debug_with_other_info(&format!("PPU:{:3},{:3}", ppuscanline, ppucycle))
-                );
-                ppucycle = bus.ppu.borrow().cycle();
-                ppuscanline = bus.ppu.borrow().scanline();
-                debug_print_tick = 3;
-            }
+        // if bus.cpu.done() {
+        //     if debug_print_tick == 0 {
+        //         eprintln!(
+        //             "{}",
+        //             bus.cpu
+        //                 .debug_with_other_info(&format!("PPU:{:3},{:3}", ppuscanline, ppucycle))
+        //         );
+        //         ppucycle = bus.ppu.borrow().cycle();
+        //         ppuscanline = bus.ppu.borrow().scanline();
+        //         debug_print_tick = 3;
+        //     }
 
-            debug_print_tick -= 1;
-        }
+        //     debug_print_tick -= 1;
+        // }
     }
 
     let end = now.elapsed().as_micros();
@@ -192,7 +192,7 @@ fn main() -> std::io::Result<()> {
         .build()
         .unwrap();
 
-    let mut canvas = Rc::new(RefCell::new(window.into_canvas().build().unwrap()));
+    let canvas = Rc::new(RefCell::new(window.into_canvas().build().unwrap()));
     let texture_creator = canvas.borrow_mut().texture_creator();
 
     let mut texture = texture_creator
@@ -225,6 +225,8 @@ fn main() -> std::io::Result<()> {
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
+    let mut palette = 0;
+
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -233,41 +235,28 @@ fn main() -> std::io::Result<()> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                _ => {}
-            }
-        }
-
-        for patternindex in 0..2 {
-            for tile_y in 0..16 {
-                for tile_x in 0..16 {
-                    let pattern_test =
-                        bus.ppu
-                            .borrow_mut()
-                            .debug_pattern(patternindex, tile_x, tile_y);
-                    for row in 0..8 {
-                        let yy = tile_y * 8 + row;
-                        for col in 0..8 {
-                            let d = pattern_test[row * 8 + col];
-                            let xx =
-                                (tile_x * 8 + col) + (patternindex * debug_pattern.width() / 2);
-                            debug_pattern.set_pixel(xx, yy, d);
-                        }
-                    }
+                Event::KeyDown {
+                    keycode: Some(Keycode::P),
+                    ..
+                } => {
+                    palette += 1;
+                    palette &= 0x07;
                 }
+                _ => {}
             }
         }
 
         bus.clock_until_frame_done();
 
+        for patternindex in 0..2 {
+            bus.ppu
+                .borrow_mut()
+                .set_debug_pattern_screen(patternindex, palette);
+        }
+
+        canvas.borrow_mut().set_draw_color(Color::RGB(0, 0, 0));
+
         canvas.borrow_mut().clear();
-        texture_debug_pattern
-            .update(
-                None,
-                debug_pattern.image(),
-                debug_pattern.width() * 4,
-                // nesrs::ppu::NES_WIDTH_SIZE * 3,
-            )
-            .unwrap();
         canvas
             .borrow_mut()
             .copy(
@@ -279,6 +268,14 @@ fn main() -> std::io::Result<()> {
                     (debug_pattern.width() * 2) as u32,
                     (debug_pattern.height() * 2) as u32,
                 )),
+            )
+            .unwrap();
+        texture_debug_pattern
+            .update(
+                None,
+                bus.ppu.borrow().screen_debug_pattern[0].image(),
+                bus.ppu.borrow().screen_debug_pattern[0].width() * 4,
+                // nesrs::ppu::NES_WIDTH_SIZE * 3,
             )
             .unwrap();
         canvas
@@ -294,8 +291,49 @@ fn main() -> std::io::Result<()> {
                 )),
             )
             .unwrap();
+        texture_debug_pattern
+            .update(
+                None,
+                bus.ppu.borrow().screen_debug_pattern[1].image(),
+                bus.ppu.borrow().screen_debug_pattern[1].width() * 4,
+                // nesrs::ppu::NES_WIDTH_SIZE * 3,
+            )
+            .unwrap();
+        canvas
+            .borrow_mut()
+            .copy(
+                &texture_debug_pattern,
+                None,
+                Some(sdl2::rect::Rect::new(
+                    256,
+                    256,
+                    (debug_pattern.width() * 2) as u32,
+                    (debug_pattern.height() * 2) as u32,
+                )),
+            )
+            .unwrap();
 
         text_renderer.render("TEST", Color::RGB(12, 33, 145), 0, 0);
+
+        let n_swatch_size: i32 = 6;
+
+        for p in 0..8i32 {
+            for s in 0..4i32 {
+                let color = bus.ppu.borrow_mut().get_color(p as usize, s as usize);
+                let color = Color::RGB(color.0, color.1, color.2);
+
+                canvas.borrow_mut().set_draw_color(color);
+                canvas
+                    .borrow_mut()
+                    .fill_rect(Rect::new(
+                        256 + p * (n_swatch_size * 5) + s * n_swatch_size,
+                        250,
+                        n_swatch_size as u32,
+                        n_swatch_size as u32,
+                    ))
+                    .unwrap();
+            }
+        }
 
         canvas.borrow_mut().present();
     }
