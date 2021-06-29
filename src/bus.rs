@@ -92,6 +92,12 @@ impl Bus {
 
     pub fn clock(&mut self) {
         self.ppu.borrow_mut().clock();
+
+        if self.ppu.borrow().call_nmi {
+            self.ppu.borrow_mut().call_nmi = false;
+            self.cpu.nmi();
+        }
+
         match self.cycle {
             0 | 3 => {
                 self.cpu.clock(&mut self.memory_mapper);
