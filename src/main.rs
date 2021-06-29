@@ -15,8 +15,66 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 
+use font_kit::family_name::FamilyName;
+use font_kit::handle::Handle;
+use font_kit::properties::Properties;
+use font_kit::source::SystemSource;
+
 #[macro_use]
 mod macros;
+
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use sdl2::rect::Rect;
+use sdl2::render::{Canvas, TextureCreator};
+use sdl2::ttf::Font;
+use sdl2::video::{Window, WindowContext};
+
+pub struct TextRenderer<'s, 't> {
+    font: Rc<&'s Font<'s, 't>>,
+    texture_creator: Rc<TextureCreator<WindowContext>>,
+    canvas: Rc<&'s RefCell<Canvas<Window>>>,
+}
+
+impl<'s, 't> TextRenderer<'s, 't> {
+    pub fn new(
+        font: Rc<&'s Font<'s, 't>>,
+        canvas: Rc<&'s RefCell<Canvas<Window>>>,
+    ) -> TextRenderer<'s, 't> {
+        let texture_creator = canvas.borrow().texture_creator();
+
+        TextRenderer {
+            font: Rc::clone(&font),
+            texture_creator: Rc::new(texture_creator),
+            canvas: Rc::clone(&canvas),
+        }
+    }
+
+    pub fn render(&self, text: &str, color: Color, x: i32, y: i32) {
+        let surface = self
+            .font
+            .render(text)
+            .blended(color)
+            .map_err(|e| e.to_string())
+            .unwrap();
+        let texture_text = self
+            .texture_creator
+            .create_texture_from_surface(&surface)
+            .map_err(|e| e.to_string())
+            .unwrap();
+        let text_query = texture_text.query();
+
+        self.canvas
+            .borrow_mut()
+            .copy(
+                &texture_text,
+                None,
+                Some(Rect::new(x, y, text_query.width, text_query.height)),
+            )
+            .unwrap();
+    }
+}
 
 fn main() -> std::io::Result<()> {
     let mut file = File::open("./rom/nestest.nes")?;
@@ -87,6 +145,23 @@ fn main() -> std::io::Result<()> {
         println!("");
     }
 
+    let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
+    let font_size = 16i32;
+
+    let font = SystemSource::new()
+        .select_best_match(&[FamilyName::Monospace], &Properties::new())
+        .unwrap();
+    let font_path = match font {
+        Handle::Path { path, .. } => path
+            .to_str()
+            .unwrap_or("/usr/share/fonts/TTF/Roboto-Regular.ttf")
+            .to_string(),
+        _ => String::from("/usr/share/fonts/TTF/Roboto-Regular.ttf"),
+    };
+
+    println!("PATH: {:?}", font_path);
+    let font = ttf_context.load_font(font_path, font_size as u16).unwrap();
+
     // let ppuref = bus.ppu.borrow();
 
     // let nametable = ppuref.debug_nametable(1);
@@ -117,8 +192,8 @@ fn main() -> std::io::Result<()> {
         .build()
         .unwrap();
 
-    let mut canvas = window.into_canvas().build().unwrap();
-    let texture_creator = canvas.texture_creator();
+    let mut canvas = Rc::new(RefCell::new(window.into_canvas().build().unwrap()));
+    let texture_creator = canvas.borrow_mut().texture_creator();
 
     let mut texture = texture_creator
         .create_texture_streaming(
@@ -142,9 +217,11 @@ fn main() -> std::io::Result<()> {
         .map_err(|e| e.to_string())
         .unwrap();
 
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-    canvas.clear();
-    canvas.present();
+    let text_renderer = TextRenderer::new(Rc::new(&font), Rc::new(&canvas));
+
+    canvas.borrow_mut().set_draw_color(Color::RGB(0, 0, 0));
+    canvas.borrow_mut().clear();
+    canvas.borrow_mut().present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
 
@@ -182,7 +259,7 @@ fn main() -> std::io::Result<()> {
 
         bus.clock_until_frame_done();
 
-        canvas.clear();
+        canvas.borrow_mut().clear();
         texture_debug_pattern
             .update(
                 None,
@@ -192,6 +269,7 @@ fn main() -> std::io::Result<()> {
             )
             .unwrap();
         canvas
+            .borrow_mut()
             .copy(
                 &texture,
                 None,
@@ -203,20 +281,23 @@ fn main() -> std::io::Result<()> {
                 )),
             )
             .unwrap();
-            canvas
-                .copy(
-                    &texture_debug_pattern,
-                    None,
-                    Some(sdl2::rect::Rect::new(
-                        0,
-                        256,
-                        (debug_pattern.width() * 2) as u32,
-                        (debug_pattern.height() * 2) as u32,
-                    )),
-                )
-                .unwrap();
+        canvas
+            .borrow_mut()
+            .copy(
+                &texture_debug_pattern,
+                None,
+                Some(sdl2::rect::Rect::new(
+                    0,
+                    256,
+                    (debug_pattern.width() * 2) as u32,
+                    (debug_pattern.height() * 2) as u32,
+                )),
+            )
+            .unwrap();
 
-        canvas.present();
+        text_renderer.render("TEST", Color::RGB(12, 33, 145), 0, 0);
+
+        canvas.borrow_mut().present();
     }
 
     Ok(())
