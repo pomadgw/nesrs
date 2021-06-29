@@ -16,6 +16,7 @@ bitvec = "0.20"
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 colored = "2"
+font-kit = "0.10.1"
 
 [target.'cfg(target_arch = "x86_64")'.dependencies.sdl2]
 version = "0.33"
