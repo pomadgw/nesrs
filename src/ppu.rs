@@ -196,7 +196,9 @@ impl Memory for PPU {
 
                 // set the buffer data
                 self.data_buffer = read_result;
-                self.increase_vaddress();
+                if !is_read_only {
+                    self.increase_vaddress();
+                }
                 result
             }
             _ => 0,
@@ -218,11 +220,11 @@ impl Memory for PPU {
             PPUADDR => match self.address_latch {
                 AddressLatch::Hi => {
                     self.address_latch = AddressLatch::Lo;
-                    self.temp_address |=
-                        ((value & 0x3f) as usize) << 8 | (self.temp_address & 0x00ff);
+                    self.temp_address =
+                        (((value & 0x3f) as usize) << 8) | (self.temp_address & 0x00ff);
                 }
                 AddressLatch::Lo => {
-                    self.temp_address |= (self.temp_address & 0xff00) | (value as usize);
+                    self.temp_address = (self.temp_address & 0xff00) | (value as usize);
                     self.address_latch = AddressLatch::Hi;
                     self.vaddress = self.temp_address;
                 }
@@ -238,8 +240,6 @@ impl Memory for PPU {
 
 impl PPU {
     pub fn new(cartridge: CartridgeRef) -> PPU {
-        println!("PPU: creating ppu");
-
         PPU {
             cartridge,
             palette_table: [0; 32],
@@ -460,7 +460,7 @@ impl PPU {
     pub fn get_color(&mut self, palette: usize, index: usize) -> PPUColor {
         let address = 0x3f00 + (palette << 2) + index;
         let index = self.ppu_read(address, true) as usize;
-        PPU_COLORS[index & 0x1f]
+        PPU_COLORS[index & 0x3f]
     }
 
     pub fn debug_nametable(&self, base: usize) -> &[u8] {
