@@ -122,6 +122,13 @@ impl PPUAddress {
         self.address |= value & PPUADDRRESS_COARSE_X_MASK;
     }
 
+    pub fn add_coarse_x(&mut self, value: usize) {
+        let old_address = self.address & !PPUADDRRESS_COARSE_X_MASK;
+        self.address += value;
+        self.address &= PPUADDRRESS_COARSE_X_MASK;
+        self.address |= old_address;
+    }
+
     pub fn coarse_y(&self) -> usize {
         (self.address & PPUADDRRESS_COARSE_Y_MASK) >> 5
     }
@@ -129,6 +136,13 @@ impl PPUAddress {
     pub fn set_coarse_y(&mut self, value: usize) {
         self.address &= !PPUADDRRESS_COARSE_Y_MASK;
         self.address |= (value << 5) & PPUADDRRESS_COARSE_Y_MASK;
+    }
+
+    pub fn add_coarse_y(&mut self, value: usize) {
+        let old_address = self.address & !PPUADDRRESS_COARSE_Y_MASK;
+        self.address += value << 5;
+        self.address &= PPUADDRRESS_COARSE_Y_MASK;
+        self.address |= old_address;
     }
 
     pub fn nametable_select(&self) -> usize {
