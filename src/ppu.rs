@@ -1,7 +1,9 @@
 use crate::cartridge::*;
 use crate::memory::Memory;
 use crate::utils::*;
+use std::convert::{From, Into};
 use std::fmt::Write;
+use std::ops::AddAssign;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -89,6 +91,83 @@ pub static PPU_COLORS: [PPUColor; 0x40] = [
 
 pub type PPURef = Rc<RefCell<PPU>>;
 
+#[derive(Debug, Copy, Clone)]
+pub struct PPUAddress {
+    address: usize,
+}
+
+const PPUADDRRESS_COARSE_X_MASK: usize = 0b000_00_00000_11111;
+const PPUADDRRESS_COARSE_Y_MASK: usize = 0b000_00_11111_00000;
+const PPUADDRRESS_NAMETABLE_SELECT_MASK: usize = 0b000_11_00000_00000;
+const PPUADDRRESS_FINE_Y_MASK: usize = 0b111_00_00000_00000;
+
+impl PPUAddress {
+    pub fn new() -> PPUAddress {
+        PPUAddress { address: 0 }
+    }
+
+    pub fn address(&self) -> usize {
+        self.address
+    }
+    pub fn set_address(&mut self, address: usize) {
+        self.address = address & 0xffff
+    }
+
+    pub fn coarse_x(&self) -> usize {
+        self.address & PPUADDRRESS_COARSE_X_MASK
+    }
+
+    pub fn set_coarse_x(&mut self, value: usize) {
+        self.address &= !PPUADDRRESS_COARSE_X_MASK;
+        self.address |= value & PPUADDRRESS_COARSE_X_MASK;
+    }
+
+    pub fn coarse_y(&self) -> usize {
+        (self.address & PPUADDRRESS_COARSE_Y_MASK) >> 5
+    }
+
+    pub fn set_coarse_y(&mut self, value: usize) {
+        self.address &= !PPUADDRRESS_COARSE_Y_MASK;
+        self.address |= (value << 5) & PPUADDRRESS_COARSE_Y_MASK;
+    }
+
+    pub fn nametable_select(&self) -> usize {
+        (self.address & PPUADDRRESS_NAMETABLE_SELECT_MASK) >> 10
+    }
+
+    pub fn set_nametable_select(&mut self, value: usize) {
+        self.address &= !PPUADDRRESS_NAMETABLE_SELECT_MASK;
+        self.address |= (value << 10) & PPUADDRRESS_NAMETABLE_SELECT_MASK;
+    }
+
+    pub fn fine_y(&self) -> usize {
+        (self.address & PPUADDRRESS_FINE_Y_MASK) >> 12
+    }
+
+    pub fn set_fine_y(&mut self, value: usize) {
+        self.address &= !PPUADDRRESS_FINE_Y_MASK;
+        self.address |= (value << 12) & PPUADDRRESS_FINE_Y_MASK;
+    }
+}
+
+impl From<usize> for PPUAddress {
+    fn from(value: usize) -> Self {
+        PPUAddress { address: value }
+    }
+}
+
+impl Into<usize> for PPUAddress {
+    fn into(self) -> usize {
+        self.address
+    }
+}
+
+impl AddAssign<usize> for PPUAddress {
+    fn add_assign(&mut self, rhs: usize) {
+        self.address += rhs;
+    }
+}
+
 bitflags! {
     pub struct PPUStatus: u8 {
         const VBLANK = 0b1000_0000;
@@ -157,8 +236,8 @@ pub struct PPU {
     address_latch: AddressLatch,
     data_buffer: u8,
 
-    temp_address: usize,
-    vaddress: usize,
+    temp_address: PPUAddress,
+    vaddress: PPUAddress,
 
     // for debug
     rand: XORShiftRand,
@@ -185,12 +264,12 @@ impl Memory for PPU {
             PPUSCROLL => 0,
             PPUADDR => 0,
             PPUDATA => {
-                let read_result = self.ppu_read(self.vaddress, is_read_only);
+                let read_result = self.ppu_read(self.vaddress.into(), is_read_only);
 
                 // result the buffer data...
                 let mut result = self.data_buffer;
 
-                if self.vaddress >= 0x3f00 {
+                if self.vaddress.address() >= 0x3f00 {
                     // ...expect if we read palette
                     result = read_result;
                 }
@@ -221,17 +300,19 @@ impl Memory for PPU {
             PPUADDR => match self.address_latch {
                 AddressLatch::Hi => {
                     self.address_latch = AddressLatch::Lo;
-                    self.temp_address =
-                        (((value & 0x3f) as usize) << 8) | (self.temp_address & 0x00ff);
+                    self.temp_address.set_address(
+                        (((value & 0x3f) as usize) << 8) | (self.temp_address.address() & 0x00ff),
+                    );
                 }
                 AddressLatch::Lo => {
-                    self.temp_address = (self.temp_address & 0xff00) | (value as usize);
+                    self.temp_address
+                        .set_address((self.temp_address.address() & 0xff00) | (value as usize));
                     self.address_latch = AddressLatch::Hi;
                     self.vaddress = self.temp_address;
                 }
             },
             PPUDATA => {
-                self.ppu_write(self.vaddress, value);
+                self.ppu_write(self.vaddress.into(), value);
                 self.increase_vaddress();
             }
             _ => {}
@@ -256,8 +337,8 @@ impl PPU {
             control: PPUControl::empty(),
             mask: PPUMask::empty(),
             address_latch: AddressLatch::Hi,
-            temp_address: 0,
-            vaddress: 0,
+            temp_address: PPUAddress::from(0),
+            vaddress: PPUAddress::from(0),
             data_buffer: 0,
 
             rand: XORShiftRand::new(0xad334da55),
