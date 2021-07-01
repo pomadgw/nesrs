@@ -248,7 +248,7 @@ pub struct PPU {
     nametable: [[u8; 0x0400]; 2],     // 0x2000 - 0x2fff
     palette_table: [u8; 32],          // 0x3f00 - 0x3fff
 
-    screen: Vec<u8>,
+    screen: Screen,
     cycle: i32,
     scanline: i32,
     pub done_drawing: bool,
@@ -377,7 +377,7 @@ impl PPU {
             palette_table: [0; 32],
             nametable: [[0; 0x0400]; 2],
             pattern_table: [[0; 0x1000]; 2],
-            screen: vec![0; NES_SCREEN_BUFFER_SIZE],
+            screen: Screen::new(NES_WIDTH_SIZE, NES_HEIGHT_SIZE),
             cycle: 0,
             scanline: 0,
             done_drawing: false,
@@ -412,19 +412,14 @@ impl PPU {
         }
 
         if self.cycle < 256 && (0 <= self.scanline && self.scanline < 240) {
-            let pos = NES_WIDTH_SIZE * (self.scanline as usize) + (self.cycle as usize);
-            let pos = pos * 4;
-
             let color = if self.rand.rand() & 0x01 == 0 {
                 PPU_COLORS[0x3f]
             } else {
                 PPU_COLORS[0x30]
             };
 
-            self.set_buffer(pos + 0, color.0);
-            self.set_buffer(pos + 1, color.1);
-            self.set_buffer(pos + 2, color.2);
-            self.set_buffer(pos + 3, 255);
+            self.screen
+                .set_pixel(self.cycle as usize, self.scanline as usize, color);
         }
 
         self.cycle += 1;
@@ -563,17 +558,13 @@ impl PPU {
         }
     }
 
-    pub fn screen(&self) -> &Vec<u8> {
+    pub fn screen(&self) -> &Screen {
         &self.screen
-    }
-
-    pub fn set_buffer(&mut self, address: usize, value: u8) {
-        self.screen[address] = value;
     }
 
     pub fn get_screen_buffer_pointer(&self) -> *const u8 {
         let pointer: *const u8;
-        pointer = self.screen.as_ptr();
+        pointer = self.screen.image().as_ptr();
 
         return pointer;
     }
