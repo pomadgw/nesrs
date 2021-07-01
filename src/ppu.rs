@@ -98,7 +98,8 @@ pub struct PPUAddress {
 
 const PPUADDRRESS_COARSE_X_MASK: usize = 0b000_00_00000_11111;
 const PPUADDRRESS_COARSE_Y_MASK: usize = 0b000_00_11111_00000;
-const PPUADDRRESS_NAMETABLE_SELECT_MASK: usize = 0b000_11_00000_00000;
+const PPUADDRRESS_NAMETABLE_X_SELECT_MASK: usize = 0b000_01_00000_00000;
+const PPUADDRRESS_NAMETABLE_Y_SELECT_MASK: usize = 0b000_10_00000_00000;
 const PPUADDRRESS_FINE_Y_MASK: usize = 0b111_00_00000_00000;
 
 impl PPUAddress {
@@ -145,13 +146,22 @@ impl PPUAddress {
         self.address |= old_address;
     }
 
-    pub fn nametable_select(&self) -> usize {
-        (self.address & PPUADDRRESS_NAMETABLE_SELECT_MASK) >> 10
+    pub fn nametable_select_x(&self) -> usize {
+        (self.address & PPUADDRRESS_NAMETABLE_X_SELECT_MASK) >> 10
     }
 
-    pub fn set_nametable_select(&mut self, value: usize) {
-        self.address &= !PPUADDRRESS_NAMETABLE_SELECT_MASK;
-        self.address |= (value << 10) & PPUADDRRESS_NAMETABLE_SELECT_MASK;
+    pub fn set_nametable_select_x(&mut self, value: usize) {
+        self.address &= !PPUADDRRESS_NAMETABLE_X_SELECT_MASK;
+        self.address |= (value << 10) & PPUADDRRESS_NAMETABLE_X_SELECT_MASK;
+    }
+
+    pub fn nametable_select_y(&self) -> usize {
+        (self.address & PPUADDRRESS_NAMETABLE_Y_SELECT_MASK) >> 11
+    }
+
+    pub fn set_nametable_select_y(&mut self, value: usize) {
+        self.address &= !PPUADDRRESS_NAMETABLE_Y_SELECT_MASK;
+        self.address |= (value << 11) & PPUADDRRESS_NAMETABLE_Y_SELECT_MASK;
     }
 
     pub fn fine_y(&self) -> usize {
@@ -249,6 +259,7 @@ pub struct PPU {
     mask: PPUMask,
     address_latch: AddressLatch,
     data_buffer: u8,
+    fine_x: usize,
 
     temp_address: PPUAddress,
     vaddress: PPUAddress,
@@ -280,7 +291,7 @@ impl Memory for PPU {
             PPUDATA => {
                 let read_result = self.ppu_read(self.vaddress.into(), is_read_only);
 
-                // result the buffer data...
+                // result the buffer data...self.control
                 let mut result = self.data_buffer;
 
                 if self.vaddress.address() >= 0x3f00 {
@@ -303,6 +314,20 @@ impl Memory for PPU {
         match address & 0x07 {
             PPUCTRL => {
                 self.control.bits = value;
+                self.temp_address.set_nametable_select_x(
+                    if self.control.contains(PPUControl::NAMETABLE_X) {
+                        1
+                    } else {
+                        0
+                    },
+                );
+                self.temp_address.set_nametable_select_y(
+                    if self.control.contains(PPUControl::NAMETABLE_Y) {
+                        1
+                    } else {
+                        0
+                    },
+                );
             }
             PPUMASK => {
                 self.mask.bits = value;
@@ -310,7 +335,18 @@ impl Memory for PPU {
             PPUSTATUS => {}
             OAMADDR => {}
             OAMDATA => {}
-            PPUSCROLL => {}
+            PPUSCROLL => match self.address_latch {
+                AddressLatch::Hi => {
+                    self.address_latch = AddressLatch::Lo;
+                    self.fine_x = (value & 0x07) as usize;
+                    self.temp_address.set_coarse_x((value >> 3) as usize);
+                }
+                AddressLatch::Lo => {
+                    self.address_latch = AddressLatch::Hi;
+                    self.temp_address.set_fine_y((value & 0x07) as usize);
+                    self.temp_address.set_coarse_y((value >> 3) as usize);
+                }
+            },
             PPUADDR => match self.address_latch {
                 AddressLatch::Hi => {
                     self.address_latch = AddressLatch::Lo;
@@ -354,6 +390,7 @@ impl PPU {
             temp_address: PPUAddress::from(0),
             vaddress: PPUAddress::from(0),
             data_buffer: 0,
+            fine_x: 0,
 
             rand: XORShiftRand::new(0xad334da55),
             screen_debug_pattern: [Screen::new(128, 128), Screen::new(128, 128)],
