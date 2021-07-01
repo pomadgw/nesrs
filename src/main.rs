@@ -200,10 +200,8 @@ fn main() -> std::io::Result<()> {
     let mut texture = texture_creator
         .create_texture_streaming(
             PixelFormatEnum::RGBA32,
-            256,
-            256,
-            // nesrs::ppu::NES_WIDTH_SIZE as u32,
-            // nesrs::ppu::NES_HEIGHT_SIZE as u32,
+            nesrs::ppu::NES_WIDTH_SIZE as u32,
+            nesrs::ppu::NES_HEIGHT_SIZE as u32,
         )
         .map_err(|e| e.to_string())
         .unwrap();
@@ -259,6 +257,15 @@ fn main() -> std::io::Result<()> {
         canvas.borrow_mut().set_draw_color(Color::RGB(0, 0, 0));
 
         canvas.borrow_mut().clear();
+
+        texture
+            .update(
+                None,
+                bus.ppu.borrow().screen().image(),
+                bus.ppu.borrow().screen().width() * 4,
+            )
+            .unwrap();
+
         canvas
             .borrow_mut()
             .copy(
@@ -266,12 +273,13 @@ fn main() -> std::io::Result<()> {
                 None,
                 Some(sdl2::rect::Rect::new(
                     0,
-                    256,
-                    (debug_pattern.width() * 2) as u32,
-                    (debug_pattern.height() * 2) as u32,
+                    0,
+                    (bus.ppu.borrow().screen().width()) as u32,
+                    (bus.ppu.borrow().screen().height()) as u32,
                 )),
             )
             .unwrap();
+
         texture_debug_pattern
             .update(
                 None,
