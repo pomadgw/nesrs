@@ -626,7 +626,7 @@ impl PPU {
             }
         }
 
-        if self.cycle < 256 && (-1 <= self.scanline && self.scanline < 239) {
+        if self.cycle < 256 && (0 <= self.scanline && self.scanline < 240) {
             let mut palette = 0;
             let mut pixel = 0;
 
@@ -638,7 +638,7 @@ impl PPU {
             let color = self.get_color(palette, pixel);
 
             self.screen
-                .set_pixel(self.cycle as usize, (self.scanline + 1) as usize, color);
+                .set_pixel(self.cycle as usize, self.scanline as usize, color);
         }
 
         self.cycle += 1;
