@@ -16,11 +16,10 @@ const OAMDATA: usize = 0x04;
 const PPUSCROLL: usize = 0x05;
 const PPUADDR: usize = 0x06;
 const PPUDATA: usize = 0x07;
-const OAMDMA: usize = 0x4014;
+pub const OAMDMA: usize = 0x4014;
 
 pub const NES_WIDTH_SIZE: usize = 256;
 pub const NES_HEIGHT_SIZE: usize = 240;
-const NES_SCREEN_BUFFER_SIZE: usize = NES_WIDTH_SIZE * NES_HEIGHT_SIZE * 4;
 
 pub static PPU_COLORS: [PPUColor; 0x40] = [
     (84, 84, 84),
@@ -817,7 +816,7 @@ impl PPU {
                     string,
                     "{:02X}",
                     self.ppu_read(base_address + row * 32 + col, true)
-                );
+                ).unwrap();
             }
 
             result.push(string);
