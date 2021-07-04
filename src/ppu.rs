@@ -108,8 +108,9 @@ impl PPUAddress {
     }
 
     pub fn address(&self) -> usize {
-        self.address
+        self.address & 0b0111_1111_1111_1111
     }
+
     pub fn set_address(&mut self, address: usize) {
         self.address = address & 0xffff
     }
@@ -155,6 +156,10 @@ impl PPUAddress {
         self.address |= (value << 10) & PPUADDRRESS_NAMETABLE_X_SELECT_MASK;
     }
 
+    pub fn toggle_nametable_select_x(&mut self) {
+        self.address ^= PPUADDRRESS_NAMETABLE_X_SELECT_MASK;
+    }
+
     pub fn nametable_select_y(&self) -> usize {
         (self.address & PPUADDRRESS_NAMETABLE_Y_SELECT_MASK) >> 11
     }
@@ -164,6 +169,10 @@ impl PPUAddress {
         self.address |= (value << 11) & PPUADDRRESS_NAMETABLE_Y_SELECT_MASK;
     }
 
+    pub fn toggle_nametable_select_y(&mut self) {
+        self.address ^= PPUADDRRESS_NAMETABLE_Y_SELECT_MASK;
+    }
+
     pub fn fine_y(&self) -> usize {
         (self.address & PPUADDRRESS_FINE_Y_MASK) >> 12
     }
@@ -171,6 +180,33 @@ impl PPUAddress {
     pub fn set_fine_y(&mut self, value: usize) {
         self.address &= !PPUADDRRESS_FINE_Y_MASK;
         self.address |= (value << 12) & PPUADDRRESS_FINE_Y_MASK;
+    }
+
+    pub fn increase_coarse_x(&mut self) {
+        if self.coarse_x() == 31 {
+            self.set_coarse_x(0);
+            self.toggle_nametable_select_x();
+        } else {
+            self.address += 1;
+        }
+    }
+
+    pub fn increase_coarse_y(&mut self) {
+        if self.fine_y() < 7 {
+            self.address += 0x1000;
+        } else {
+            self.set_fine_y(0);
+            let coarse_y = self.coarse_y();
+
+            if coarse_y == 29 {
+                self.set_coarse_y(0);
+                self.toggle_nametable_select_y();
+            } else if coarse_y == 31 {
+                self.set_coarse_y(0);
+            } else {
+                self.set_coarse_y(coarse_y + 1);
+            }
+        }
     }
 }
 
@@ -213,6 +249,20 @@ bitflags! {
     }
 }
 
+impl PPUMask {
+    pub fn is_render_bg(&self) -> bool {
+        self.contains(PPUMask::SHOW_BG)
+    }
+
+    pub fn is_render_sprite(&self) -> bool {
+        self.contains(PPUMask::SHOW_SPRITE)
+    }
+
+    pub fn is_render_something(&self) -> bool {
+        self.is_render_bg() || self.is_render_sprite()
+    }
+}
+
 bitflags! {
     pub struct PPUControl: u8 {
         const ENABLE_NMI                   = 0b1000_0000;
@@ -242,6 +292,40 @@ enum AddressLatch {
     Hi,
 }
 
+struct ShiftRegister16 {
+    pub lo: u16,
+    pub hi: u16,
+}
+
+impl ShiftRegister16 {
+    pub fn new() -> ShiftRegister16 {
+        ShiftRegister16 { lo: 0, hi: 0 }
+    }
+
+    pub fn get(&self, index: usize) -> usize {
+        let bitmux = 0x8000 >> index;
+        let lo = if (self.lo & bitmux) > 0 { 1 } else { 0 };
+        let hi = if (self.hi & bitmux) > 0 { 1 } else { 0 };
+
+        ((hi << 1) | lo) as usize
+    }
+
+    pub fn shift(&mut self) {
+        self.lo <<= 1;
+        self.hi <<= 1;
+    }
+
+    pub fn load_lo(&mut self, value: u8) {
+        self.lo &= 0xff00;
+        self.lo |= value as u16;
+    }
+
+    pub fn load_hi(&mut self, value: u8) {
+        self.hi &= 0xff00;
+        self.hi |= value as u16;
+    }
+}
+
 pub struct PPU {
     pub cartridge: CartridgeRef,
     pattern_table: [[u8; 0x1000]; 2], // 0x0000 - 0x1fff
@@ -263,9 +347,15 @@ pub struct PPU {
 
     temp_address: PPUAddress,
     vaddress: PPUAddress,
+    bg_next_tile_id: u8,
+    bg_next_tile_attrib: u8,
+    bg_next_tile_lsb: u8,
+    bg_next_tile_msb: u8,
+
+    bg_pattern_shifter: ShiftRegister16,
+    bg_attrib_shifter: ShiftRegister16,
 
     // for debug
-    rand: XORShiftRand,
     pub screen_debug_pattern: [Screen; 2],
 }
 
@@ -358,11 +448,11 @@ impl Memory for PPU {
                     self.temp_address
                         .set_address((self.temp_address.address() & 0xff00) | (value as usize));
                     self.address_latch = AddressLatch::Hi;
-                    self.vaddress = self.temp_address;
+                    self.vaddress.set_address(self.temp_address.address());
                 }
             },
             PPUDATA => {
-                self.ppu_write(self.vaddress.into(), value);
+                self.ppu_write(self.vaddress.address(), value);
                 self.increase_vaddress();
             }
             _ => {}
@@ -391,9 +481,40 @@ impl PPU {
             vaddress: PPUAddress::from(0),
             data_buffer: 0,
             fine_x: 0,
+            bg_next_tile_id: 0,
+            bg_next_tile_attrib: 0,
+            bg_next_tile_lsb: 0,
+            bg_next_tile_msb: 0,
 
-            rand: XORShiftRand::new(0xad334da55),
+            bg_pattern_shifter: ShiftRegister16::new(),
+            bg_attrib_shifter: ShiftRegister16::new(),
+
             screen_debug_pattern: [Screen::new(128, 128), Screen::new(128, 128)],
+        }
+    }
+
+    fn load_background_shifters(&mut self) {
+        self.bg_pattern_shifter.load_lo(self.bg_next_tile_lsb);
+        self.bg_pattern_shifter.load_hi(self.bg_next_tile_msb);
+
+        self.bg_attrib_shifter
+            .load_lo(if self.bg_next_tile_attrib & 0b01 > 0 {
+                0xff
+            } else {
+                0
+            });
+        self.bg_attrib_shifter
+            .load_hi(if self.bg_next_tile_attrib & 0b10 > 0 {
+                0xff
+            } else {
+                0
+            });
+    }
+
+    fn update_shitfers(&mut self) {
+        if self.mask.is_render_bg() {
+            self.bg_pattern_shifter.shift();
+            self.bg_attrib_shifter.shift();
         }
     }
 
@@ -411,15 +532,113 @@ impl PPU {
             }
         }
 
-        if self.cycle < 256 && (0 <= self.scanline && self.scanline < 240) {
-            let color = if self.rand.rand() & 0x01 == 0 {
-                PPU_COLORS[0x3f]
-            } else {
-                PPU_COLORS[0x30]
-            };
+        // visible scanline...
+        if -1 <= self.scanline && self.scanline < 240 {
+            if (1 <= self.cycle && self.cycle <= 256) || (321 <= self.cycle && self.cycle < 338) {
+                self.update_shitfers();
+
+                match (self.cycle - 1) & 0x07 {
+                    0 => {
+                        self.load_background_shifters();
+
+                        self.bg_next_tile_id =
+                            self.ppu_read(0x2000 | (self.vaddress.address() & 0x0fff), false);
+                    }
+                    2 => {
+                        /*
+                        The low 12 bits of the attribute address are composed in the following way:
+                        NN 1111 YYY XXX
+                        || |||| ||| +++-- high 3 bits of coarse X (x/4)
+                        || |||| +++------ high 3 bits of coarse Y (y/4)
+                        || ++++---------- attribute offset (960 bytes)
+                        ++--------------- nametable select
+                        */
+                        let chosen_nametable = self.vaddress.address()
+                            & (PPUADDRRESS_NAMETABLE_X_SELECT_MASK
+                                | PPUADDRRESS_NAMETABLE_Y_SELECT_MASK);
+                        let chosen_coarse_y = (self.vaddress.address() >> 4) & 0x38;
+                        let chosen_coarse_x = (self.vaddress.address() >> 2) & 0x07;
+                        self.bg_next_tile_attrib = self.ppu_read(
+                            0x23c0 | chosen_nametable | chosen_coarse_y | chosen_coarse_x,
+                            false,
+                        );
+
+                        if self.vaddress.coarse_y() & 0x02 > 0 {
+                            self.bg_next_tile_attrib >>= 4;
+                        }
+                        if self.vaddress.coarse_x() & 0x02 > 0 {
+                            self.bg_next_tile_attrib >>= 2;
+                        }
+
+                        self.bg_next_tile_attrib &= 0x03;
+                    }
+                    4 => {
+                        let mut address =
+                            if self.control.contains(PPUControl::BG_PATTERN_TABLE_ADDRESS) {
+                                1 << 12
+                            } else {
+                                0
+                            };
+                        address += (self.bg_next_tile_id as usize) << 4;
+                        address += self.vaddress.fine_y();
+                        self.bg_next_tile_lsb = self.ppu_read(address, false);
+                    }
+                    6 => {
+                        let mut address =
+                            if self.control.contains(PPUControl::BG_PATTERN_TABLE_ADDRESS) {
+                                1 << 12
+                            } else {
+                                0
+                            };
+                        address += (self.bg_next_tile_id as usize) << 4;
+                        address += self.vaddress.fine_y() + 8;
+                        self.bg_next_tile_msb = self.ppu_read(address, false);
+                    }
+                    7 => {
+                        if self.mask.is_render_something() {
+                            self.vaddress.increase_coarse_x();
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            if self.cycle == 256 {
+                if self.mask.is_render_something() {
+                    self.vaddress.increase_coarse_y();
+                }
+            } else if self.cycle == 257 {
+                if self.mask.is_render_something() {
+                    self.vaddress
+                        .set_nametable_select_x(self.temp_address.nametable_select_x());
+                    self.vaddress.set_coarse_x(self.temp_address.coarse_x());
+                }
+            }
+
+            if self.scanline == -1 && self.cycle >= 280 && self.cycle < 305 {
+                // End of vertical blank period so reset the Y address ready for rendering
+                if self.mask.is_render_something() {
+                    self.vaddress
+                        .set_nametable_select_y(self.temp_address.nametable_select_y());
+                    self.vaddress.set_coarse_y(self.temp_address.coarse_y());
+                    self.vaddress.set_fine_y(self.temp_address.fine_y());
+                }
+            }
+        }
+
+        if self.cycle < 256 && (-1 <= self.scanline && self.scanline < 239) {
+            let mut palette = 0;
+            let mut pixel = 0;
+
+            if self.mask.is_render_bg() {
+                pixel = self.bg_pattern_shifter.get(self.fine_x);
+                palette = self.bg_attrib_shifter.get(self.fine_x);
+            }
+
+            let color = self.get_color(palette, pixel);
 
             self.screen
-                .set_pixel(self.cycle as usize, self.scanline as usize, color);
+                .set_pixel(self.cycle as usize, (self.scanline + 1) as usize, color);
         }
 
         self.cycle += 1;
