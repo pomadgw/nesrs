@@ -3,9 +3,7 @@
 use nesrs;
 use nesrs::bus::*;
 use nesrs::cartridge::*;
-use nesrs::utils::*;
 
-use colored::*;
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::Instant;
@@ -35,6 +33,7 @@ pub struct TextRenderer<'s, 't> {
     font: Rc<&'s Font<'s, 't>>,
     texture_creator: Rc<TextureCreator<WindowContext>>,
     canvas: Rc<&'s RefCell<Canvas<Window>>>,
+    offset_y: i32,
 }
 
 impl<'s, 't> TextRenderer<'s, 't> {
@@ -48,6 +47,7 @@ impl<'s, 't> TextRenderer<'s, 't> {
             font: Rc::clone(&font),
             texture_creator: Rc::new(texture_creator),
             canvas: Rc::clone(&canvas),
+            offset_y: 0,
         }
     }
 
@@ -70,7 +70,12 @@ impl<'s, 't> TextRenderer<'s, 't> {
             .copy(
                 &texture_text,
                 None,
-                Some(Rect::new(x, y, text_query.width, text_query.height)),
+                Some(Rect::new(
+                    x,
+                    y + self.offset_y,
+                    text_query.width,
+                    text_query.height,
+                )),
             )
             .unwrap();
     }
@@ -78,10 +83,18 @@ impl<'s, 't> TextRenderer<'s, 't> {
     pub fn recommended_line_spacing(&self) -> i32 {
         self.font.recommended_line_spacing()
     }
+
+    pub fn newline(&mut self) {
+        self.offset_y += self.recommended_line_spacing();
+    }
+
+    pub fn reset_newline(&mut self) {
+        self.offset_y = 0;
+    }
 }
 
 fn main() -> std::io::Result<()> {
-    let mut file = File::open("./rom/nestest.nes")?;
+    let mut file = File::open("./rom/test1.nes")?;
     let mut buffer = Vec::new();
 
     file.read_to_end(&mut buffer)?;
@@ -92,9 +105,6 @@ fn main() -> std::io::Result<()> {
     bus.cpu.debug = false;
     bus.reset();
     // bus.cpu.regs.pc = 0xc000;
-
-    // let now = Instant::now();
-    // let start = now.elapsed().as_micros();
 
     // // let mut ppucycle = 0;
     // // let mut ppuscanline = 0;
@@ -150,7 +160,7 @@ fn main() -> std::io::Result<()> {
     // }
 
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
-    let font_size = 6i32;
+    let font_size = 12i32;
 
     let font = SystemSource::new()
         .select_best_match(&[FamilyName::Monospace], &Properties::new())
@@ -183,8 +193,6 @@ fn main() -> std::io::Result<()> {
     //     }
     // }
 
-    let mut debug_pattern: Screen = Screen::new(256, 128);
-
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
@@ -207,17 +215,11 @@ fn main() -> std::io::Result<()> {
         .unwrap();
 
     let mut texture_debug_pattern = texture_creator
-        .create_texture_streaming(
-            PixelFormatEnum::RGBA32,
-            (debug_pattern.width()) as u32,
-            (debug_pattern.height()) as u32,
-            // nesrs::ppu::NES_WIDTH_SIZE as u32,
-            // nesrs::ppu::NES_HEIGHT_SIZE as u32,
-        )
+        .create_texture_streaming(PixelFormatEnum::RGBA32, 256, 128)
         .map_err(|e| e.to_string())
         .unwrap();
 
-    let text_renderer = TextRenderer::new(Rc::new(&font), Rc::new(&canvas));
+    let mut text_renderer = TextRenderer::new(Rc::new(&font), Rc::new(&canvas));
 
     canvas.borrow_mut().set_draw_color(Color::RGB(0, 0, 0));
     canvas.borrow_mut().clear();
@@ -226,6 +228,15 @@ fn main() -> std::io::Result<()> {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     let mut palette = 0;
+    let now = Instant::now();
+    let frame_regulator = Instant::now();
+    let mut start = 0;
+    let mut end;
+    let mut fps;
+
+    let mut show_debug = false;
+
+    let mut frame_time = frame_regulator.elapsed().as_micros();
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -242,16 +253,33 @@ fn main() -> std::io::Result<()> {
                     palette += 1;
                     palette &= 0x07;
                 }
+                Event::KeyDown {
+                    keycode: Some(Keycode::D),
+                    ..
+                } => {
+                    show_debug = !show_debug;
+                }
                 _ => {}
             }
         }
 
-        bus.clock_until_frame_done();
+        if (frame_regulator.elapsed().as_micros() - frame_time) < 13_333 {
+            continue;
+        }
 
-        for patternindex in 0..2 {
-            bus.ppu
-                .borrow_mut()
-                .set_debug_pattern_screen(patternindex, palette);
+        bus.clock_until_frame_done();
+        end = now.elapsed().as_micros();
+        fps = (1_000_000) / (end - start);
+
+        start = now.elapsed().as_micros();
+        frame_time = frame_regulator.elapsed().as_micros();
+
+        if show_debug {
+            for patternindex in 0..2 {
+                bus.ppu
+                    .borrow_mut()
+                    .set_debug_pattern_screen(patternindex, palette);
+            }
         }
 
         canvas.borrow_mut().set_draw_color(Color::RGB(0, 0, 0));
@@ -274,84 +302,103 @@ fn main() -> std::io::Result<()> {
                 Some(sdl2::rect::Rect::new(
                     0,
                     0,
-                    (bus.ppu.borrow().screen().width()) as u32,
-                    (bus.ppu.borrow().screen().height()) as u32,
+                    (bus.ppu.borrow().screen().width() * 2) as u32,
+                    (bus.ppu.borrow().screen().height() * 2) as u32,
                 )),
             )
             .unwrap();
 
-        texture_debug_pattern
-            .update(
-                None,
-                bus.ppu.borrow().screen_debug_pattern[0].image(),
-                bus.ppu.borrow().screen_debug_pattern[0].width() * 4,
-                // nesrs::ppu::NES_WIDTH_SIZE * 3,
-            )
-            .unwrap();
-        canvas
-            .borrow_mut()
-            .copy(
-                &texture_debug_pattern,
-                None,
-                Some(sdl2::rect::Rect::new(
-                    0,
-                    256,
-                    (debug_pattern.width() * 2) as u32,
-                    (debug_pattern.height() * 2) as u32,
-                )),
-            )
-            .unwrap();
-        texture_debug_pattern
-            .update(
-                None,
-                bus.ppu.borrow().screen_debug_pattern[1].image(),
-                bus.ppu.borrow().screen_debug_pattern[1].width() * 4,
-                // nesrs::ppu::NES_WIDTH_SIZE * 3,
-            )
-            .unwrap();
-        canvas
-            .borrow_mut()
-            .copy(
-                &texture_debug_pattern,
-                None,
-                Some(sdl2::rect::Rect::new(
-                    256,
-                    256,
-                    (debug_pattern.width() * 2) as u32,
-                    (debug_pattern.height() * 2) as u32,
-                )),
-            )
-            .unwrap();
+        if show_debug {
+            text_renderer.reset_newline();
 
-        // text_renderer.render("TEST", Color::RGB(12, 33, 145), 0, 0);
+            text_renderer.render("DEBUG MODE", Color::RGB(0xc0, 0xc0, 0xc0), 0, 0);
+
+            text_renderer.newline();
+
+            text_renderer.render(
+                &format!("FPS: {:4} fps", fps),
+                Color::RGB(0xc0, 0xc0, 0xc0),
+                0,
+                0,
+            );
+        }
+
+        if show_debug {
+            let width = bus.ppu.borrow().screen_debug_pattern[0].width() * 2;
+            let height = bus.ppu.borrow().screen_debug_pattern[0].height();
+            texture_debug_pattern
+                .update(
+                    None,
+                    bus.ppu.borrow().screen_debug_pattern[0].image(),
+                    bus.ppu.borrow().screen_debug_pattern[0].width() * 4,
+                    // nesrs::ppu::NES_WIDTH_SIZE * 3,
+                )
+                .unwrap();
+            canvas
+                .borrow_mut()
+                .copy(
+                    &texture_debug_pattern,
+                    None,
+                    Some(sdl2::rect::Rect::new(
+                        0,
+                        256,
+                        (width * 2) as u32,
+                        (height * 2) as u32,
+                    )),
+                )
+                .unwrap();
+            texture_debug_pattern
+                .update(
+                    None,
+                    bus.ppu.borrow().screen_debug_pattern[1].image(),
+                    bus.ppu.borrow().screen_debug_pattern[1].width() * 4,
+                    // nesrs::ppu::NES_WIDTH_SIZE * 3,
+                )
+                .unwrap();
+            canvas
+                .borrow_mut()
+                .copy(
+                    &texture_debug_pattern,
+                    None,
+                    Some(sdl2::rect::Rect::new(
+                        256,
+                        256,
+                        (width * 2) as u32,
+                        (height * 2) as u32,
+                    )),
+                )
+                .unwrap();
+        }
 
         let mut ppuref = bus.ppu.borrow_mut();
-        let debug_nametable = ppuref.debug_nametable(0);
+        // let debug_nametable = ppuref.debug_nametable(0);
 
-        let mut row = 0;
-        let offset = text_renderer.recommended_line_spacing();
-        // debug_nametable.iter().for_each(|item| {
-        //     text_renderer.render(&item, Color::RGB(0x30, 0x30, 0xff), 0, 0 + offset * row);
-        //     row += 1;
-        // });
+        // let mut row = 0;
+        // let offset = text_renderer.recommended_line_spacing();
+        // // debug_nametable.iter().for_each(|item| {
+        // //     text_renderer.render(&item, Color::RGB(0x30, 0x30, 0xff), 0, 0 + offset * row);
+        // //     row += 1;
+        // // });
 
-        let n_swatch_size: i32 = 6;
+        if show_debug {
+            let n_swatch_size: i32 = 6;
 
-        for p in 0..8i32 {
-            for s in 0..4i32 {
-                let color = ppuref.get_color(p as usize, s as usize);
-                let color = Color::RGB(color.0, color.1, color.2);
+            for p in 0..8i32 {
+                for s in 0..4i32 {
+                    let color = ppuref.get_color(p as usize, s as usize);
+                    let color = Color::RGB(color.0, color.1, color.2);
 
-                canvas.borrow_mut().set_draw_color(color);
-                canvas
-                    .borrow_mut()
-                    .fill_rect(Rect::new(
-                        256 + p * (n_swatch_size * 5) + s * n_swatch_size,
-                        250,
-                        n_swatch_size as u32,
-                        n_swatch_size as u32,
-                    ))
-                    .unwrap();
+                    canvas.borrow_mut().set_draw_color(color);
+                    canvas
+                        .borrow_mut()
+                        .fill_rect(Rect::new(
+                            256 + p * (n_swatch_size * 5) + s * n_swatch_size,
+                            512 - n_swatch_size,
+                            n_swatch_size as u32,
+                            n_swatch_size as u32,
+                        ))
+                        .unwrap();
+                }
             }
         }
 
