@@ -29,7 +29,6 @@ impl Memory for NesMemoryMapper {
         } else if address < 0x2000 {
             self.ram[address & 0x07FF]
         } else if address < 0x4000 {
-            // TODO: PPU here
             self.ppu.borrow_mut().read(address & 0x07, is_read_only)
         } else if address == 0x4014 {
             // TODO: OAMDMA
