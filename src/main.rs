@@ -93,61 +93,61 @@ fn main() -> std::io::Result<()> {
     bus.reset();
     // bus.cpu.regs.pc = 0xc000;
 
-    let now = Instant::now();
-    let start = now.elapsed().as_micros();
+    // let now = Instant::now();
+    // let start = now.elapsed().as_micros();
 
-    // let mut ppucycle = 0;
-    // let mut ppuscanline = 0;
+    // // let mut ppucycle = 0;
+    // // let mut ppuscanline = 0;
 
-    // let mut debug_print_tick = 0;
+    // // let mut debug_print_tick = 0;
 
-    for _i in 0..(400000 * 3) {
-        bus.clock();
+    // for _i in 0..(400000 * 3) {
+    //     bus.clock();
 
-        // if bus.cpu.done() {
-        //     if debug_print_tick == 0 {
-        //         eprintln!(
-        //             "{}",
-        //             bus.cpu
-        //                 .debug_with_other_info(&format!("PPU:{:3},{:3}", ppuscanline, ppucycle))
-        //         );
-        //         ppucycle = bus.ppu.borrow().cycle();
-        //         ppuscanline = bus.ppu.borrow().scanline();
-        //         debug_print_tick = 3;
-        //     }
+    //     // if bus.cpu.done() {
+    //     //     if debug_print_tick == 0 {
+    //     //         eprintln!(
+    //     //             "{}",
+    //     //             bus.cpu
+    //     //                 .debug_with_other_info(&format!("PPU:{:3},{:3}", ppuscanline, ppucycle))
+    //     //         );
+    //     //         ppucycle = bus.ppu.borrow().cycle();
+    //     //         ppuscanline = bus.ppu.borrow().scanline();
+    //     //         debug_print_tick = 3;
+    //     //     }
 
-        //     debug_print_tick -= 1;
-        // }
-    }
+    //     //     debug_print_tick -= 1;
+    //     // }
+    // }
 
-    let end = now.elapsed().as_micros();
-    let dur = end - start;
-    let dur_per_cycle = dur as f32 / bus.cpu.total_cycles as f32;
-    let freq = bus.cpu.total_cycles as f32 / (dur as f32 / 1_000_000.0);
+    // let end = now.elapsed().as_micros();
+    // let dur = end - start;
+    // let dur_per_cycle = dur as f32 / bus.cpu.total_cycles as f32;
+    // let freq = bus.cpu.total_cycles as f32 / (dur as f32 / 1_000_000.0);
 
-    eprintln!("duration: {:}us, cycles: {}", dur, bus.cpu.total_cycles);
-    eprintln!("duration / cycles: {} us/cycle", dur_per_cycle);
-    if freq < 1_000_000.0 {
-        eprintln!("freq: {} Hz", freq);
-    } else if freq > 1_000_000_000.0 {
-        eprintln!("freq: {} KHz", freq / 1_000.0);
-    } else {
-        eprintln!("freq: {} MHz", freq / 1_000_000.0);
-    }
+    // eprintln!("duration: {:}us, cycles: {}", dur, bus.cpu.total_cycles);
+    // eprintln!("duration / cycles: {} us/cycle", dur_per_cycle);
+    // if freq < 1_000_000.0 {
+    //     eprintln!("freq: {} Hz", freq);
+    // } else if freq > 1_000_000_000.0 {
+    //     eprintln!("freq: {} KHz", freq / 1_000.0);
+    // } else {
+    //     eprintln!("freq: {} MHz", freq / 1_000_000.0);
+    // }
 
-    match bus.ppu.borrow_mut().get_color(0, 0) {
-        (r, g, b) => println!("{}", "█".truecolor(r, g, b)),
-    }
+    // match bus.ppu.borrow_mut().get_color(0, 0) {
+    //     (r, g, b) => println!("{}", "█".truecolor(r, g, b)),
+    // }
 
-    println!("");
-    for palette in 0..8 {
-        for pixel in 0..4 {
-            match bus.ppu.borrow_mut().get_color(palette, pixel) {
-                (r, g, b) => print!("{}", "█".truecolor(r, g, b)),
-            }
-        }
-        println!("");
-    }
+    // println!("");
+    // for palette in 0..8 {
+    //     for pixel in 0..4 {
+    //         match bus.ppu.borrow_mut().get_color(palette, pixel) {
+    //             (r, g, b) => print!("{}", "█".truecolor(r, g, b)),
+    //         }
+    //     }
+    //     println!("");
+    // }
 
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string()).unwrap();
     let font_size = 6i32;
