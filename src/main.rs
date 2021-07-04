@@ -330,10 +330,10 @@ fn main() -> std::io::Result<()> {
 
         let mut row = 0;
         let offset = text_renderer.recommended_line_spacing();
-        debug_nametable.iter().for_each(|item| {
-            text_renderer.render(&item, Color::RGB(12, 192, 255), 0, 0 + offset * row);
-            row += 1;
-        });
+        // debug_nametable.iter().for_each(|item| {
+        //     text_renderer.render(&item, Color::RGB(0x30, 0x30, 0xff), 0, 0 + offset * row);
+        //     row += 1;
+        // });
 
         let n_swatch_size: i32 = 6;
 
