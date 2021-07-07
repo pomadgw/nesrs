@@ -816,7 +816,8 @@ impl PPU {
                     string,
                     "{:02X}",
                     self.ppu_read(base_address + row * 32 + col, true)
-                ).unwrap();
+                )
+                .unwrap();
             }
 
             result.push(string);
