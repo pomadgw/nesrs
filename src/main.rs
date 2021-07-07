@@ -1,4 +1,3 @@
-// extern crate sdl2;
 
 use nesrs;
 use nesrs::bus::*;
@@ -23,6 +22,8 @@ mod macros;
 
 use std::cell::RefCell;
 use std::rc::Rc;
+
+use std::env;
 
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, TextureCreator};
@@ -94,7 +95,8 @@ impl<'s, 't> TextRenderer<'s, 't> {
 }
 
 fn main() -> std::io::Result<()> {
-    let mut file = File::open("./rom/test1.nes")?;
+    let args: Vec<String> = env::args().collect();
+    let mut file = File::open(&args[1])?;
     let mut buffer = Vec::new();
 
     file.read_to_end(&mut buffer)?;

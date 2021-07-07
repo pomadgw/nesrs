@@ -531,7 +531,7 @@ impl CPU {
             }
             // PHP
             Microcode::PhpPushStack => {
-                self.push_stack(memory, self.regs.p.bits());
+                self.push_stack(memory, (self.regs.p | StatusFlag::B | StatusFlag::U).bits());
                 self.fetch_opcode();
             }
             // PLP
