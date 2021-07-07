@@ -1,12 +1,12 @@
 #[cfg(test)]
-mod cpu_instr_tests {
+mod cpu_instr_tests_imm {
     use nesrs::bus::*;
     use nesrs::cartridge::*;
     use nesrs::memory::*;
 
     #[test]
-    fn implied_test() {
-        let bytes = include_bytes!("./02-implied.nes");
+    fn immediate_test() {
+        let bytes = include_bytes!("./instr_test/03-immediate.nes");
         let buffer = bytes.to_vec();
         let cartridge = Cartridge::parse(&buffer);
 
