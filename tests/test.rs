@@ -3,6 +3,9 @@ extern crate serde_yaml;
 
 mod test_utils;
 
+#[path = "instr_test/tests.rs"]
+mod instr_test;
+
 #[macro_use]
 #[path = "../src/macros.rs"]
 mod macros;
