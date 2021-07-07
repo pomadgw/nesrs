@@ -101,9 +101,7 @@ impl Cartridge {
             cursor.read(&mut chr_rom).unwrap();
         }
 
-        let mapper = Box::new(NROM {
-            prg_banks: n_prg_banks,
-        });
+        let mapper = Box::new(NROM::new(n_prg_banks));
 
         Cartridge {
             header,
@@ -191,6 +189,10 @@ impl Memory for Cartridge {
                 self.use_cartridge_data = true;
                 return self.prg_rom()[mapped_address];
             }
+            MapperStatus::ReadRam(data) => {
+                self.use_cartridge_data = true;
+                return data;
+            }
             _ => {
                 self.use_cartridge_data = false;
                 return 0;
@@ -208,6 +210,9 @@ impl Memory for Cartridge {
             MapperStatus::Read => {
                 self.use_cartridge_data = true;
                 self.prg_rom[mapped_address] = value;
+            }
+            MapperStatus::Write => {
+                self.use_cartridge_data = true;
             }
             _ => {
                 self.use_cartridge_data = false;

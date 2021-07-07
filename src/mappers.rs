@@ -1,5 +1,6 @@
 pub enum MapperStatus {
     Read,
+    ReadRam(u8),
     Write,
     Unreadable,
 }
@@ -24,16 +25,24 @@ pub trait Mapper {
 
 pub struct NROM {
     pub prg_banks: u8,
+    vram: Vec<u8>,
 }
 
 impl NROM {
     pub fn new(prg_banks: u8) -> Self {
-        Self { prg_banks }
+        Self {
+            prg_banks,
+            vram: vec![0; 0x2000],
+        }
     }
 }
 
 impl Mapper for NROM {
     fn map_cpu_read_address(&self, address: usize, mapped_address: &mut usize) -> MapperStatus {
+        if address >= 0x6000 && address <= 0x8000 {
+            return MapperStatus::ReadRam(self.vram[address & 0x1fff]);
+        }
+
         if address < 0x8000 {
             return MapperStatus::Unreadable;
         }
@@ -45,10 +54,15 @@ impl Mapper for NROM {
 
     fn map_cpu_write_address(
         &mut self,
-        _address: usize,
+        address: usize,
         _mapped_address: &mut usize,
-        _value: u8,
+        value: u8,
     ) -> MapperStatus {
+        if address >= 0x6000 && address <= 0x8000 {
+            self.vram[address & 0x1fff] = value;
+            return MapperStatus::Write;
+        }
+
         MapperStatus::Unreadable
     }
 
