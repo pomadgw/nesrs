@@ -242,7 +242,6 @@ fn main() -> std::io::Result<()> {
 
     use sdl2::keyboard::Scancode;
 
-    // bus.press_controller_button(0, ButtonStatus::UP, true);
     macro_rules! update_controllers {
         ( $($event_pump:ident, $actual_button:ident, $button:ident),+ ) => (
             $(
