@@ -14,7 +14,11 @@ pub struct NesMemoryMapper {
 }
 
 impl NesMemoryMapper {
-    pub fn new(ppu: PPURef, cartridge: CartridgeRef, controllers: Vec<ControllerRef>) -> NesMemoryMapper {
+    pub fn new(
+        ppu: PPURef,
+        cartridge: CartridgeRef,
+        controllers: Vec<ControllerRef>,
+    ) -> NesMemoryMapper {
         NesMemoryMapper {
             cartridge,
             ram: vec![0; 0x0800],

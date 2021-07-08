@@ -1,4 +1,3 @@
-
 use nesrs;
 use nesrs::bus::*;
 use nesrs::cartridge::*;
