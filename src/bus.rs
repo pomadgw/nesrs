@@ -10,7 +10,7 @@ pub struct NesMemoryMapper {
     ram: Vec<u8>,
     cartridge: CartridgeRef,
     ppu: PPURef,
-    controllers: Vec<ControllerRef>,
+    pub controllers: Vec<ControllerRef>,
 }
 
 impl NesMemoryMapper {
@@ -76,8 +76,6 @@ pub struct Bus {
     pub cpu: CPU,
     pub cycle: u32,
     pub ppu: PPURef,
-    pub controller1: ControllerRef,
-    pub controller2: ControllerRef,
 }
 
 impl Bus {
@@ -86,15 +84,13 @@ impl Bus {
         let ppu = Rc::new(RefCell::new(PPU::new(cartref.clone())));
         let controller1 = Controller::new_ref();
         let controller2 = Controller::new_ref();
-        let controllers = vec![controller1.clone(), controller2.clone()];
+        let controllers = vec![controller1, controller2];
 
         Bus {
             memory_mapper: NesMemoryMapper::new(ppu.clone(), cartref, controllers),
             cpu: CPU::new(),
             cycle: 0,
             ppu,
-            controller1,
-            controller2,
         }
     }
 
@@ -137,5 +133,16 @@ impl Bus {
 
     pub fn memory(&mut self) -> &mut NesMemoryMapper {
         &mut self.memory_mapper
+    }
+
+    pub fn press_controller_button(
+        &mut self,
+        controller_id: usize,
+        button: ButtonStatus,
+        state: bool,
+    ) {
+        self.memory_mapper.controllers[controller_id]
+            .borrow_mut()
+            .set_button_status(button, state);
     }
 }
