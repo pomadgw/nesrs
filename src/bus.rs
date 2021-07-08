@@ -1,4 +1,5 @@
 use crate::cartridge::*;
+use crate::controller::*;
 use crate::cpu::*;
 use crate::memory::*;
 use crate::ppu::*;
@@ -9,14 +10,20 @@ pub struct NesMemoryMapper {
     ram: Vec<u8>,
     cartridge: CartridgeRef,
     ppu: PPURef,
+    pub controllers: Vec<ControllerRef>,
 }
 
 impl NesMemoryMapper {
-    pub fn new(ppu: PPURef, cartridge: CartridgeRef) -> NesMemoryMapper {
+    pub fn new(
+        ppu: PPURef,
+        cartridge: CartridgeRef,
+        controllers: Vec<ControllerRef>,
+    ) -> NesMemoryMapper {
         NesMemoryMapper {
-            cartridge: cartridge,
+            cartridge,
             ram: vec![0; 0x0800],
-            ppu: ppu,
+            ppu,
+            controllers,
         }
     }
 }
@@ -37,8 +44,7 @@ impl Memory for NesMemoryMapper {
             // TODO: APU here
             0
         } else if address == 0x4016 || address == 0x4017 {
-            // TODO: controller
-            0
+            self.controllers[address & 1].borrow_mut().read()
         } else {
             self.ram[address & 0x07FF]
         }
@@ -58,7 +64,7 @@ impl Memory for NesMemoryMapper {
         } else if address <= 0x4013 || (address == 0x4015) || (address == 0x4017) {
             // TODO: APU here
         } else if address == 0x4016 || address == 0x4017 {
-            // TODO: controller
+            self.controllers[address & 1].borrow_mut().write(value);
         } else {
             self.ram[address & 0x07FF] = value;
         }
@@ -76,9 +82,12 @@ impl Bus {
     pub fn new(cartridge: Cartridge) -> Self {
         let cartref = Rc::new(RefCell::new(cartridge));
         let ppu = Rc::new(RefCell::new(PPU::new(cartref.clone())));
+        let controller1 = Controller::new_ref();
+        let controller2 = Controller::new_ref();
+        let controllers = vec![controller1, controller2];
 
         Bus {
-            memory_mapper: NesMemoryMapper::new(ppu.clone(), cartref),
+            memory_mapper: NesMemoryMapper::new(ppu.clone(), cartref, controllers),
             cpu: CPU::new(),
             cycle: 0,
             ppu,
@@ -124,5 +133,16 @@ impl Bus {
 
     pub fn memory(&mut self) -> &mut NesMemoryMapper {
         &mut self.memory_mapper
+    }
+
+    pub fn press_controller_button(
+        &mut self,
+        controller_id: usize,
+        button: ButtonStatus,
+        state: bool,
+    ) {
+        self.memory_mapper.controllers[controller_id]
+            .borrow_mut()
+            .set_button_status(button, state);
     }
 }

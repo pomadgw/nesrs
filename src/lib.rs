@@ -2,13 +2,11 @@
 extern crate bitflags;
 
 #[macro_use]
-extern crate modular_bitfield;
-
-#[macro_use]
 pub mod macros;
 
 pub mod bus;
 pub mod cartridge;
+pub mod controller;
 pub mod cpu;
 pub mod mappers;
 pub mod memory;

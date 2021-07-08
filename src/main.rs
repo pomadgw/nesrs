@@ -1,7 +1,7 @@
-
 use nesrs;
 use nesrs::bus::*;
 use nesrs::cartridge::*;
+use nesrs::controller::ButtonStatus;
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -240,7 +240,31 @@ fn main() -> std::io::Result<()> {
 
     let mut frame_time = frame_regulator.elapsed().as_micros();
 
+    use sdl2::keyboard::Scancode;
+
+    macro_rules! update_controllers {
+        ( $($event_pump:ident, $actual_button:ident, $button:ident),+ ) => (
+            $(
+                if $event_pump.keyboard_state().is_scancode_pressed(Scancode::$actual_button)
+                {
+                    bus.press_controller_button(0, ButtonStatus::$button, true);
+                } else {
+                    bus.press_controller_button(0, ButtonStatus::$button, false);
+                }
+            )+
+        )
+    }
+
     'running: loop {
+        update_controllers!(event_pump, X, A);
+        update_controllers!(event_pump, Z, B);
+        update_controllers!(event_pump, A, SELECT);
+        update_controllers!(event_pump, S, START);
+        update_controllers!(event_pump, Up, UP);
+        update_controllers!(event_pump, Down, DOWN);
+        update_controllers!(event_pump, Left, LEFT);
+        update_controllers!(event_pump, Right, RIGHT);
+
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -260,6 +284,12 @@ fn main() -> std::io::Result<()> {
                     ..
                 } => {
                     show_debug = !show_debug;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::R),
+                    ..
+                } => {
+                    bus.reset();
                 }
                 _ => {}
             }
