@@ -353,6 +353,28 @@ fn main() -> std::io::Result<()> {
                 0,
                 0,
             );
+
+            text_renderer.newline();
+            text_renderer.newline();
+            text_renderer.render("OAMS", Color::RGB(0xc0, 0xc0, 0xc0), 0, 0);
+
+            for oam in 0..64 {
+                text_renderer.newline();
+                let oam_y = bus.ppu.borrow().oams[oam * 4 + 0];
+                let oam_id = bus.ppu.borrow().oams[oam * 4 + 1];
+                let oam_attr = bus.ppu.borrow().oams[oam * 4 + 2];
+                let oam_x = bus.ppu.borrow().oams[oam * 4 + 3];
+
+                text_renderer.render(
+                    &format!(
+                        "{:02X}: [{:3}, {:3}] ID: {:02X} AT: {:02X}",
+                        oam, oam_x, oam_y, oam_id, oam_attr
+                    ),
+                    Color::RGB(0xc0, 0xc0, 0xc0),
+                    0,
+                    0,
+                );
+            }
         }
 
         if show_debug {
