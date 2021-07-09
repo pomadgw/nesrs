@@ -331,6 +331,9 @@ pub struct PPU {
     nametable: [[u8; 0x0400]; 2],     // 0x2000 - 0x2fff
     palette_table: [u8; 32],          // 0x3f00 - 0x3fff
 
+    oam_address: u8,
+    pub oams: [u8; 256],
+
     screen: Screen,
     cycle: i32,
     scanline: i32,
@@ -373,8 +376,8 @@ impl Memory for PPU {
 
                 status
             }
-            OAMADDR => 0,
-            OAMDATA => 0,
+            OAMADDR => 0xff,
+            OAMDATA => self.oams[self.oam_address as usize],
             PPUSCROLL => 0,
             PPUADDR => 0,
             PPUDATA => {
@@ -422,8 +425,13 @@ impl Memory for PPU {
                 self.mask.bits = value;
             }
             PPUSTATUS => {}
-            OAMADDR => {}
-            OAMDATA => {}
+            OAMADDR => {
+                self.oam_address = value;
+            }
+            OAMDATA => {
+                self.write_oam_address(self.oam_address as usize, value);
+                self.oam_address = self.oam_address.wrapping_add(1);
+            }
             PPUSCROLL => match self.address_latch {
                 AddressLatch::Hi => {
                     self.address_latch = AddressLatch::Lo;
@@ -466,6 +474,8 @@ impl PPU {
             palette_table: [0; 32],
             nametable: [[0; 0x0400]; 2],
             pattern_table: [[0; 0x1000]; 2],
+            oam_address: 0,
+            oams: [0xff; 256],
             screen: Screen::new(NES_WIDTH_SIZE, NES_HEIGHT_SIZE),
             cycle: 0,
             scanline: 0,
@@ -659,6 +669,10 @@ impl PPU {
 
     pub fn scanline(&self) -> i32 {
         self.scanline
+    }
+
+    pub fn write_oam_address(&mut self, address: usize, value: u8) {
+        self.oams[address] = value;
     }
 
     pub fn ppu_read(&mut self, address: usize, is_read_only: bool) -> u8 {

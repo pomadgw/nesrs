@@ -11,6 +11,12 @@ pub struct NesMemoryMapper {
     cartridge: CartridgeRef,
     ppu: PPURef,
     pub controllers: Vec<ControllerRef>,
+
+    oam_dma_page: u8,
+    oam_dma_address: u8,
+    dma_data: u8,
+    pub do_oam_dma: bool,
+    pub oam_dma_cycle: i8,
 }
 
 impl NesMemoryMapper {
@@ -24,6 +30,36 @@ impl NesMemoryMapper {
             ram: vec![0; 0x0800],
             ppu,
             controllers,
+            oam_dma_page: 0,
+            oam_dma_address: 0,
+            dma_data: 0,
+            oam_dma_cycle: 1,
+            do_oam_dma: false,
+        }
+    }
+
+    pub fn transfer_oam(&mut self, cycle: u32) {
+        if self.oam_dma_cycle > 0 {
+            if cycle & 1 == 1 {
+                self.oam_dma_cycle += 1;
+            }
+
+            self.oam_dma_cycle -= 1;
+        } else {
+            if cycle & 1 == 1 {
+                let address = (self.oam_dma_page as usize) << 8 | (self.oam_dma_address as usize);
+                self.dma_data = self.read(address, false);
+            } else {
+                self.ppu
+                    .borrow_mut()
+                    .write_oam_address(self.oam_dma_address as usize, self.dma_data);
+                self.oam_dma_address = self.oam_dma_address.wrapping_add(1);
+
+                if self.oam_dma_address == 0 {
+                    self.oam_dma_cycle = 1;
+                    self.do_oam_dma = false;
+                }
+            }
         }
     }
 }
@@ -37,9 +73,6 @@ impl Memory for NesMemoryMapper {
             self.ram[address & 0x07FF]
         } else if address < 0x4000 {
             self.ppu.borrow_mut().read(address & 0x07, is_read_only)
-        } else if address == 0x4014 {
-            // TODO: OAMDMA
-            0
         } else if address <= 0x4013 || (address == 0x4015) || (address == 0x4017) {
             // TODO: APU here
             0
@@ -59,8 +92,10 @@ impl Memory for NesMemoryMapper {
         } else if address < 0x4000 {
             // TODO: PPU here
             self.ppu.borrow_mut().write(address & 0x07, value)
-        } else if address == 0x4014 {
-            // TODO: OAMDMA
+        } else if address == OAMDMA {
+            self.oam_dma_page = value;
+            self.oam_dma_address = 0;
+            self.do_oam_dma = true;
         } else if address <= 0x4013 || (address == 0x4015) || (address == 0x4017) {
             // TODO: APU here
         } else if address == 0x4016 || address == 0x4017 {
@@ -75,6 +110,7 @@ pub struct Bus {
     memory_mapper: NesMemoryMapper,
     pub cpu: CPU,
     pub cycle: u32,
+    pub total_cycles: u32,
     pub ppu: PPURef,
 }
 
@@ -90,6 +126,7 @@ impl Bus {
             memory_mapper: NesMemoryMapper::new(ppu.clone(), cartref, controllers),
             cpu: CPU::new(),
             cycle: 0,
+            total_cycles: 0,
             ppu,
         }
     }
@@ -108,7 +145,11 @@ impl Bus {
 
         match self.cycle {
             0 | 3 => {
-                self.cpu.clock(&mut self.memory_mapper);
+                if self.memory_mapper.do_oam_dma {
+                    self.memory_mapper.transfer_oam(self.total_cycles);
+                } else {
+                    self.cpu.clock(&mut self.memory_mapper);
+                }
             }
             _ => {}
         }
@@ -117,6 +158,7 @@ impl Bus {
         }
 
         self.cycle -= 1;
+        self.total_cycles += 1;
     }
 
     pub fn clock_until_frame_done(&mut self) {
