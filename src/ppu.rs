@@ -342,6 +342,13 @@ impl OAM {
             x: 0xff,
         }
     }
+
+    pub fn reset(&mut self) {
+        self.y = 0xff;
+        self.id = 0xff;
+        self.attr = 0xff;
+        self.x = 0xff;
+    }
 }
 
 pub struct OAMS {
@@ -359,6 +366,12 @@ impl OAMS {
 
     pub fn get(&self, index: usize) -> OAM {
         self.oams[index]
+    }
+
+    pub fn reset(&mut self) {
+        for oam in &mut self.oams {
+            oam.reset();
+        }
     }
 }
 
