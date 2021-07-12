@@ -14,7 +14,7 @@ use sdl2::pixels::PixelFormatEnum;
 
 use font_kit::family_name::FamilyName;
 use font_kit::handle::Handle;
-use font_kit::properties::Properties;
+use font_kit::properties::{Properties, Weight};
 use font_kit::source::SystemSource;
 
 #[macro_use]
@@ -165,7 +165,7 @@ fn main() -> std::io::Result<()> {
     let font_size = 12i32;
 
     let font = SystemSource::new()
-        .select_best_match(&[FamilyName::Monospace], &Properties::new())
+        .select_best_match(&[FamilyName::Monospace], &Properties::new().weight(Weight::BOLD))
         .unwrap();
     let font_path = match font {
         Handle::Path { path, .. } => path
@@ -318,12 +318,10 @@ fn main() -> std::io::Result<()> {
 
         canvas.borrow_mut().clear();
 
+        let mut ppu_ref = bus.ppu.borrow_mut();
+
         texture
-            .update(
-                None,
-                bus.ppu.borrow().screen().image(),
-                bus.ppu.borrow().screen().width() * 4,
-            )
+            .update(None, ppu_ref.screen().image(), ppu_ref.screen().width() * 4)
             .unwrap();
 
         canvas
@@ -334,8 +332,8 @@ fn main() -> std::io::Result<()> {
                 Some(sdl2::rect::Rect::new(
                     0,
                     0,
-                    (bus.ppu.borrow().screen().width() * 2) as u32,
-                    (bus.ppu.borrow().screen().height() * 2) as u32,
+                    (ppu_ref.screen().width() * 2) as u32,
+                    (ppu_ref.screen().height() * 2) as u32,
                 )),
             )
             .unwrap();
@@ -360,7 +358,7 @@ fn main() -> std::io::Result<()> {
 
             for oam in 0..64 {
                 text_renderer.newline();
-                let oam_data = bus.ppu.borrow().oams.get(oam);
+                let oam_data = ppu_ref.oams.get(oam);
                 let oam_y = oam_data.y;
                 let oam_id = oam_data.id;
                 let oam_attr = oam_data.attr;
@@ -376,16 +374,41 @@ fn main() -> std::io::Result<()> {
                     0,
                 );
             }
+
+            text_renderer.reset_newline();
+            text_renderer.newline();
+            text_renderer.newline();
+            text_renderer.newline();
+            text_renderer.render("SECONDARY OAMS", Color::RGB(0xc0, 0xc0, 0xc0), 256, 0);
+
+            for oam in 0..8 {
+                text_renderer.newline();
+                let oam_data = ppu_ref.internal_oams_debug.get(oam);
+                let oam_y = oam_data.y;
+                let oam_id = oam_data.id;
+                let oam_attr = oam_data.attr;
+                let oam_x = oam_data.x;
+
+                text_renderer.render(
+                    &format!(
+                        "{:02X}: [{:3}, {:3}] ID: {:02X} AT: {:02X}",
+                        oam, oam_x, oam_y, oam_id, oam_attr
+                    ),
+                    Color::RGB(0x00, 0xc0, 0xc0),
+                    256,
+                    0,
+                );
+            }
         }
 
         if show_debug {
-            let width = bus.ppu.borrow().screen_debug_pattern[0].width() * 2;
-            let height = bus.ppu.borrow().screen_debug_pattern[0].height();
+            let width = ppu_ref.screen_debug_pattern[0].width() * 2;
+            let height = ppu_ref.screen_debug_pattern[0].height();
             texture_debug_pattern
                 .update(
                     None,
-                    bus.ppu.borrow().screen_debug_pattern[0].image(),
-                    bus.ppu.borrow().screen_debug_pattern[0].width() * 4,
+                    ppu_ref.screen_debug_pattern[0].image(),
+                    ppu_ref.screen_debug_pattern[0].width() * 4,
                     // nesrs::ppu::NES_WIDTH_SIZE * 3,
                 )
                 .unwrap();
@@ -405,8 +428,8 @@ fn main() -> std::io::Result<()> {
             texture_debug_pattern
                 .update(
                     None,
-                    bus.ppu.borrow().screen_debug_pattern[1].image(),
-                    bus.ppu.borrow().screen_debug_pattern[1].width() * 4,
+                    ppu_ref.screen_debug_pattern[1].image(),
+                    ppu_ref.screen_debug_pattern[1].width() * 4,
                     // nesrs::ppu::NES_WIDTH_SIZE * 3,
                 )
                 .unwrap();
@@ -425,7 +448,6 @@ fn main() -> std::io::Result<()> {
                 .unwrap();
         }
 
-        let mut ppuref = bus.ppu.borrow_mut();
         // let debug_nametable = ppuref.debug_nametable(0);
 
         // let mut row = 0;
@@ -440,7 +462,7 @@ fn main() -> std::io::Result<()> {
 
             for p in 0..8i32 {
                 for s in 0..4i32 {
-                    let color = ppuref.get_color(p as usize, s as usize);
+                    let color = ppu_ref.get_color(p as usize, s as usize);
                     let color = Color::RGB(color.0, color.1, color.2);
 
                     canvas.borrow_mut().set_draw_color(color);
