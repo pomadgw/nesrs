@@ -741,7 +741,8 @@ impl PPU {
                                     self.internal_oams[self.internal_oam_address] =
                                         self.curr_oam_data;
 
-                                    self.internal_oams_debug[self.internal_oam_address] = self.curr_oam_data;
+                                    self.internal_oams_debug[self.internal_oam_address] =
+                                        self.curr_oam_data;
 
                                     let diff = self.scanline - (self.curr_oam_data as i32);
 
@@ -758,8 +759,10 @@ impl PPU {
                                     }
                                 }
                                 PPUSpriteRead::ReadRest => {
-                                    self.internal_oams[self.internal_oam_address] = self.curr_oam_data;
-                                    self.internal_oams_debug[self.internal_oam_address] = self.curr_oam_data;
+                                    self.internal_oams[self.internal_oam_address] =
+                                        self.curr_oam_data;
+                                    self.internal_oams_debug[self.internal_oam_address] =
+                                        self.curr_oam_data;
 
                                     self.oam_address += 1;
                                     self.internal_oam_address += 1;

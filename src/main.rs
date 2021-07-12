@@ -165,7 +165,10 @@ fn main() -> std::io::Result<()> {
     let font_size = 12i32;
 
     let font = SystemSource::new()
-        .select_best_match(&[FamilyName::Monospace], &Properties::new().weight(Weight::BOLD))
+        .select_best_match(
+            &[FamilyName::Monospace],
+            &Properties::new().weight(Weight::BOLD),
+        )
         .unwrap();
     let font_path = match font {
         Handle::Path { path, .. } => path
