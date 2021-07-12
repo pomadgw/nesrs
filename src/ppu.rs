@@ -409,6 +409,7 @@ pub struct PPU {
 
     oam_address: u8,
     pub oams: OAMS,
+    internal_oams: OAMS,
 
     screen: Screen,
     cycle: i32,
@@ -552,6 +553,7 @@ impl PPU {
             pattern_table: [[0; 0x1000]; 2],
             oam_address: 0,
             oams: OAMS::new(64),
+            internal_oams: OAMS::new(8),
             screen: Screen::new(NES_WIDTH_SIZE, NES_HEIGHT_SIZE),
             cycle: 0,
             scanline: 0,
