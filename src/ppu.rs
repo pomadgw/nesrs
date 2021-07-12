@@ -325,6 +325,69 @@ impl ShiftRegister16 {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct OAM {
+    pub y: u8,
+    pub id: u8,
+    pub attr: u8,
+    pub x: u8,
+}
+
+impl OAM {
+    pub fn new() -> OAM {
+        OAM {
+            y: 0xff,
+            id: 0xff,
+            attr: 0xff,
+            x: 0xff,
+        }
+    }
+}
+
+pub struct OAMS {
+    oams: Vec<OAM>,
+}
+
+use std::ops::{Index, IndexMut};
+
+impl OAMS {
+    pub fn new(size: usize) -> OAMS {
+        OAMS {
+            oams: vec![OAM::new(); size],
+        }
+    }
+
+    pub fn get(&self, index: usize) -> OAM {
+        self.oams[index]
+    }
+}
+
+impl Index<usize> for OAMS {
+    type Output = u8;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index & 0x03 {
+            0 => &self.oams[index >> 2].y,
+            1 => &self.oams[index >> 2].id,
+            2 => &self.oams[index >> 2].attr,
+            3 => &self.oams[index >> 2].x,
+            _ => &0,
+        }
+    }
+}
+
+impl IndexMut<usize> for OAMS {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        match index & 0x03 {
+            0 => &mut self.oams[index >> 2].y,
+            1 => &mut self.oams[index >> 2].id,
+            2 => &mut self.oams[index >> 2].attr,
+            3 => &mut self.oams[index >> 2].x,
+            _ => panic!("Invalid OAM index"),
+        }
+    }
+}
+
 pub struct PPU {
     pub cartridge: CartridgeRef,
     pattern_table: [[u8; 0x1000]; 2], // 0x0000 - 0x1fff
@@ -332,7 +395,7 @@ pub struct PPU {
     palette_table: [u8; 32],          // 0x3f00 - 0x3fff
 
     oam_address: u8,
-    pub oams: [u8; 256],
+    pub oams: OAMS,
 
     screen: Screen,
     cycle: i32,
@@ -475,7 +538,7 @@ impl PPU {
             nametable: [[0; 0x0400]; 2],
             pattern_table: [[0; 0x1000]; 2],
             oam_address: 0,
-            oams: [0xff; 256],
+            oams: OAMS::new(64),
             screen: Screen::new(NES_WIDTH_SIZE, NES_HEIGHT_SIZE),
             cycle: 0,
             scanline: 0,
