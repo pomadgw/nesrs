@@ -360,10 +360,11 @@ fn main() -> std::io::Result<()> {
 
             for oam in 0..64 {
                 text_renderer.newline();
-                let oam_y = bus.ppu.borrow().oams[oam * 4 + 0];
-                let oam_id = bus.ppu.borrow().oams[oam * 4 + 1];
-                let oam_attr = bus.ppu.borrow().oams[oam * 4 + 2];
-                let oam_x = bus.ppu.borrow().oams[oam * 4 + 3];
+                let oam_data = bus.ppu.borrow().oams.get(oam);
+                let oam_y = oam_data.y;
+                let oam_id = oam_data.id;
+                let oam_attr = oam_data.attr;
+                let oam_x = oam_data.x;
 
                 text_renderer.render(
                     &format!(
