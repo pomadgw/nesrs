@@ -325,7 +325,7 @@ impl ShiftRegister16 {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct OAM {
     pub y: u8,
     pub id: u8,
@@ -364,8 +364,8 @@ impl OAMS {
         }
     }
 
-    pub fn get(&self, index: usize) -> OAM {
-        self.oams[index]
+    pub fn get(&self, index: usize) -> &OAM {
+        &self.oams[index]
     }
 
     pub fn reset(&mut self) {
@@ -401,15 +401,26 @@ impl IndexMut<usize> for OAMS {
     }
 }
 
+enum PPUSpriteRead {
+    ReadY,
+    ReadRest,
+    OnSpriteOverflow,
+}
+
 pub struct PPU {
     pub cartridge: CartridgeRef,
     pattern_table: [[u8; 0x1000]; 2], // 0x0000 - 0x1fff
     nametable: [[u8; 0x0400]; 2],     // 0x2000 - 0x2fff
     palette_table: [u8; 32],          // 0x3f00 - 0x3fff
 
-    oam_address: u8,
+    oam_address: usize,
     pub oams: OAMS,
     internal_oams: OAMS,
+    pub internal_oams_debug: OAMS,
+    internal_oam_address: usize,
+    sprite_count: usize,
+    sprite_read_mode: PPUSpriteRead,
+    curr_oam_data: u8,
 
     screen: Screen,
     cycle: i32,
@@ -454,7 +465,7 @@ impl Memory for PPU {
                 status
             }
             OAMADDR => 0xff,
-            OAMDATA => self.oams[self.oam_address as usize],
+            OAMDATA => self.oams[self.oam_address],
             PPUSCROLL => 0,
             PPUADDR => 0,
             PPUDATA => {
@@ -503,10 +514,10 @@ impl Memory for PPU {
             }
             PPUSTATUS => {}
             OAMADDR => {
-                self.oam_address = value;
+                self.oam_address = value as usize;
             }
             OAMDATA => {
-                self.write_oam_address(self.oam_address as usize, value);
+                self.write_oam_address(self.oam_address, value);
                 self.oam_address = self.oam_address.wrapping_add(1);
             }
             PPUSCROLL => match self.address_latch {
@@ -554,6 +565,11 @@ impl PPU {
             oam_address: 0,
             oams: OAMS::new(64),
             internal_oams: OAMS::new(8),
+            internal_oams_debug: OAMS::new(8),
+            sprite_count: 0,
+            curr_oam_data: 0,
+            internal_oam_address: 0,
+            sprite_read_mode: PPUSpriteRead::ReadY,
             screen: Screen::new(NES_WIDTH_SIZE, NES_HEIGHT_SIZE),
             cycle: 0,
             scanline: 0,
@@ -609,6 +625,7 @@ impl PPU {
         // TODO: implement clock
         if self.cycle == 1 && self.scanline == -1 {
             self.status.set(PPUStatus::VBLANK, false);
+            self.status.set(PPUStatus::SPRITE_OVERFLOW, false);
         }
 
         if self.cycle == 1 && self.scanline == 241 {
@@ -690,6 +707,80 @@ impl PPU {
                 }
             }
 
+            // sprite evaluation
+            let sprint_size = if self.control.contains(PPUControl::SPRITE_SIZE) {
+                16
+            } else {
+                8
+            };
+
+            match self.cycle {
+                0 => {
+                    self.sprite_count = 0;
+                    self.internal_oam_address = 0;
+                    self.sprite_read_mode = PPUSpriteRead::ReadY;
+                }
+                1..=64 => {
+                    self.internal_oams[((self.cycle as usize) - 1) >> 1] = 0xff;
+                }
+                65..=256 => {
+                    // if self.cycle == 65 {
+                    //     println!("{:3} self.oam_n = {}", self.scanline, self.oam_n);
+                    // }
+
+                    if self.oam_address < 256 && self.sprite_count < 9 {
+                        if self.cycle & 0x01 == 1 {
+                            // read OAM entry
+                            self.curr_oam_data = self.oams[self.oam_address];
+                            // println!("{:3} self.oam_n({:2}).y = {:02X}", self.scanline, self.oam_n, self.curr_oam_data);
+                        } else {
+                            match self.sprite_read_mode {
+                                PPUSpriteRead::ReadY => {
+                                    assert!(self.oam_address & 0x03 == 0);
+
+                                    self.internal_oams[self.internal_oam_address] =
+                                        self.curr_oam_data;
+
+                                    self.internal_oams_debug[self.internal_oam_address] = self.curr_oam_data;
+
+                                    let diff = self.scanline - (self.curr_oam_data as i32);
+
+                                    if diff >= 0 && diff < sprint_size {
+                                        if self.oam_address == 0 {
+                                            // todo: sprint hit 0 here
+                                        }
+
+                                        self.sprite_read_mode = PPUSpriteRead::ReadRest;
+                                        self.oam_address += 1;
+                                        self.internal_oam_address += 1;
+                                    } else {
+                                        self.oam_address += 4;
+                                    }
+                                }
+                                PPUSpriteRead::ReadRest => {
+                                    self.internal_oams[self.internal_oam_address] = self.curr_oam_data;
+                                    self.internal_oams_debug[self.internal_oam_address] = self.curr_oam_data;
+
+                                    self.oam_address += 1;
+                                    self.internal_oam_address += 1;
+
+                                    if self.internal_oam_address == 32 {
+                                        self.sprite_read_mode = PPUSpriteRead::OnSpriteOverflow;
+                                    } else if self.internal_oam_address & 0x03 == 0 {
+                                        self.sprite_read_mode = PPUSpriteRead::ReadY;
+                                        self.sprite_count += 1;
+                                    }
+                                }
+                                PPUSpriteRead::OnSpriteOverflow => {
+                                    self.status.set(PPUStatus::SPRITE_OVERFLOW, true);
+                                }
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+
             if self.cycle == 256 {
                 if self.mask.is_render_something() {
                     self.vaddress.increase_coarse_y();
@@ -700,6 +791,8 @@ impl PPU {
                         .set_nametable_select_x(self.temp_address.nametable_select_x());
                     self.vaddress.set_coarse_x(self.temp_address.coarse_x());
                 }
+
+                self.oam_address = 0;
             }
 
             if self.scanline == -1 && self.cycle >= 280 && self.cycle < 305 {
