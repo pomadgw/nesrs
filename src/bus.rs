@@ -50,10 +50,12 @@ impl NesMemoryMapper {
                 let address = (self.oam_dma_page as usize) << 8 | (self.oam_dma_address as usize);
                 self.dma_data = self.read(address, false);
             } else {
+                let address = self.ppu.borrow_mut().oam_address;
                 self.ppu
                     .borrow_mut()
-                    .write_oam_address(self.oam_dma_address as usize, self.dma_data);
+                    .write_oam_address(address as usize, self.dma_data);
                 self.oam_dma_address = self.oam_dma_address.wrapping_add(1);
+                self.ppu.borrow_mut().oam_address = address.wrapping_add(1);
 
                 if self.oam_dma_address == 0 {
                     self.oam_dma_cycle = 1;
