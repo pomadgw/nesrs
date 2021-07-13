@@ -797,11 +797,11 @@ impl PPU {
                                         }
 
                                         self.sprite_read_mode = PPUSpriteRead::ReadRest;
-                                        self.oam_address += self.oam_address.wrapping_add(1);
+                                        self.oam_address = self.oam_address.wrapping_add(1);
                                         self.oam_address_loop_counter += 1;
                                         self.internal_oam_address += 1;
                                     } else {
-                                        self.oam_address += self.oam_address.wrapping_add(4);
+                                        self.oam_address = self.oam_address.wrapping_add(4);
                                         self.oam_address_loop_counter += 4;
                                     }
                                 }
@@ -811,7 +811,7 @@ impl PPU {
                                     self.internal_oams_debug[self.internal_oam_address] =
                                         self.curr_oam_data;
 
-                                    self.oam_address += 1;
+                                    self.oam_address = self.oam_address.wrapping_add(1);
                                     self.oam_address_loop_counter += 1;
 
                                     self.internal_oam_address += 1;
@@ -832,6 +832,7 @@ impl PPU {
                     }
                 }
                 257 => {
+                    self.oam_address = 0;
                     // todo: does not conform with the actual sprint evaluation
 
                     for oam_index in 0..32 {
@@ -934,6 +935,9 @@ impl PPU {
                         self.sprite_pattern_shifter[sprite_index].load_lo(sprite_pattern_bits_lo);
                         self.sprite_pattern_shifter[sprite_index].load_hi(sprite_pattern_bits_hi);
                     }
+                }
+                288..=320 => {
+                    self.oam_address = 0;
                 }
                 _ => {}
             }
