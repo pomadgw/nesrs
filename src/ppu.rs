@@ -422,7 +422,8 @@ pub struct PPU {
     nametable: [[u8; 0x0400]; 2],     // 0x2000 - 0x2fff
     palette_table: [u8; 32],          // 0x3f00 - 0x3fff
 
-    oam_address: usize,
+    pub oam_address: u8,
+    oam_address_loop_counter: u32,
     pub oams: OAMS,
     internal_oams: OAMS,
     pub internal_oams_debug: OAMS,
@@ -479,7 +480,7 @@ impl Memory for PPU {
                 status
             }
             OAMADDR => 0xff,
-            OAMDATA => self.oams[self.oam_address],
+            OAMDATA => self.oams[self.oam_address as usize],
             PPUSCROLL => 0,
             PPUADDR => 0,
             PPUDATA => {
@@ -528,10 +529,10 @@ impl Memory for PPU {
             }
             PPUSTATUS => {}
             OAMADDR => {
-                self.oam_address = value as usize;
+                self.oam_address = value;
             }
             OAMDATA => {
-                self.write_oam_address(self.oam_address, value);
+                self.write_oam_address(self.oam_address as usize, value);
                 self.oam_address = self.oam_address.wrapping_add(1);
             }
             PPUSCROLL => match self.address_latch {
@@ -585,6 +586,7 @@ impl PPU {
             sprite_count: 0,
             curr_oam_data: 0,
             internal_oam_address: 0,
+            oam_address_loop_counter: 0,
             sprite_read_mode: PPUSpriteRead::ReadY,
             is_sprite0_hit_possible: false,
             is_sprite0_hit_being_rendered: false,
@@ -764,21 +766,22 @@ impl PPU {
                 0 => {
                     self.sprite_count = 0;
                     self.internal_oam_address = 0;
+                    self.oam_address_loop_counter = 0;
                     self.sprite_read_mode = PPUSpriteRead::ReadY;
                 }
                 1..=64 => {
                     self.internal_oams[((self.cycle as usize) - 1) >> 1] = 0xff;
                 }
                 65..=256 => {
-                    if self.oam_address < 256 && self.sprite_count < 9 {
+                    if self.oam_address_loop_counter < 256 && self.sprite_count < 9 {
                         if self.cycle & 0x01 == 1 {
                             // read OAM entry
-                            self.curr_oam_data = self.oams[self.oam_address];
+                            self.curr_oam_data = self.oams[self.oam_address as usize];
                             // println!("{:3} self.oam_n({:2}).y = {:02X}", self.scanline, self.oam_n, self.curr_oam_data);
                         } else {
                             match self.sprite_read_mode {
                                 PPUSpriteRead::ReadY => {
-                                    assert!(self.oam_address & 0x03 == 0);
+                                    // assert!(self.oam_address & 0x03 == 0);
 
                                     self.internal_oams[self.internal_oam_address] =
                                         self.curr_oam_data;
@@ -794,10 +797,12 @@ impl PPU {
                                         }
 
                                         self.sprite_read_mode = PPUSpriteRead::ReadRest;
-                                        self.oam_address += 1;
+                                        self.oam_address += self.oam_address.wrapping_add(1);
+                                        self.oam_address_loop_counter += 1;
                                         self.internal_oam_address += 1;
                                     } else {
-                                        self.oam_address += 4;
+                                        self.oam_address += self.oam_address.wrapping_add(4);
+                                        self.oam_address_loop_counter += 4;
                                     }
                                 }
                                 PPUSpriteRead::ReadRest => {
@@ -807,6 +812,8 @@ impl PPU {
                                         self.curr_oam_data;
 
                                     self.oam_address += 1;
+                                    self.oam_address_loop_counter += 1;
+
                                     self.internal_oam_address += 1;
 
                                     if self.internal_oam_address == 32 {
@@ -884,32 +891,44 @@ impl PPU {
                             // 8x8 sprite mode
                             if !((attr & 0x80) > 0) {
                                 // Sprite is normal, not flipped
-                                sprite_pattern_address_lo = (pattern_sprite << 12) | (id << 4) | (self.scanline - y) as usize;
+                                sprite_pattern_address_lo = (pattern_sprite << 12)
+                                    | (id << 4)
+                                    | (self.scanline - y) as usize;
                                 // println!("8x8 sprite not flipped: {:3} - {:3}", self.scanline, y);
                             } else {
                                 // println!("8x8 sprite flipped");
                                 // The sprite is flipped vertically
-                                sprite_pattern_address_lo = (pattern_sprite << 12) | (id << 4) | (7 - (self.scanline - y)) as usize;
+                                sprite_pattern_address_lo = (pattern_sprite << 12)
+                                    | (id << 4)
+                                    | (7 - (self.scanline - y)) as usize;
                             }
                         }
 
                         let sprite_pattern_address_hi = sprite_pattern_address_lo + 8;
 
-                        let mut sprite_pattern_bits_lo = self.ppu_read(sprite_pattern_address_lo, false);
-                        let mut sprite_pattern_bits_hi = self.ppu_read(sprite_pattern_address_hi, false);
+                        let mut sprite_pattern_bits_lo =
+                            self.ppu_read(sprite_pattern_address_lo, false);
+                        let mut sprite_pattern_bits_hi =
+                            self.ppu_read(sprite_pattern_address_hi, false);
                         // println!("L {:04X} => {:08b}", sprite_pattern_address_lo, sprite_pattern_bits_lo);
                         // println!("H {:04X} => {:08b}", sprite_pattern_address_hi, sprite_pattern_bits_hi);
 
                         let is_flipped_horizontally = (attr & 0x40) > 0;
 
                         if is_flipped_horizontally {
-                            sprite_pattern_bits_lo = ((sprite_pattern_bits_lo & 0xf0) >> 4) | ((sprite_pattern_bits_lo & 0x0f) << 4);
-                            sprite_pattern_bits_lo = ((sprite_pattern_bits_lo & 0xcc) >> 2) | ((sprite_pattern_bits_lo & 0x33) << 2);
-                            sprite_pattern_bits_lo = ((sprite_pattern_bits_lo & 0xaa) >> 1) | ((sprite_pattern_bits_lo & 0x55) << 1);
+                            sprite_pattern_bits_lo = ((sprite_pattern_bits_lo & 0xf0) >> 4)
+                                | ((sprite_pattern_bits_lo & 0x0f) << 4);
+                            sprite_pattern_bits_lo = ((sprite_pattern_bits_lo & 0xcc) >> 2)
+                                | ((sprite_pattern_bits_lo & 0x33) << 2);
+                            sprite_pattern_bits_lo = ((sprite_pattern_bits_lo & 0xaa) >> 1)
+                                | ((sprite_pattern_bits_lo & 0x55) << 1);
 
-                            sprite_pattern_bits_hi = ((sprite_pattern_bits_hi & 0xf0) >> 4) | ((sprite_pattern_bits_hi & 0x0f) << 4);
-                            sprite_pattern_bits_hi = ((sprite_pattern_bits_hi & 0xcc) >> 2) | ((sprite_pattern_bits_hi & 0x33) << 2);
-                            sprite_pattern_bits_hi = ((sprite_pattern_bits_hi & 0xaa) >> 1) | ((sprite_pattern_bits_hi & 0x55) << 1);
+                            sprite_pattern_bits_hi = ((sprite_pattern_bits_hi & 0xf0) >> 4)
+                                | ((sprite_pattern_bits_hi & 0x0f) << 4);
+                            sprite_pattern_bits_hi = ((sprite_pattern_bits_hi & 0xcc) >> 2)
+                                | ((sprite_pattern_bits_hi & 0x33) << 2);
+                            sprite_pattern_bits_hi = ((sprite_pattern_bits_hi & 0xaa) >> 1)
+                                | ((sprite_pattern_bits_hi & 0x55) << 1);
                         }
 
                         self.sprite_pattern_shifter[sprite_index].load_lo(sprite_pattern_bits_lo);
@@ -1012,7 +1031,7 @@ impl PPU {
                     if self.is_sprite0_hit_possible && self.is_sprite0_hit_being_rendered {
                         if self.mask.is_render_something() {
                             if self.mask.is_render_left() {
-                                if 1 <= self.cycle && self.cycle < 258 {
+                                if 9 <= self.cycle && self.cycle < 258 {
                                     self.status.set(PPUStatus::SPRITE0_HIT, true);
                                 }
                             } else {
