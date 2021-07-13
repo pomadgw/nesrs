@@ -39,7 +39,7 @@ impl NROM {
 
 impl Mapper for NROM {
     fn map_cpu_read_address(&self, address: usize, mapped_address: &mut usize) -> MapperStatus {
-        if address >= 0x6000 && address <= 0x8000 {
+        if address >= 0x6000 && address < 0x8000 {
             return MapperStatus::ReadRam(self.vram[address & 0x1fff]);
         }
 
