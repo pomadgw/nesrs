@@ -361,11 +361,11 @@ fn main() -> std::io::Result<()> {
 
             for oam in 0..64 {
                 text_renderer.newline();
-                let oam_data = ppu_ref.oams.get(oam);
-                let oam_y = oam_data.y;
-                let oam_id = oam_data.id;
-                let oam_attr = oam_data.attr;
-                let oam_x = oam_data.x;
+                let oam_index = oam << 2;
+                let oam_y = ppu_ref.oams[oam_index + 0];
+                let oam_id = ppu_ref.oams[oam_index + 1];
+                let oam_attr = ppu_ref.oams[oam_index + 2];
+                let oam_x = ppu_ref.oams[oam_index + 3];
 
                 text_renderer.render(
                     &format!(
