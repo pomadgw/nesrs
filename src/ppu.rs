@@ -616,11 +616,13 @@ impl PPU {
             self.is_sprite0_hit_being_rendered = false;
         }
 
-        if self.cycle == 1 && self.scanline == 241 && !self.supress_vblank {
-            self.status.set(PPUStatus::VBLANK, true);
+        if self.cycle == 1 && self.scanline == 241 {
+            if !self.supress_vblank {
+                self.status.set(PPUStatus::VBLANK, true);
 
-            if self.control.contains(PPUControl::ENABLE_NMI) {
-                self.call_nmi = true;
+                if self.control.contains(PPUControl::ENABLE_NMI) {
+                    self.call_nmi = true;
+                }
             }
         }
 
