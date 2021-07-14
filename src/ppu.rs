@@ -734,7 +734,9 @@ impl PPU {
                                     }
                                 }
                                 PPUSpriteRead::OnSpriteOverflow => {
-                                    self.status.set(PPUStatus::SPRITE_OVERFLOW, true);
+                                    if self.mask.is_render_something() {
+                                        self.status.set(PPUStatus::SPRITE_OVERFLOW, true);
+                                    }
                                 }
                             }
                         }
