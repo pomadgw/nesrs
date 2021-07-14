@@ -330,86 +330,6 @@ impl ShiftRegister16 {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct OAM {
-    pub y: u8,
-    pub id: u8,
-    pub attr: u8,
-    pub x: u8,
-}
-
-impl OAM {
-    pub fn new() -> OAM {
-        OAM {
-            y: 0xff,
-            id: 0xff,
-            attr: 0xff,
-            x: 0xff,
-        }
-    }
-
-    pub fn reset(&mut self) {
-        self.y = 0xff;
-        self.id = 0xff;
-        self.attr = 0xff;
-        self.x = 0xff;
-    }
-}
-
-pub struct OAMS {
-    oams: Vec<OAM>,
-}
-
-use std::ops::{Index, IndexMut};
-
-impl OAMS {
-    pub fn new(size: usize) -> OAMS {
-        OAMS {
-            oams: vec![OAM::new(); size],
-        }
-    }
-
-    pub fn get(&self, index: usize) -> &OAM {
-        &self.oams[index]
-    }
-
-    pub fn get_mut(&mut self, index: usize) -> &mut OAM {
-        &mut self.oams[index]
-    }
-
-    pub fn reset(&mut self) {
-        for oam in &mut self.oams {
-            oam.reset();
-        }
-    }
-}
-
-impl Index<usize> for OAMS {
-    type Output = u8;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        match index & 0x03 {
-            0 => &self.oams[index >> 2].y,
-            1 => &self.oams[index >> 2].id,
-            2 => &self.oams[index >> 2].attr,
-            3 => &self.oams[index >> 2].x,
-            _ => &0,
-        }
-    }
-}
-
-impl IndexMut<usize> for OAMS {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        match index & 0x03 {
-            0 => &mut self.oams[index >> 2].y,
-            1 => &mut self.oams[index >> 2].id,
-            2 => &mut self.oams[index >> 2].attr,
-            3 => &mut self.oams[index >> 2].x,
-            _ => panic!("Invalid OAM index"),
-        }
-    }
-}
-
 enum PPUSpriteRead {
     ReadY,
     ReadRest,
@@ -424,9 +344,9 @@ pub struct PPU {
 
     pub oam_address: u8,
     oam_address_loop_counter: u32,
-    pub oams: OAMS,
-    internal_oams: OAMS,
-    next_scanline_oams: OAMS,
+    pub oams: [u8; 256],
+    internal_oams: [u8; 64],
+    next_scanline_oams: [u8; 64],
     next_scanline_sprite_count: usize,
     internal_oam_address: usize,
     sprite_count: usize,
@@ -578,9 +498,9 @@ impl PPU {
             nametable: [[0; 0x0400]; 2],
             pattern_table: [[0; 0x1000]; 2],
             oam_address: 0,
-            oams: OAMS::new(64),
-            internal_oams: OAMS::new(8),
-            next_scanline_oams: OAMS::new(8),
+            oams: [0; 256],
+            internal_oams: [0; 64],
+            next_scanline_oams: [0; 64],
             next_scanline_sprite_count: 0,
             sprite_count: 0,
             curr_oam_data: 0,
@@ -651,14 +571,13 @@ impl PPU {
 
         if self.mask.is_render_sprite() && 1 <= self.cycle && self.cycle <= 258 {
             for sprite_index in 0..self.next_scanline_sprite_count {
-                let mut sprite = self.next_scanline_oams.get_mut(sprite_index);
+                let index = (sprite_index << 2) + 3;
+                let sprite_x = self.next_scanline_oams[index];
 
-                if sprite.x > 0 {
-                    sprite.x -= 1;
+                if sprite_x > 0 {
+                    self.next_scanline_oams[index] -= 1;
                 } else {
                     self.sprite_pattern_shifter[sprite_index].shift();
-                    // println!("SHIFT SPRITE L: {:016b}", self.sprite_pattern_shifter[sprite_index].lo);
-                    // println!("SHIFT SPRITE H: {:016b}", self.sprite_pattern_shifter[sprite_index].hi);
                 }
             }
         }
@@ -773,7 +692,6 @@ impl PPU {
                         if self.cycle & 0x01 == 1 {
                             // read OAM entry
                             self.curr_oam_data = self.oams[self.oam_address as usize];
-                            // println!("{:3} self.oam_n({:2}).y = {:02X}", self.scanline, self.oam_n, self.curr_oam_data);
                         } else {
                             match self.sprite_read_mode {
                                 PPUSpriteRead::ReadY => {
@@ -843,11 +761,10 @@ impl PPU {
                     };
 
                     for sprite_index in 0..self.next_scanline_sprite_count {
-                        let sprite = self.next_scanline_oams.get(sprite_index);
-                        let id = sprite.id as usize;
-                        let attr = sprite.attr;
-                        let y = sprite.y as i32;
-                        // println!("ID: {:02X}, ATTR: {:02X}", id, attr);
+                        let sprite_offset = sprite_index << 2;
+                        let id = self.next_scanline_oams[sprite_offset + 1] as usize;
+                        let attr = self.next_scanline_oams[sprite_offset + 2];
+                        let y = self.next_scanline_oams[sprite_offset + 0] as i32;
                         let sprite_pattern_address_lo: usize;
 
                         if is_sprite16_mode {
@@ -886,9 +803,7 @@ impl PPU {
                                 sprite_pattern_address_lo = (pattern_sprite << 12)
                                     | (id << 4)
                                     | (self.scanline - y) as usize;
-                                // println!("8x8 sprite not flipped: {:3} - {:3}", self.scanline, y);
                             } else {
-                                // println!("8x8 sprite flipped");
                                 // The sprite is flipped vertically
                                 sprite_pattern_address_lo = (pattern_sprite << 12)
                                     | (id << 4)
@@ -902,8 +817,6 @@ impl PPU {
                             self.ppu_read(sprite_pattern_address_lo, false);
                         let mut sprite_pattern_bits_hi =
                             self.ppu_read(sprite_pattern_address_hi, false);
-                        // println!("L {:04X} => {:08b}", sprite_pattern_address_lo, sprite_pattern_bits_lo);
-                        // println!("H {:04X} => {:08b}", sprite_pattern_address_hi, sprite_pattern_bits_hi);
 
                         let is_flipped_horizontally = (attr & 0x40) > 0;
 
@@ -990,13 +903,13 @@ impl PPU {
                 self.is_sprite0_hit_being_rendered = false;
 
                 for sprite_index in 0..self.next_scanline_sprite_count {
-                    if self.next_scanline_oams.get(sprite_index).x == 0 {
+                    let sprite_offset = sprite_index << 2;
+                    let x = self.next_scanline_oams[sprite_offset + 3];
+                    let attr = self.next_scanline_oams[sprite_offset + 2];
+                    if x == 0 {
                         fg_pixel = self.sprite_pattern_shifter[sprite_index].get(8);
-                        // if fg_pixel > 0 { println!("fg_pixel: {}", fg_pixel); }
-                        // println!("{}", self.sprite_pattern_shifter[sprite_index].lo);
-                        // println!("{}", self.sprite_pattern_shifter[sprite_index].hi);
-                        fg_palette = (self.next_scanline_oams.get(sprite_index).attr & 0x03) + 0x04;
-                        fg_priority = self.next_scanline_oams.get(sprite_index).attr & 0x20 == 0;
+                        fg_palette = (attr & 0x03) + 0x04;
+                        fg_priority = attr & 0x20 == 0;
 
                         if fg_pixel != 0 {
                             if sprite_index == 0 {
