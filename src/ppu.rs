@@ -360,6 +360,7 @@ pub struct PPU {
     cycle: i32,
     scanline: i32,
     odd_cycle: bool,
+    supress_vblank: bool,
     pub done_drawing: bool,
     pub call_nmi: bool,
 
@@ -394,8 +395,9 @@ impl Memory for PPU {
                 let status = (self.status.bits() & 0xe0) | (self.data_buffer & 0x1f);
 
                 if !is_read_only {
-                    self.status.set(PPUStatus::VBLANK, false);
                     self.address_latch = AddressLatch::Hi;
+                    self.status.set(PPUStatus::VBLANK, false);
+                    self.supress_vblank = true;
                 }
 
                 status
@@ -417,7 +419,8 @@ impl Memory for PPU {
                     // for some reason, we need to read mirrored nametable
                     // to be kept in buffer... -_-
                     // this is to pass blargg_ppu_tests_2005.09.15b/vram_access #6 test
-                    read_result = self.ppu_read((self.vaddress.address() & 0x0fff) | 0x2000, is_read_only);
+                    read_result =
+                        self.ppu_read((self.vaddress.address() & 0x0fff) | 0x2000, is_read_only);
                 }
 
                 // set the buffer data
@@ -525,6 +528,7 @@ impl PPU {
             odd_cycle: false,
             done_drawing: false,
             call_nmi: false,
+            supress_vblank: false,
 
             status: PPUStatus::empty(),
             control: PPUControl::empty(),
@@ -594,7 +598,7 @@ impl PPU {
 
     pub fn clock(&mut self) {
         if self.scanline == 0 && self.cycle == 0 && self.mask.is_render_bg() {
-            if self.odd_cycle  {
+            if self.odd_cycle {
                 self.cycle = 1;
             }
 
@@ -612,13 +616,15 @@ impl PPU {
             self.is_sprite0_hit_being_rendered = false;
         }
 
-        if self.cycle == 1 && self.scanline == 241 {
+        if self.cycle == 1 && self.scanline == 241 && !self.supress_vblank {
             self.status.set(PPUStatus::VBLANK, true);
 
             if self.control.contains(PPUControl::ENABLE_NMI) {
                 self.call_nmi = true;
             }
         }
+
+        self.supress_vblank = false;
 
         // visible scanline...
         if -1 <= self.scanline && self.scanline < 240 {
