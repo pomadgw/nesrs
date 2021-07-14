@@ -359,6 +359,7 @@ pub struct PPU {
     screen: Screen,
     cycle: i32,
     scanline: i32,
+    odd_cycle: bool,
     pub done_drawing: bool,
     pub call_nmi: bool,
 
@@ -521,6 +522,7 @@ impl PPU {
             screen: Screen::new(NES_WIDTH_SIZE, NES_HEIGHT_SIZE),
             cycle: 0,
             scanline: 0,
+            odd_cycle: false,
             done_drawing: false,
             call_nmi: false,
 
@@ -591,7 +593,14 @@ impl PPU {
     }
 
     pub fn clock(&mut self) {
-        // TODO: implement clock
+        if self.scanline == 0 && self.cycle == 0 && self.mask.is_render_bg() {
+            if self.odd_cycle  {
+                self.cycle = 1;
+            }
+
+            self.odd_cycle = !self.odd_cycle;
+        }
+
         if self.cycle == 1 && self.scanline == -1 {
             self.status.set(PPUStatus::VBLANK, false);
             self.status.set(PPUStatus::SPRITE_OVERFLOW, false);
@@ -888,7 +897,7 @@ impl PPU {
             }
         }
 
-        if self.cycle < 256 && (0 <= self.scanline && self.scanline < 240) {
+        if (self.cycle >= 0 && self.cycle < 256) && (0 <= self.scanline && self.scanline < 240) {
             let mut palette = 0;
             let mut pixel = 0;
 
