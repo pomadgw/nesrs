@@ -377,31 +377,6 @@ fn main() -> std::io::Result<()> {
                     0,
                 );
             }
-
-            text_renderer.reset_newline();
-            text_renderer.newline();
-            text_renderer.newline();
-            text_renderer.newline();
-            text_renderer.render("SECONDARY OAMS", Color::RGB(0xc0, 0xc0, 0xc0), 256, 0);
-
-            for oam in 0..8 {
-                text_renderer.newline();
-                let oam_data = ppu_ref.internal_oams_debug.get(oam);
-                let oam_y = oam_data.y;
-                let oam_id = oam_data.id;
-                let oam_attr = oam_data.attr;
-                let oam_x = oam_data.x;
-
-                text_renderer.render(
-                    &format!(
-                        "{:02X}: [{:3}, {:3}] ID: {:02X} AT: {:02X}",
-                        oam, oam_x, oam_y, oam_id, oam_attr
-                    ),
-                    Color::RGB(0x00, 0xc0, 0xc0),
-                    256,
-                    0,
-                );
-            }
         }
 
         if show_debug {
