@@ -426,7 +426,6 @@ pub struct PPU {
     oam_address_loop_counter: u32,
     pub oams: OAMS,
     internal_oams: OAMS,
-    pub internal_oams_debug: OAMS,
     next_scanline_oams: OAMS,
     next_scanline_sprite_count: usize,
     internal_oam_address: usize,
@@ -581,7 +580,6 @@ impl PPU {
             oam_address: 0,
             oams: OAMS::new(64),
             internal_oams: OAMS::new(8),
-            internal_oams_debug: OAMS::new(8),
             next_scanline_oams: OAMS::new(8),
             next_scanline_sprite_count: 0,
             sprite_count: 0,
@@ -771,7 +769,7 @@ impl PPU {
                     self.internal_oams[((self.cycle as usize) - 1) >> 1] = 0xff;
                 }
                 65..=256 => {
-                    if self.oam_address_loop_counter < 256 && self.sprite_count < 9 {
+                    if self.oam_address_loop_counter < 256 {
                         if self.cycle & 0x01 == 1 {
                             // read OAM entry
                             self.curr_oam_data = self.oams[self.oam_address as usize];
@@ -779,12 +777,9 @@ impl PPU {
                         } else {
                             match self.sprite_read_mode {
                                 PPUSpriteRead::ReadY => {
-                                    // assert!(self.oam_address & 0x03 == 0);
+                                    assert!(self.oam_address_loop_counter & 0x03 == 0);
 
                                     self.internal_oams[self.internal_oam_address] =
-                                        self.curr_oam_data;
-
-                                    self.internal_oams_debug[self.internal_oam_address] =
                                         self.curr_oam_data;
 
                                     let diff = self.scanline - (self.curr_oam_data as i32);
@@ -805,8 +800,6 @@ impl PPU {
                                 }
                                 PPUSpriteRead::ReadRest => {
                                     self.internal_oams[self.internal_oam_address] =
-                                        self.curr_oam_data;
-                                    self.internal_oams_debug[self.internal_oam_address] =
                                         self.curr_oam_data;
 
                                     self.oam_address = self.oam_address.wrapping_add(1);
