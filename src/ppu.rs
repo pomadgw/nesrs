@@ -434,6 +434,7 @@ pub struct PPU {
     sprite_read_mode: PPUSpriteRead,
     curr_oam_data: u8,
     is_sprite0_hit_possible: bool,
+    next_scanline_is_sprite0_hit_possible: bool,
     is_sprite0_hit_being_rendered: bool,
 
     screen: Screen,
@@ -589,6 +590,7 @@ impl PPU {
             oam_address_loop_counter: 0,
             sprite_read_mode: PPUSpriteRead::ReadY,
             is_sprite0_hit_possible: false,
+            next_scanline_is_sprite0_hit_possible: false,
             is_sprite0_hit_being_rendered: false,
 
             screen: Screen::new(NES_WIDTH_SIZE, NES_HEIGHT_SIZE),
@@ -673,6 +675,7 @@ impl PPU {
             self.reset_sprite_pattern_shifter();
 
             self.is_sprite0_hit_possible = false;
+            self.next_scanline_is_sprite0_hit_possible = false;
             self.is_sprite0_hit_being_rendered = false;
         }
 
@@ -755,7 +758,7 @@ impl PPU {
                 }
             }
 
-            // sprite evaluation
+            // sprite evaluation for next scanline
             let sprint_size = if self.control.contains(PPUControl::SPRITE_SIZE) {
                 16
             } else {
@@ -763,12 +766,7 @@ impl PPU {
             };
 
             match self.cycle {
-                0 => {
-                    self.sprite_count = 0;
-                    self.internal_oam_address = 0;
-                    self.oam_address_loop_counter = 0;
-                    self.sprite_read_mode = PPUSpriteRead::ReadY;
-                }
+                0 => {}
                 1..=64 => {
                     self.internal_oams[((self.cycle as usize) - 1) >> 1] = 0xff;
                 }
@@ -792,7 +790,7 @@ impl PPU {
                                     let diff = self.scanline - (self.curr_oam_data as i32);
 
                                     if diff >= 0 && diff < sprint_size {
-                                        if self.oam_address == 0 {
+                                        if self.oam_address_loop_counter == 0 {
                                             self.is_sprite0_hit_possible = true;
                                         }
 
@@ -936,8 +934,16 @@ impl PPU {
                         self.sprite_pattern_shifter[sprite_index].load_hi(sprite_pattern_bits_hi);
                     }
                 }
-                288..=320 => {
+                258..=320 => {
                     self.oam_address = 0;
+                }
+                340 => {
+                    self.next_scanline_is_sprite0_hit_possible = self.is_sprite0_hit_possible;
+                    self.is_sprite0_hit_possible = false;
+                    self.sprite_count = 0;
+                    self.internal_oam_address = 0;
+                    self.oam_address_loop_counter = 0;
+                    self.sprite_read_mode = PPUSpriteRead::ReadY;
                 }
                 _ => {}
             }
@@ -991,8 +997,6 @@ impl PPU {
                 self.is_sprite0_hit_being_rendered = false;
 
                 for sprite_index in 0..self.next_scanline_sprite_count {
-                    // println!("{} X = {:3}", sprite_index, self.next_scanline_oams.get(sprite_index).x);
-
                     if self.next_scanline_oams.get(sprite_index).x == 0 {
                         fg_pixel = self.sprite_pattern_shifter[sprite_index].get(8);
                         // if fg_pixel > 0 { println!("fg_pixel: {}", fg_pixel); }
@@ -1032,7 +1036,9 @@ impl PPU {
                         palette = bg_palette;
                     }
 
-                    if self.is_sprite0_hit_possible && self.is_sprite0_hit_being_rendered {
+                    if self.next_scanline_is_sprite0_hit_possible
+                        && self.is_sprite0_hit_being_rendered
+                    {
                         if self.mask.is_render_something() {
                             if self.mask.is_render_left() {
                                 if 9 <= self.cycle && self.cycle < 258 {
