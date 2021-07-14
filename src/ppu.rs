@@ -404,21 +404,28 @@ impl Memory for PPU {
             PPUSCROLL => 0,
             PPUADDR => 0,
             PPUDATA => {
-                let read_result = self.ppu_read(self.vaddress.into(), is_read_only);
+                let mut read_result = self.ppu_read(self.vaddress.address(), is_read_only);
 
-                // result the buffer data...self.control
+                // result the buffer data...
                 let mut result = self.data_buffer;
 
                 if self.vaddress.address() >= 0x3f00 {
                     // ...expect if we read palette
                     result = read_result;
+
+                    // for some reason, we need to read mirrored nametable
+                    // to be kept in buffer... -_-
+                    // this is to pass blargg_ppu_tests_2005.09.15b/vram_access #6 test
+                    read_result = self.ppu_read((self.vaddress.address() & 0x0fff) | 0x2000, is_read_only);
                 }
 
                 // set the buffer data
                 self.data_buffer = read_result;
+
                 if !is_read_only {
                     self.increase_vaddress();
                 }
+
                 result
             }
             _ => 0,
