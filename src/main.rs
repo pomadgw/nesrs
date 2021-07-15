@@ -10,6 +10,14 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
+use nesrs;
+use nesrs::bus::*;
+use nesrs::cartridge::*;
+use nesrs::controller::ButtonStatus;
+
+use std::fs::File;
+use std::io::prelude::*;
+
 mod gui;
 
 const WIDTH: u32 = 640;
@@ -53,10 +61,24 @@ fn main() -> Result<(), Error> {
         (pixels, gui)
     };
     let mut world = World::new();
+    let mut nes = None;
 
     event_loop.run(move |event, _, control_flow| {
         // Update egui inputs
         gui.handle_event(&event);
+
+        if let Some(path) = &gui.opened_fname {
+            println!("Opening file: {:?}", path);
+
+            let mut file = File::open(path).unwrap();
+            let mut buffer = Vec::new();
+
+            file.read_to_end(&mut buffer).unwrap();
+            let cartridge = Cartridge::parse(&buffer);
+            nes = Some(Bus::new(cartridge));
+
+            gui.opened_fname = None;
+        }
 
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
