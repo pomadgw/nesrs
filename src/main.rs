@@ -11,7 +11,6 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 use nesrs::bus::*;
-use nesrs::cartridge::*;
 use nesrs::controller::ButtonStatus;
 use nesrs::ppu::{NES_HEIGHT_SIZE, NES_WIDTH_SIZE};
 
@@ -65,9 +64,17 @@ fn main() -> Result<(), Error> {
             let mut buffer = Vec::new();
 
             file.read_to_end(&mut buffer).unwrap();
-            let cartridge = Cartridge::parse(&buffer);
-            nes = Some(Bus::new(cartridge));
-            nes.as_mut().unwrap().reset();
+            nes = match Bus::new_from_array(&buffer) {
+                Ok(bus) => Some(bus),
+                Err(error) => {
+                    println!("ERROR: {}", error);
+                    None
+                }
+            };
+
+            if let Some(bus) = nes.as_mut() {
+                bus.reset();
+            }
 
             gui.opened_fname = None;
         }
