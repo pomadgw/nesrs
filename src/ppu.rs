@@ -91,7 +91,7 @@ pub static PPU_COLORS: [PPUColor; 0x40] = [
 pub type PPURef = Rc<RefCell<PPU>>;
 
 #[derive(Debug, Copy, Clone)]
-pub struct PPUAddress {
+struct PPUAddress {
     address: usize,
 }
 
@@ -102,10 +102,6 @@ const PPUADDRRESS_NAMETABLE_Y_SELECT_MASK: usize = 0b000_10_00000_00000;
 const PPUADDRRESS_FINE_Y_MASK: usize = 0b111_00_00000_00000;
 
 impl PPUAddress {
-    pub fn new() -> PPUAddress {
-        PPUAddress { address: 0 }
-    }
-
     pub fn address(&self) -> usize {
         self.address & 0b0111_1111_1111_1111
     }
@@ -123,13 +119,6 @@ impl PPUAddress {
         self.address |= value & PPUADDRRESS_COARSE_X_MASK;
     }
 
-    pub fn add_coarse_x(&mut self, value: usize) {
-        let old_address = self.address & !PPUADDRRESS_COARSE_X_MASK;
-        self.address += value;
-        self.address &= PPUADDRRESS_COARSE_X_MASK;
-        self.address |= old_address;
-    }
-
     pub fn coarse_y(&self) -> usize {
         (self.address & PPUADDRRESS_COARSE_Y_MASK) >> 5
     }
@@ -137,13 +126,6 @@ impl PPUAddress {
     pub fn set_coarse_y(&mut self, value: usize) {
         self.address &= !PPUADDRRESS_COARSE_Y_MASK;
         self.address |= (value << 5) & PPUADDRRESS_COARSE_Y_MASK;
-    }
-
-    pub fn add_coarse_y(&mut self, value: usize) {
-        let old_address = self.address & !PPUADDRRESS_COARSE_Y_MASK;
-        self.address += value << 5;
-        self.address &= PPUADDRRESS_COARSE_Y_MASK;
-        self.address |= old_address;
     }
 
     pub fn nametable_select_x(&self) -> usize {
