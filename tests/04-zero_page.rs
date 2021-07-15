@@ -1,16 +1,13 @@
 #[cfg(test)]
 mod cpu_instr_tests_zero_page {
     use nesrs::bus::*;
-    use nesrs::cartridge::*;
     use nesrs::memory::*;
 
     #[test]
     fn zero_page_test() {
         let bytes = include_bytes!("./instr_test/04-zero_page.nes");
         let buffer = bytes.to_vec();
-        let cartridge = Cartridge::parse(&buffer);
-
-        let mut bus = Bus::new(cartridge);
+        let mut bus = Bus::new_from_array(&buffer).unwrap();
 
         // bus.cpu.debug = true;
         bus.reset();
