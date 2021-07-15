@@ -29,7 +29,9 @@ pub struct NROM {
 }
 
 impl NROM {
-    pub fn new(prg_banks: u8) -> Self {
+    pub const ID: u8 = 0;
+
+    pub fn new(prg_banks: u8, _n_chr_banks: u8) -> Self {
         Self {
             prg_banks,
             vram: vec![0; 0x2000],

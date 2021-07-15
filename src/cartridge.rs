@@ -101,7 +101,10 @@ impl Cartridge {
             cursor.read(&mut chr_rom).unwrap();
         }
 
-        let mapper = Box::new(NROM::new(n_prg_banks));
+        let mapper = match mapper_id {
+            NROM::ID => Box::new(NROM::new(n_prg_banks, n_chr_banks)),
+            _ => panic!("Mapper {} is not supported", mapper_id),
+        };
 
         Cartridge {
             header,
