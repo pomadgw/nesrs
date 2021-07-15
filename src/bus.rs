@@ -133,8 +133,13 @@ impl Bus {
         }
     }
 
-    pub fn new_from_array(array: &Vec<u8>) -> Self {
-        Self::new(Cartridge::parse(array))
+    pub fn new_from_array(array: &Vec<u8>) -> Result<Self, String> {
+        let cart = Cartridge::parse(array);
+
+        match cart {
+            Ok(cart) => Ok(Self::new(cart)),
+            Err(s) => Err(s)
+        }
     }
 
     pub fn clock(&mut self) {
