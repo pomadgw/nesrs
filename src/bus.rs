@@ -189,4 +189,12 @@ impl Bus {
             .borrow_mut()
             .set_button_status(button, state);
     }
+
+    pub fn cpu_total_cycles(&self) -> u32 {
+        self.cpu.total_cycles
+    }
+
+    pub fn ppu_total_cycles(&self) -> u32 {
+        self.total_cycles
+    }
 }

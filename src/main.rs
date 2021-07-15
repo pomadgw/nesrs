@@ -239,7 +239,9 @@ fn main() -> std::io::Result<()> {
     let mut end;
     let mut fps;
 
-    let mut show_debug = false;
+    let mut show_debug = 0;
+    let mut prev_cpu_total_cycles = 0;
+    let mut curr_cpu_total_cycles = 0;
 
     let mut frame_time = frame_regulator.elapsed().as_micros();
 
@@ -286,7 +288,7 @@ fn main() -> std::io::Result<()> {
                     keycode: Some(Keycode::D),
                     ..
                 } => {
-                    show_debug = !show_debug;
+                    show_debug = (show_debug + 1) % 4;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::R),
@@ -304,12 +306,15 @@ fn main() -> std::io::Result<()> {
 
         bus.clock_until_frame_done();
         end = now.elapsed().as_micros();
-        fps = (1_000_000) / (end - start);
+        let dur = end - start;
+        fps = (1_000_000) / dur;
+        prev_cpu_total_cycles = curr_cpu_total_cycles;
+        curr_cpu_total_cycles = bus.cpu_total_cycles();
 
         start = now.elapsed().as_micros();
         frame_time = frame_regulator.elapsed().as_micros();
 
-        if show_debug {
+        if show_debug == 1 {
             for patternindex in 0..2 {
                 bus.ppu
                     .borrow_mut()
@@ -340,8 +345,10 @@ fn main() -> std::io::Result<()> {
                 )),
             )
             .unwrap();
+        if show_debug != 0 {
+            let cpu_cycle = (curr_cpu_total_cycles - prev_cpu_total_cycles) * (fps as u32);
+            let cpu_cycle = (cpu_cycle as f32) / 1_000_000.0;
 
-        if show_debug {
             text_renderer.reset_newline();
 
             text_renderer.render("DEBUG MODE", Color::RGB(0xc0, 0xc0, 0xc0), 0, 0);
@@ -349,12 +356,14 @@ fn main() -> std::io::Result<()> {
             text_renderer.newline();
 
             text_renderer.render(
-                &format!("FPS: {:4} fps", fps),
+                &format!("FPS: {:4} fps, CPU: {:5.5}MHz", fps, cpu_cycle),
                 Color::RGB(0xc0, 0xc0, 0xc0),
                 0,
                 0,
             );
+        }
 
+        if show_debug == 2 {
             text_renderer.newline();
             text_renderer.newline();
             text_renderer.render("OAMS", Color::RGB(0xc0, 0xc0, 0xc0), 0, 0);
@@ -379,7 +388,7 @@ fn main() -> std::io::Result<()> {
             }
         }
 
-        if show_debug {
+        if show_debug == 1 {
             let width = ppu_ref.screen_debug_pattern[0].width() * 2;
             let height = ppu_ref.screen_debug_pattern[0].height();
             texture_debug_pattern
@@ -435,7 +444,7 @@ fn main() -> std::io::Result<()> {
         // //     row += 1;
         // // });
 
-        if show_debug {
+        if show_debug == 3 {
             let n_swatch_size: i32 = 6;
 
             for p in 0..8i32 {
