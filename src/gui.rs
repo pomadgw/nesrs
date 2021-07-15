@@ -1,10 +1,10 @@
 use egui::{ClippedMesh, FontDefinitions};
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
-use pixels::{wgpu, PixelsContext};
-use std::time::Instant;
 use native_dialog::FileDialog;
+use pixels::{wgpu, PixelsContext};
 use std::path::PathBuf;
+use std::time::Instant;
 
 /// Manages all state required for rendering egui over `Pixels`.
 pub(crate) struct Gui {
@@ -94,8 +94,7 @@ impl Gui {
                             .show_open_single_file()
                             .unwrap();
                         self.opened_fname = path;
-                    }
-                    else if ui.button("About...").clicked() {
+                    } else if ui.button("About...").clicked() {
                         self.window_open = true;
                     }
                 })

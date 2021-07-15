@@ -60,4 +60,10 @@ impl Screen {
     pub fn image(&self) -> &Vec<u8> {
         &self.image
     }
+
+    pub fn copy_to(&self, buffer: &mut [u8]) {
+        assert_eq!(self.image.len(), buffer.len());
+
+        buffer.copy_from_slice(&self.image);
+    }
 }
