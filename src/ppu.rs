@@ -1017,37 +1017,33 @@ impl PPU {
         self.oams[address] = value;
     }
 
-    pub fn ppu_read(&mut self, address: usize, is_read_only: bool) -> u8 {
-        let data = self.cartridge.borrow_mut().ppu_read(address, is_read_only);
-
-        if self.cartridge.borrow().use_cartridge_data() {
-            return data;
-        }
-
+    fn map_ppu_address(&mut self, address: usize) -> &mut u8 {
         match address {
-            0..=0x0fff => self.pattern_table[0][address & 0x0fff],
-            0x1000..=0x1fff => self.pattern_table[1][address & 0x0fff],
+            0..=0x0fff => &mut self.pattern_table[0][address & 0x0fff],
+            0x1000..=0x1fff => &mut self.pattern_table[1][address & 0x0fff],
             0x2000..=0x3eff => {
                 let nametable_address = address & 0x0fff;
                 match self.cartridge.borrow().mirroring() {
                     MirroringMode::Horizontal => match nametable_address {
-                        0x0000..=0x07ff => self.nametable[0][nametable_address & 0x03ff],
-                        0x0800..=0x0fff => self.nametable[1][nametable_address & 0x03ff],
-                        _ => 0,
+                        0x0000..=0x07ff => &mut self.nametable[0][nametable_address & 0x03ff],
+                        0x0800..=0x0fff => &mut self.nametable[1][nametable_address & 0x03ff],
+                        _ => panic!("Invalid nametable address!"),
                     },
                     MirroringMode::Vertical => match nametable_address {
                         0x0000..=0x03ff | 0x0800..=0x0bff => {
-                            self.nametable[0][nametable_address & 0x03ff]
+                            &mut self.nametable[0][nametable_address & 0x03ff]
                         }
                         0x0400..=0x07ff | 0x0c00..=0x0fff => {
-                            self.nametable[1][nametable_address & 0x03ff]
+                            &mut self.nametable[1][nametable_address & 0x03ff]
                         }
-                        _ => 0,
+                        _ => panic!("Invalid nametable address!"),
                     },
-                    MirroringMode::SingleScreen => self.nametable[0][nametable_address & 0x03ff],
+                    MirroringMode::SingleScreen => {
+                        &mut self.nametable[0][nametable_address & 0x03ff]
+                    }
                     MirroringMode::Hardware => {
                         // should not be set as hardware
-                        0
+                        panic!("Mirroring used in PPU should not be set to hardware!")
                     }
                 }
             }
@@ -1064,10 +1060,22 @@ impl PPU {
                     palette_index = 0x0c;
                 }
 
-                self.palette_table[palette_index]
+                &mut self.palette_table[palette_index]
             }
-            _ => 0,
+            _ => panic!("Invalid PPU address: {:04X}", address),
         }
+    }
+
+    pub fn ppu_read(&mut self, address: usize, is_read_only: bool) -> u8 {
+        let data = self.cartridge.borrow_mut().ppu_read(address, is_read_only);
+
+        if self.cartridge.borrow().use_cartridge_data() {
+            return data;
+        }
+
+        let result = *self.map_ppu_address(address);
+
+        result
     }
 
     pub fn ppu_write(&mut self, address: usize, value: u8) {
@@ -1077,59 +1085,7 @@ impl PPU {
             return;
         }
 
-        match address {
-            0..=0x0fff => {
-                self.pattern_table[0][address & 0x0fff] = value;
-            }
-            0x1000..=0x1fff => {
-                self.pattern_table[1][address & 0x0fff] = value;
-            }
-            0x2000..=0x3eff => {
-                let nametable_address = address & 0x0fff;
-                match self.cartridge.borrow().mirroring() {
-                    MirroringMode::Horizontal => match nametable_address {
-                        0x0000..=0x07ff => {
-                            self.nametable[0][nametable_address & 0x03ff] = value;
-                        }
-                        0x0800..=0x0fff => {
-                            self.nametable[1][nametable_address & 0x03ff] = value;
-                        }
-                        _ => {}
-                    },
-                    MirroringMode::Vertical => match nametable_address {
-                        0x0000..=0x03ff | 0x0800..=0x0bff => {
-                            self.nametable[0][nametable_address & 0x03ff] = value;
-                        }
-                        0x0400..=0x07ff | 0x0c00..=0x0fff => {
-                            self.nametable[1][nametable_address & 0x03ff] = value;
-                        }
-                        _ => {}
-                    },
-                    MirroringMode::SingleScreen => {
-                        self.nametable[0][nametable_address & 0x03ff] = value;
-                    }
-                    MirroringMode::Hardware => {
-                        // should not be set as hardware
-                    }
-                }
-            }
-            0x3f00..=0x3fff => {
-                let mut palette_index = address & 0x001f;
-
-                if palette_index == 0x10 {
-                    palette_index = 0x00;
-                } else if palette_index == 0x14 {
-                    palette_index = 0x04;
-                } else if palette_index == 0x18 {
-                    palette_index = 0x08;
-                } else if palette_index == 0x1c {
-                    palette_index = 0x0c;
-                }
-
-                self.palette_table[palette_index] = value;
-            }
-            _ => {}
-        }
+        *self.map_ppu_address(address) = value;
     }
 
     pub fn screen(&self) -> &Screen {
