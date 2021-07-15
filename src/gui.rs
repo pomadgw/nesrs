@@ -3,6 +3,8 @@ use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use pixels::{wgpu, PixelsContext};
 use std::time::Instant;
+use native_dialog::FileDialog;
+use std::path::PathBuf;
 
 /// Manages all state required for rendering egui over `Pixels`.
 pub(crate) struct Gui {
@@ -15,6 +17,7 @@ pub(crate) struct Gui {
 
     // State for the demo app.
     window_open: bool,
+    pub opened_fname: Option<PathBuf>,
 }
 
 impl Gui {
@@ -41,6 +44,7 @@ impl Gui {
             rpass,
             paint_jobs: Vec::new(),
             window_open: true,
+            opened_fname: None,
         }
     }
 
@@ -83,7 +87,15 @@ impl Gui {
         egui::TopBottomPanel::top("menubar_container").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 egui::menu::menu(ui, "File", |ui| {
-                    if ui.button("About...").clicked() {
+                    if ui.button("Open...").clicked() {
+                        let path = FileDialog::new()
+                            .set_location("~/Desktop")
+                            .add_filter("NES image", &["nes"])
+                            .show_open_single_file()
+                            .unwrap();
+                        self.opened_fname = path;
+                    }
+                    else if ui.button("About...").clicked() {
                         self.window_open = true;
                     }
                 })
@@ -95,6 +107,13 @@ impl Gui {
             .show(ctx, |ui| {
                 ui.label("This example demonstrates using egui with pixels.");
                 ui.label("Made with 💖 in San Francisco!");
+
+                // match self.opened_fname {
+                //     Some(path) => {
+                //         ui.label(format!("Opened file: {:?}", path));
+                //     }
+                //     None => {}
+                // }
 
                 ui.separator();
 
