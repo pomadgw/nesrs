@@ -59,7 +59,7 @@ pub struct Cartridge {
 pub type CartridgeRef = Rc<RefCell<Cartridge>>;
 
 impl Cartridge {
-    pub fn parse(buffer: &Vec<u8>) -> Cartridge {
+    pub fn parse(buffer: &Vec<u8>) -> Result<Cartridge, String> {
         let mut cursor = Cursor::new(buffer);
 
         // read nesrom.nes
@@ -103,10 +103,12 @@ impl Cartridge {
 
         let mapper = match mapper_id {
             NROM::ID => Box::new(NROM::new(n_prg_banks, n_chr_banks)),
-            _ => panic!("Mapper {} is not supported", mapper_id),
+            _ => {
+                return Err(format!("Mapper {} is not supported", mapper_id));
+            }
         };
 
-        Cartridge {
+        Ok(Cartridge {
             header,
             prg_rom,
             n_prg_banks: n_prg_banks as usize,
@@ -117,7 +119,7 @@ impl Cartridge {
             mapper_id,
             mapper,
             use_cartridge_data: false,
-        }
+        })
     }
 
     pub fn prg_rom(&self) -> &Vec<u8> {
