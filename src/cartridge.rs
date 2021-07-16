@@ -7,8 +7,7 @@ use std::io::SeekFrom;
 use std::mem;
 use std::slice;
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Copy, Clone)]
 pub enum MirroringMode {
@@ -56,7 +55,7 @@ pub struct Cartridge {
     use_cartridge_data: bool,
 }
 
-pub type CartridgeRef = Rc<RefCell<Cartridge>>;
+pub type CartridgeRef = Arc<Mutex<Cartridge>>;
 
 impl Cartridge {
     pub fn parse(buffer: &Vec<u8>) -> Result<Cartridge, String> {

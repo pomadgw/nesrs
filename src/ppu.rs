@@ -5,8 +5,7 @@ use std::convert::{From, Into};
 use std::fmt::Write;
 use std::ops::AddAssign;
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 const PPUCTRL: usize = 0x00;
 const PPUMASK: usize = 0x01;
@@ -88,7 +87,7 @@ pub static PPU_COLORS: [PPUColor; 0x40] = [
     (0, 0, 0),
 ];
 
-pub type PPURef = Rc<RefCell<PPU>>;
+pub type PPURef = Arc<Mutex<PPU>>;
 
 #[derive(Debug, Copy, Clone)]
 struct PPUAddress {
@@ -1005,7 +1004,7 @@ impl PPU {
             0x1000..=0x1fff => &mut self.pattern_table[1][address & 0x0fff],
             0x2000..=0x3eff => {
                 let nametable_address = address & 0x0fff;
-                match self.cartridge.borrow().mirroring() {
+                match self.cartridge.lock().unwrap().mirroring() {
                     MirroringMode::Horizontal => match nametable_address {
                         0x0000..=0x07ff => &mut self.nametable[0][nametable_address & 0x03ff],
                         0x0800..=0x0fff => &mut self.nametable[1][nametable_address & 0x03ff],
@@ -1049,9 +1048,14 @@ impl PPU {
     }
 
     pub fn ppu_read(&mut self, address: usize, is_read_only: bool) -> u8 {
-        let data = self.cartridge.borrow_mut().ppu_read(address, is_read_only);
+        let (data, use_cartridge_data) = {
+            let mut cartridge = self.cartridge.lock().unwrap();
+            let data = cartridge.ppu_read(address, is_read_only);
+            let use_cartridge_data = cartridge.use_cartridge_data();
+            (data, use_cartridge_data)
+        };
 
-        if self.cartridge.borrow().use_cartridge_data() {
+        if use_cartridge_data {
             return data;
         }
 
@@ -1061,9 +1065,14 @@ impl PPU {
     }
 
     pub fn ppu_write(&mut self, address: usize, value: u8) {
-        self.cartridge.borrow_mut().ppu_write(address, value);
+        let use_cartridge_data = {
+            let mut cartridge = self.cartridge.lock().unwrap();
+            cartridge.ppu_write(address, value);
+            let use_cartridge_data = cartridge.use_cartridge_data();
+            use_cartridge_data
+        };
 
-        if self.cartridge.borrow().use_cartridge_data() {
+        if use_cartridge_data {
             return;
         }
 

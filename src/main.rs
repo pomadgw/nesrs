@@ -85,7 +85,8 @@ fn main() -> Result<(), Error> {
             // world.draw(pixels.get_frame());
             if let Some(bus) = &mut nes {
                 bus.clock_until_frame_done();
-                bus.ppu.borrow().screen().copy_to(pixels.get_frame());
+                let ppu = bus.ppu.lock().unwrap();
+                ppu.screen().copy_to(pixels.get_frame());
             }
 
             // Prepare egui
