@@ -79,6 +79,14 @@ fn main() -> Result<(), Error> {
             gui.opened_fname = None;
         }
 
+        if gui.do_reset {
+            if let Some(bus) = nes.as_mut() {
+                bus.reset();
+            }
+
+            gui.do_reset = false;
+        }
+
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
             // Draw the world
