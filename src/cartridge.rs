@@ -51,7 +51,7 @@ pub struct Cartridge {
     n_chr_banks: usize,
     hw_mirroring: MirroringMode,
     mapper_id: u8,
-    mapper: Box<dyn Mapper>,
+    mapper: Box<dyn Mapper + Send + Sync>,
     use_cartridge_data: bool,
 }
 
