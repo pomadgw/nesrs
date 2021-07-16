@@ -186,7 +186,7 @@ impl Bus {
     pub fn clock_until_frame_done(&mut self) {
         loop {
             let done_drawing = {
-                let mut ppu = self.ppu.lock().unwrap();
+                let ppu = self.ppu.lock().unwrap();
                 ppu.done_drawing
             };
 
