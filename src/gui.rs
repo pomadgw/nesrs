@@ -18,6 +18,7 @@ pub(crate) struct Gui {
     // State for the demo app.
     window_open: bool,
     pub opened_fname: Option<PathBuf>,
+    pub do_reset: bool,
 }
 
 impl Gui {
@@ -43,8 +44,9 @@ impl Gui {
             screen_descriptor,
             rpass,
             paint_jobs: Vec::new(),
-            window_open: true,
+            window_open: false,
             opened_fname: None,
+            do_reset: true,
         }
     }
 
@@ -97,7 +99,13 @@ impl Gui {
                     } else if ui.button("About...").clicked() {
                         self.window_open = true;
                     }
-                })
+                });
+
+                egui::menu::menu(ui, "CPU", |ui| {
+                    if ui.button("Reset").clicked() {
+                        self.do_reset = true;
+                    }
+                });
             });
         });
 
