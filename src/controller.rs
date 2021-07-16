@@ -1,7 +1,6 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
-pub type ControllerRef = Rc<RefCell<Controller>>;
+pub type ControllerRef = Arc<Mutex<Controller>>;
 
 bitflags! {
     pub struct ButtonStatus: u8 {
@@ -32,7 +31,7 @@ impl Controller {
     }
 
     pub fn new_ref() -> ControllerRef {
-        Rc::new(RefCell::new(Controller::new()))
+        Arc::new(Mutex::new(Controller::new()))
     }
 
     pub fn write(&mut self, value: u8) {

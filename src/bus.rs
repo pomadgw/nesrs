@@ -3,8 +3,7 @@ use crate::controller::*;
 use crate::cpu::*;
 use crate::memory::*;
 use crate::ppu::*;
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 pub struct NesMemoryMapper {
     ram: Vec<u8>,
@@ -50,12 +49,11 @@ impl NesMemoryMapper {
                 let address = (self.oam_dma_page as usize) << 8 | (self.oam_dma_address as usize);
                 self.dma_data = self.read(address, false);
             } else {
-                let address = self.ppu.borrow_mut().oam_address;
-                self.ppu
-                    .borrow_mut()
-                    .write_oam_address(address as usize, self.dma_data);
+                let mut ppu = self.ppu.lock().unwrap();
+                let address = ppu.oam_address;
+                ppu.write_oam_address(address as usize, self.dma_data);
                 self.oam_dma_address = self.oam_dma_address.wrapping_add(1);
-                self.ppu.borrow_mut().oam_address = address.wrapping_add(1);
+                ppu.oam_address = address.wrapping_add(1);
 
                 if self.oam_dma_address == 0 {
                     self.oam_dma_cycle = 1;
@@ -68,32 +66,44 @@ impl NesMemoryMapper {
 
 impl Memory for NesMemoryMapper {
     fn read(&mut self, address: usize, is_read_only: bool) -> u8 {
-        let data = self.cartridge.borrow_mut().read(address, is_read_only);
-        if self.cartridge.borrow().use_cartridge_data() {
-            return data;
+        let (cartridge_data, use_cartridge_data) = {
+            let mut cartridge = self.cartridge.lock().unwrap();
+            let data = cartridge.read(address, is_read_only);
+            let use_cartridge_data = cartridge.use_cartridge_data();
+            (data, use_cartridge_data)
+        };
+
+        if use_cartridge_data {
+            return cartridge_data;
         } else if address < 0x2000 {
             self.ram[address & 0x07FF]
         } else if address < 0x4000 {
-            self.ppu.borrow_mut().read(address & 0x07, is_read_only)
+            let mut ppu = self.ppu.lock().unwrap();
+            ppu.read(address & 0x07, is_read_only)
         } else if address <= 0x4013 || (address == 0x4015) || (address == 0x4017) {
-            // TODO: APU here
             0
         } else if address == 0x4016 || address == 0x4017 {
-            self.controllers[address & 1].borrow_mut().read()
+            let mut controller = self.controllers[address & 1].lock().unwrap();
+            controller.read()
         } else {
             self.ram[address & 0x07FF]
         }
     }
 
     fn write(&mut self, address: usize, value: u8) {
-        self.cartridge.borrow_mut().write(address, value);
+        let use_cartridge_data = {
+            let mut cartridge = self.cartridge.lock().unwrap();
+            cartridge.write(address, value);
+            let use_cartridge_data = cartridge.use_cartridge_data();
+            use_cartridge_data
+        };
 
-        if self.cartridge.borrow().use_cartridge_data() {
+        if use_cartridge_data {
         } else if address < 0x2000 {
             self.ram[address & 0x07FF] = value;
         } else if address < 0x4000 {
-            // TODO: PPU here
-            self.ppu.borrow_mut().write(address & 0x07, value)
+            let mut ppu = self.ppu.lock().unwrap();
+            ppu.write(address & 0x07, value)
         } else if address == OAMDMA {
             self.oam_dma_page = value;
             self.oam_dma_address = 0;
@@ -101,7 +111,8 @@ impl Memory for NesMemoryMapper {
         } else if address <= 0x4013 || (address == 0x4015) || (address == 0x4017) {
             // TODO: APU here
         } else if address == 0x4016 || address == 0x4017 {
-            self.controllers[address & 1].borrow_mut().write(value);
+            let mut controller = self.controllers[address & 1].lock().unwrap();
+            controller.write(value);
         } else {
             self.ram[address & 0x07FF] = value;
         }
@@ -118,8 +129,8 @@ pub struct Bus {
 
 impl Bus {
     pub fn new(cartridge: Cartridge) -> Self {
-        let cartref = Rc::new(RefCell::new(cartridge));
-        let ppu = Rc::new(RefCell::new(PPU::new(cartref.clone())));
+        let cartref = Arc::new(Mutex::new(cartridge));
+        let ppu = Arc::new(Mutex::new(PPU::new(cartref.clone())));
         let controller1 = Controller::new_ref();
         let controller2 = Controller::new_ref();
         let controllers = vec![controller1, controller2];
@@ -138,16 +149,20 @@ impl Bus {
 
         match cart {
             Ok(cart) => Ok(Self::new(cart)),
-            Err(s) => Err(s)
+            Err(s) => Err(s),
         }
     }
 
     pub fn clock(&mut self) {
-        self.ppu.borrow_mut().clock();
+        {
+            let mut ppu = self.ppu.lock().unwrap();
 
-        if self.ppu.borrow().call_nmi {
-            self.ppu.borrow_mut().call_nmi = false;
-            self.cpu.nmi();
+            ppu.clock();
+
+            if ppu.call_nmi {
+                ppu.call_nmi = false;
+                self.cpu.nmi();
+            }
         }
 
         match self.cycle {
@@ -169,11 +184,20 @@ impl Bus {
     }
 
     pub fn clock_until_frame_done(&mut self) {
-        while !self.ppu.borrow().done_drawing {
+        loop {
+            let done_drawing = {
+                let mut ppu = self.ppu.lock().unwrap();
+                ppu.done_drawing
+            };
+
+            if done_drawing {
+                let mut ppu = self.ppu.lock().unwrap();
+                ppu.done_drawing = false;
+                break;
+            }
+
             self.clock();
         }
-
-        self.ppu.borrow_mut().done_drawing = false;
     }
 
     pub fn reset(&mut self) {
@@ -190,9 +214,10 @@ impl Bus {
         button: ButtonStatus,
         state: bool,
     ) {
-        self.memory_mapper.controllers[controller_id]
-            .borrow_mut()
-            .set_button_status(button, state);
+        let mut controller = self.memory_mapper.controllers[controller_id]
+            .lock()
+            .unwrap();
+        controller.set_button_status(button, state);
     }
 
     pub fn cpu_total_cycles(&self) -> u32 {
