@@ -11,6 +11,7 @@ use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
 use nesrs::bus::*;
+use nesrs::utils::read_cpu_instructions;
 use nesrs::controller::ButtonStatus;
 use nesrs::ppu::{NES_HEIGHT_SIZE, NES_WIDTH_SIZE};
 
@@ -73,6 +74,10 @@ fn main() -> Result<(), Error> {
             };
 
             if let Some(bus) = nes.as_mut() {
+                for string in read_cpu_instructions(bus.memory(), 0x8000, 10).iter() {
+                    println!("{}", string);
+                }
+
                 bus.reset();
             }
 
