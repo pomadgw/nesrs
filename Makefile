@@ -1,3 +1,5 @@
+all: bin
+
 dep:
 	cargo install grcov
 
@@ -12,3 +14,12 @@ test:
 opencoverage:
 	cd ./target/debug/coverage
 	python3 -m http.server
+
+bin:
+	cargo run --release --package nesrs-bin
+
+lib:
+	cargo build --lib --release
+
+clean:
+	cargo clean
